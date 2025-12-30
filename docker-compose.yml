@@ -1,0 +1,52 @@
+services:
+  app:
+    image: augustzer0/do-meok:latest
+    container_name: domeok-back
+    depends_on:
+      - redis
+      - postgresql
+    networks:
+      - domeok-network   # DB, Redis 네트워크
+      - npm-network  # Nginx (Reverse Proxy)
+    environment:
+      - TZ=Asia/Seoul
+
+  postgresql:
+    image: postgres:15
+    container_name: domeok-db
+    restart: always
+    environment:
+      - POSTGRES_USER=${DB_USER}
+      - POSTGRES_PASSWORD=${DB_PASSWORD}
+      - POSTGRES_DB=domeok
+      - TZ=Asia/Seoul
+      - PGTZ=Asia/Seoul
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - domeok-network # 내부망에만 존재
+    ports:
+      - "5432:5432"
+
+  redis:
+    image: redis:latest
+    container_name: domeok-redis
+    restart: always
+    environment:
+      - REDIS_HOST=redis_container
+      - REDIS_PORT=6379
+    volumes:
+      - redis_data:/data
+    networks:
+      - domeok-network
+
+networks:
+  domeok-network:
+    # 내부끼리 통신용 (기본 브릿지)
+
+  npm-network:
+    external: true
+
+volumes:
+  redis_data:
+  postgres_data:

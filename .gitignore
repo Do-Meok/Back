@@ -3,9 +3,10 @@ __pycache__/
 *.py[cod]
 *$py.class
 .venv/
-uv.lock
 .idea/
 
 # Environments
 .env
 .env.*
+docker-compose.dev.yml
+Dockerfile.dev
