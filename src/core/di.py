@@ -20,4 +20,4 @@ def get_access_token(
 ) -> str:
     if auth_header is None:
         raise UnauthorizedException()
-    return auth_header.credentials # access_token
+    return auth_header.credentials
