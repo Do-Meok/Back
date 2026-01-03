@@ -14,6 +14,7 @@ def get_user_repo(session: AsyncSession = Depends(get_postgres_db)) -> UserRepos
 def get_user_service(user_repo: UserRepository = Depends(get_user_repo)) -> UserService:
     return UserService(user_repo)
 
+# --- 토큰 ---
 def get_access_token(
         auth_header: HTTPAuthorizationCredentials | None = Depends(
             HTTPBearer(auto_error=False))
