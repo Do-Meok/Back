@@ -17,9 +17,7 @@ ENV PYTHONDONTWRITEBYTECODE=1 \
 
 # 4. 필수 시스템 패키지 및 타임존 설정
 RUN apt-get update && \
-    apt-get install -y --no-install-recommends tzdata && \
-    ln -sf /usr/share/zoneinfo/$TZ /etc/localtime && \
-    echo $TZ > /etc/timezone && \
+    apt-get install -y --no-install-recommends tzdata curl && \
     rm -rf /var/lib/apt/lists/*
 
 # 5. uv 설치
