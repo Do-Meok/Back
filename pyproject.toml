@@ -7,15 +7,20 @@ dependencies = [
     "alembic>=1.17.2",
     "asyncpg>=0.31.0",
     "fastapi>=0.128.0",
-    "passlib[bcrypt]>=1.7.4",
+    "httpx>=0.28.1",
+    "passlib[argon2]>=1.7.4",
     "pydantic-settings>=2.12.0",
+    "pydantic[email]>=2.12.5",
     "python-jose[cryptography]>=3.5.0",
     "sqlalchemy[asyncio]>=2.0.45",
+    "uuid6>=2025.0.1",
     "uvicorn[standard]>=0.40.0",
 ]
 
 [dependency-groups]
 dev = [
+    "pytest>=9.0.2",
+    "pytest-asyncio>=1.3.0",
     "ruff>=0.14.10",
 ]
 
