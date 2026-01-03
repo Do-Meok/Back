@@ -1,38 +1,43 @@
-# python 3.10 이미지 설치 - slim(가벼운 버전)
+# 1. 파이썬 베이스 이미지
 FROM python:3.10-slim
 
-# 2️⃣ 환경 변수 설정
-ENV PYTHONDONTWRITEBYTECODE=1 \
-    PYTHONUNBUFFERED=1 \
-    TZ=Asia/Seoul
-
-# 작업 디렉토리 설정
+# 2. 작업 디렉토리 설정
 WORKDIR /app
 
-# 시스템 패키지 및 타임존 설정
+# 3. 환경 변수 설정
+# ✅ 변경: 개발 버전과 동일하게 /venv 사용 (시스템 파이썬과 격리)
+# ✅ 추가: UV_COMPILE_BYTECODE=1 (설치 시 .pyc 파일을 미리 컴파일하여 실행 속도 향상)
+ENV UV_PROJECT_ENVIRONMENT="/venv"
+ENV PYTHONDONTWRITEBYTECODE=1 \
+    PYTHONUNBUFFERED=1 \
+    TZ=Asia/Seoul \
+    UV_COMPILE_BYTECODE=1 \
+    PYTHONPATH=/app/src \
+    PATH="$UV_PROJECT_ENVIRONMENT/bin:$PATH"
+
+# 4. 필수 시스템 패키지 및 타임존 설정
 RUN apt-get update && \
     apt-get install -y --no-install-recommends tzdata && \
     ln -sf /usr/share/zoneinfo/$TZ /etc/localtime && \
     echo $TZ > /etc/timezone && \
     rm -rf /var/lib/apt/lists/*
 
-# ✅ 변경된 부분: requirements.txt 대신 pyproject.toml 사용
-# 1. 설정 파일 복사 (requirements.txt 제거됨)
-COPY pyproject.toml .
-COPY uv.lock .
+# 5. uv 설치
+RUN pip install --no-cache-dir uv
 
-# (✅ 변경 - 캐시 마운트 적용)
-# --mount=type=cache: 호스트의 캐시 폴더를 빌드 중에 끌어다 씁니다.
-# 다운로드했던 패키지가 남아있어서, 2번째 빌드부터는 설치가 '즉시' 완료됩니다.
-RUN pip install --no-cache-dir uv && \
-    uv pip install --system -r pyproject.toml \
-    --cache-dir /root/.cache/uv
+# 6. 의존성 설치
+COPY pyproject.toml uv.lock ./
 
-# 프로젝트 전체 복사
+# ✅ 변경: uv sync 사용
+# --frozen: uv.lock 파일 기준으로만 설치 (버전 변경 방지)
+# --no-dev: 배포판이므로 개발용 패키지 제외 (테스트 도구 등)
+# --no-install-project: 프로젝트 자체는 설치하지 않고 의존성만 설치
+RUN --mount=type=cache,target=/root/.cache/uv \
+    uv sync --frozen --no-dev --no-install-project
+
+# 7. 프로젝트 전체 복사
 COPY . .
 
-# PYTHONPATH 설정
-ENV PYTHONPATH=/app/src
-
-# FastAPI 실행
+# 8. FastAPI 실행
+# --reload 제거 (배포 환경)
 CMD ["uvicorn", "src.main:app", "--host", "0.0.0.0", "--port", "8000", "--lifespan", "on", "--proxy-headers", "--forwarded-allow-ips", "*"]
