@@ -1,4 +1,5 @@
 from pathlib import Path
+from pydantic import SecretStr
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 BASE_DIR = Path(__file__).resolve().parent.parent.parent
@@ -8,9 +9,12 @@ class Settings(BaseSettings):
 
     DB_USER: str
     DB_PASSWORD: str
-    DB_HOST: str = "localhost"  # 기본값 설정 (없으면 로컬로 간주)
+    DB_HOST: str
     DB_PORT: int = 5432
     DB_NAME: str = "domeok"
+
+    JWT_SECRET_KEY: SecretStr
+    HMAC_SECRET: SecretStr
 
     @property
     def POSTGRES_DATABASE_URL(self) -> str:

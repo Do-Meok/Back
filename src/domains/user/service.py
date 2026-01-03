@@ -1,22 +1,26 @@
 import hmac
 import hashlib
+
+from fastapi import Request
 from base64 import urlsafe_b64encode
 from cryptography.fernet import Fernet
 from passlib.context import CryptContext
+from jose import jwt, JWTError
+from datetime import datetime, timedelta, timezone
 
-
+from core.config import settings
 from domains.user.exceptions import DuplicateEmailException, DuplicateNicknameException, \
-    InvalidCheckedPasswordException, DuplicatePhoneNumException
+    InvalidCheckedPasswordException, DuplicatePhoneNumException, InvalidCredentialsException, TokenExpiredException
 from domains.user.repository import UserRepository
-from domains.user.schemas import SignUpRequest
+from domains.user.schemas import SignUpRequest, LogInRequest, LogInResponse
 from domains.user.models import User
 
 TEMP_AES_KEY = Fernet.generate_key()
-TEMP_HMAC_SECRET = "aa"
+TEMP_HMAC_SECRET = settings.HMAC_SECRET.get_secret_value()
 
 class UserService:
     encoding = "UTF-8"
-    secret_key = "aaa"
+    secret_key = settings.JWT_SECRET_KEY.get_secret_value()
     jwt_algorithm = "HS256"
 
     # 비밀번호 해쉬 설정 (passlib - Argon2)
@@ -53,9 +57,37 @@ class UserService:
         ).digest()
         return urlsafe_b64encode(mac).decode(self.encoding)
 
+    # --- JWT 토큰 관련 ---
+    def create_jwt(self, user_id: str) -> str:
+        now = datetime.now(timezone.utc)
+
+        payload = {
+            "sub": str(user_id),
+            "iat": now,
+            "exp": now + timedelta(days=1),
+        }
+        return jwt.encode(
+            payload,
+            self.secret_key,
+            algorithm=self.jwt_algorithm,
+        )
+
+    def decode_jwt(self, access_token: str) -> str:
+        try:
+            payload = jwt.decode(
+                access_token, self.secret_key, algorithms=[self.jwt_algorithm]
+            )
+            email = payload.get("sub")
+
+            if email is None:
+                raise TokenExpiredException()
+            return email
+
+        except JWTError:
+            raise TokenExpiredException()
+
     # --- 로직 ---
     async def sign_up(self, request: SignUpRequest):
-
         try:
             # 이메일 중복 예외처리
             if await self.user_repo.get_user_by_email(request.email):
@@ -89,6 +121,22 @@ class UserService:
             )
             saved_user = await self.user_repo.save_user(user)
             return saved_user
+
+        except Exception as e:
+            raise e
+
+    async def log_in(self, request: LogInRequest, req: Request):
+        try:
+            user = await self.user_repo.get_user_by_email(email=request.email)
+
+            if not user or not self.verify_password(request.password, user.password):
+                raise InvalidCredentialsException()
+
+            access_token = self.create_jwt(user_id=user.id)
+            return LogInResponse(access_token=access_token)
+
+        except InvalidCredentialsException:
+            raise
 
         except Exception as e:
             raise e
