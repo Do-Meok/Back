@@ -1,5 +1,6 @@
-from pydantic import BaseModel, EmailStr, constr
+from pydantic import BaseModel, EmailStr, constr, Field, ConfigDict
 from datetime import date
+
 
 class SignUpRequest(BaseModel):
     email: EmailStr
@@ -12,15 +13,18 @@ class SignUpRequest(BaseModel):
 
 
 class SignUpResponse(BaseModel):
-    email: str
-    message: str = "회원가입이 완료되었습니다."
+    email: str = Field(..., examples=["test@example.com"])
+    message: str = Field(
+        default="회원가입이 완료되었습니다.", examples=["회원가입이 완료되었습니다."]
+    )
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
+
 
 class LogInRequest(BaseModel):
     email: EmailStr
     password: constr(min_length=8, max_length=20)
+
 
 class LogInResponse(BaseModel):
     access_token: str

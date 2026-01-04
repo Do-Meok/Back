@@ -5,8 +5,8 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 BASE_DIR = Path(__file__).resolve().parent.parent.parent
 ENV_PATH = BASE_DIR / ".env"
 
-class Settings(BaseSettings):
 
+class Settings(BaseSettings):
     DB_USER: str
     DB_PASSWORD: str
     DB_HOST: str
@@ -24,7 +24,8 @@ class Settings(BaseSettings):
         env_file=str(ENV_PATH),
         env_file_encoding="utf-8",
         extra="ignore",  # 정의되지 않은 변수는 무시
-        case_sensitive=True  # 대소문자 구분 (기존 class Config에 있던 것 이동)
+        case_sensitive=True,  # 대소문자 구분 (기존 class Config에 있던 것 이동)
     )
+
 
 settings = Settings()  # 유효성 체크

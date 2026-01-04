@@ -9,14 +9,21 @@ from jose import jwt, JWTError
 from datetime import datetime, timedelta, timezone
 
 from core.config import settings
-from domains.user.exceptions import DuplicateEmailException, DuplicateNicknameException, \
-    InvalidCheckedPasswordException, DuplicatePhoneNumException, InvalidCredentialsException, TokenExpiredException
+from domains.user.exceptions import (
+    DuplicateEmailException,
+    DuplicateNicknameException,
+    InvalidCheckedPasswordException,
+    DuplicatePhoneNumException,
+    InvalidCredentialsException,
+    TokenExpiredException,
+)
 from domains.user.repository import UserRepository
 from domains.user.schemas import SignUpRequest, LogInRequest, LogInResponse
 from domains.user.models import User
 
 TEMP_AES_KEY = Fernet.generate_key()
 TEMP_HMAC_SECRET = settings.HMAC_SECRET.get_secret_value()
+
 
 class UserService:
     encoding = "UTF-8"
@@ -44,16 +51,20 @@ class UserService:
 
     # --- 전화번호 관련 ---
     def _encrypt_phone(self, plain_phone: str) -> str:
-        return self.cipher_suite.encrypt(plain_phone.encode(self.encoding)).decode(self.encoding)
+        return self.cipher_suite.encrypt(plain_phone.encode(self.encoding)).decode(
+            self.encoding
+        )
 
     def decrypt_phone(self, encrypted_phone: str) -> str:
-        return self.cipher_suite.decrypt(encrypted_phone.encode(self.encoding)).decode(self.encoding)
+        return self.cipher_suite.decrypt(encrypted_phone.encode(self.encoding)).decode(
+            self.encoding
+        )
 
     def _make_phone_hash(self, phone: str) -> str:
         mac = hmac.new(
             self.phone_secret.encode(self.encoding),
             phone.encode(self.encoding),
-            hashlib.sha256
+            hashlib.sha256,
         ).digest()
         return urlsafe_b64encode(mac).decode(self.encoding)
 

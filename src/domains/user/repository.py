@@ -7,8 +7,8 @@ from typing import Optional, Any
 from core.exceptions import DatabaseException, UnexpectedException
 from domains.user.models import User
 
-class UserRepository:
 
+class UserRepository:
     def __init__(self, session: AsyncSession):
         self.session = session
 
