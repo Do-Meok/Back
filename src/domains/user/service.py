@@ -112,14 +112,19 @@ class UserService:
             if request.password != request.checked_password:
                 raise InvalidCheckedPasswordException()
 
-            # 전화번호 중복 예외처리
-            phone_hash = self._make_phone_hash(request.phone_num)
+            # 전화번호 처리 로직
+            phone_hash = None
+            encrypted_phone = None
 
-            if await self.user_repo.get_user_by_phone_num(phone_hash):
-                raise DuplicatePhoneNumException()
+            if request.phone_num:
+                phone_hash = self._make_phone_hash(request.phone_num)
+
+                if await self.user_repo.get_user_by_phone_num(phone_hash):
+                    raise DuplicatePhoneNumException()
+
+                encrypted_phone = self._encrypt_phone(request.phone_num)
 
             hashed_password = self.hash_password(request.password)
-            encrypted_phone = self._encrypt_phone(request.phone_num)
 
             user = User(
                 email=request.email,
