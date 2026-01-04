@@ -1,10 +1,10 @@
-from sqlalchemy import Column, String, TIMESTAMP, text, Date
-from sqlalchemy.orm import declarative_base
-from sqlalchemy.types import Uuid
-
 import uuid6
 
-Base = declarative_base()
+from sqlalchemy import Column, String, TIMESTAMP, text, Date
+from sqlalchemy.types import Uuid
+
+from core.database import Base
+
 
 class User(Base):
     __tablename__ = "users"
@@ -18,5 +18,8 @@ class User(Base):
     phone = Column(String(128))
     phone_hash = Column(String(128), unique=True)
     social_auth = Column(String(10), nullable=False, default="local")
-    created_at = Column(TIMESTAMP(timezone=True), server_default=text("CURRENT_TIMESTAMP"), nullable=False)
-
+    created_at = Column(
+        TIMESTAMP(timezone=True),
+        server_default=text("CURRENT_TIMESTAMP"),
+        nullable=False,
+    )
