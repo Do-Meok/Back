@@ -68,7 +68,7 @@ async def test_sign_up_duplicate_email(client: AsyncClient):
 
 @pytest.mark.asyncio
 async def test_sign_up_password_mismatch(client: AsyncClient):
-    #3. 비밀번호 확인 불일치 시 400 에러 확인
+    # 3. 비밀번호 확인 불일치 시 400 에러 확인
     response = await client.post(
         "/api/v1/users/sign-up",
         json={
@@ -88,7 +88,7 @@ async def test_sign_up_password_mismatch(client: AsyncClient):
 
 @pytest.mark.asyncio
 async def test_log_in_success(client: AsyncClient):
-    #4. 로그인 성공 테스트
+    # 4. 로그인 성공 테스트
     # (A) 가입
     await client.post(
         "/api/v1/users/sign-up",
@@ -114,7 +114,7 @@ async def test_log_in_success(client: AsyncClient):
 
 @pytest.mark.asyncio
 async def test_log_in_fail(client: AsyncClient):
-    #5. 로그인 실패 (비밀번호 틀림)
+    # 5. 로그인 실패 (비밀번호 틀림)
     # (A) 가입
     await client.post(
         "/api/v1/users/sign-up",

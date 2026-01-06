@@ -2,6 +2,7 @@ import uuid6
 
 from sqlalchemy import Column, String, TIMESTAMP, text, Date
 from sqlalchemy.types import Uuid
+from sqlalchemy.orm import relationship
 
 from core.database import Base
 
@@ -23,3 +24,5 @@ class User(Base):
         server_default=text("CURRENT_TIMESTAMP"),
         nullable=False,
     )
+
+    ingredients = relationship("Ingredient", back_populates="owner")

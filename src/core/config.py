@@ -14,6 +14,7 @@ class Settings(BaseSettings):
     DB_NAME: str = "domeok"
 
     JWT_SECRET_KEY: SecretStr
+    PHONE_AES_KEY: SecretStr
     HMAC_SECRET: SecretStr
 
     @property

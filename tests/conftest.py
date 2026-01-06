@@ -25,7 +25,6 @@ async def db_engine():
 
 @pytest_asyncio.fixture(scope="function")
 async def db_session(db_engine):
-
     # 테이블 생성
     async with db_engine.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)
@@ -56,7 +55,7 @@ async def client(db_session):
     app.dependency_overrides[get_postgres_db] = override_get_postgres_db
 
     async with AsyncClient(
-            transport=ASGITransport(app=app), base_url="http://test"
+        transport=ASGITransport(app=app), base_url="http://test"
     ) as ac:
         yield ac
 

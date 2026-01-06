@@ -1,4 +1,4 @@
-from core.exceptions import BaseCustomException
+from core.exception.exceptions import BaseCustomException
 
 
 class DuplicateEmailException(BaseCustomException):
