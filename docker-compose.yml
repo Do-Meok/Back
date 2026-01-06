@@ -10,6 +10,8 @@ services:
       - npm-network  # Nginx (Reverse Proxy)
     environment:
       - TZ=Asia/Seoul
+    labels:
+      - "share.log=true"
 
   postgresql:
     image: postgres:15
