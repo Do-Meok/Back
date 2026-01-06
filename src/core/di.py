@@ -1,11 +1,14 @@
-from fastapi import Depends
-from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
+from fastapi import Depends, Request
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from domains.user.exceptions import UnauthorizedException
+from core.security import get_access_token
+from core.database import get_postgres_db
+
+from domains.ingredient.repository import IngredientRepository
+from domains.ingredient.service import IngredientService
 from domains.user.repository import UserRepository
 from domains.user.service import UserService
-from core.database import get_postgres_db
+from domains.user.models import User
 
 
 # --- 유저 관련 DI ---
@@ -17,12 +20,23 @@ def get_user_service(user_repo: UserRepository = Depends(get_user_repo)) -> User
     return UserService(user_repo)
 
 
-# --- 토큰 ---
-def get_access_token(
-    auth_header: HTTPAuthorizationCredentials | None = Depends(
-        HTTPBearer(auto_error=False)
-    ),
-) -> str:
-    if auth_header is None:
-        raise UnauthorizedException()
-    return auth_header.credentials
+async def get_current_user(
+    req: Request,
+    access_token: str = Depends(get_access_token),
+    user_service: UserService = Depends(get_user_service),
+) -> User:
+    return await user_service.get_user_by_token(access_token, req)
+
+
+# --- 재료 관련 DI ---
+def get_ingredient_repo(
+    session: AsyncSession = Depends(get_postgres_db),
+) -> IngredientRepository:
+    return IngredientRepository(session)
+
+
+def get_ingredient_service(
+    ingredient_repo: IngredientRepository = Depends(get_ingredient_repo),
+    user: User = Depends(get_current_user),
+) -> IngredientService:
+    return IngredientService(user=user, ingredient_repo=ingredient_repo)

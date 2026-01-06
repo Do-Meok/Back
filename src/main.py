@@ -3,8 +3,8 @@ from fastapi.exceptions import RequestValidationError
 from starlette.exceptions import HTTPException as StarletteHTTPException
 
 from api.v1.api import api_router
-from core.exceptions import BaseCustomException
-from core.exception_handlers import (
+from core.exception.exceptions import BaseCustomException
+from core.exception.exception_handlers import (
     custom_exception_handler,
     system_exception_handler,
     http_exception_handler,

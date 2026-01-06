@@ -4,7 +4,7 @@ from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.ext.asyncio.session import AsyncSession
 from typing import Optional, Any
 
-from core.exceptions import DatabaseException, UnexpectedException
+from core.exception.exceptions import DatabaseException, UnexpectedException
 from domains.user.models import User
 
 
@@ -37,3 +37,6 @@ class UserRepository:
 
     async def get_user_by_phone_num(self, phone_hash: str) -> Optional[User]:
         return await self._get_user_by_field("phone_hash", phone_hash)
+
+    async def get_user_by_id(self, user_id: str) -> Optional[User]:
+        return await self._get_user_by_field("id", user_id)
