@@ -11,7 +11,12 @@ from domains.user.exceptions import (
     UserNotFoundException,
 )
 from domains.user.repository import UserRepository
-from domains.user.schemas import SignUpRequest, LogInRequest, LogInResponse, InfoResponse
+from domains.user.schemas import (
+    SignUpRequest,
+    LogInRequest,
+    LogInResponse,
+    InfoResponse,
+)
 from domains.user.models import User
 
 
@@ -91,7 +96,4 @@ class UserService:
         if not user:
             raise UserNotFoundException()
 
-        return InfoResponse(
-            email=user.email,
-            nickname=user.nickname
-        )
+        return InfoResponse(email=user.email, nickname=user.nickname)

@@ -137,6 +137,7 @@ async def test_log_in_fail(client: AsyncClient):
     assert response.status_code == 401
     assert response.json()["code"] == "INVALID_CREDENTIALS"
 
+
 @pytest.mark.asyncio
 async def test_get_user_info(authorized_client):
     response = await authorized_client.get("/api/v1/users/info")

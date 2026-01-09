@@ -30,6 +30,7 @@ class LogInRequest(BaseModel):
 class LogInResponse(BaseModel):
     access_token: str
 
+
 class InfoResponse(BaseModel):
     email: EmailStr
     nickname: str
