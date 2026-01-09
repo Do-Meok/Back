@@ -1,56 +1,63 @@
+import pytest
 import pytest_asyncio
-from httpx import AsyncClient, ASGITransport
+import uuid
 from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession
-from sqlalchemy.orm import sessionmaker
+from sqlalchemy.pool import NullPool
+from sqlalchemy import text
+from testcontainers.postgres import PostgresContainer
+from httpx import AsyncClient, ASGITransport
 
 from main import app
 from core.database import get_postgres_db, Base
+from domains.user.models import User
+from core.di import get_current_user
 
-# 테스트용 인메모리 SQLite
-TEST_DATABASE_URL = "sqlite+aiosqlite:///:memory:"
+
+# 임시 Postgres 컨테이너
+@pytest.fixture(scope="session")
+def postgres_container():
+    postgres = PostgresContainer("postgres:15-alpine")
+    postgres.start()
+    yield postgres
+    postgres.stop()
 
 
+# 엔진 생성
 @pytest_asyncio.fixture(scope="session")
-async def db_engine():
-    """
-    세션(테스트 전체) 범위의 엔진 생성
-    """
-    engine = create_async_engine(TEST_DATABASE_URL, echo=False)
+async def db_engine(postgres_container):
+    connection_url = postgres_container.get_connection_url().replace(
+        "psycopg2", "asyncpg"
+    )
+    engine = create_async_engine(connection_url, echo=False, poolclass=NullPool)
+
+    async with engine.begin() as conn:
+        await conn.run_sync(Base.metadata.create_all)
 
     yield engine
 
-    # 테스트 세션이 끝나면 엔진 종료 -> 무한 테스트 막기
     await engine.dispose()
+
+
+@pytest_asyncio.fixture(scope="function", autouse=True)
+async def init_db(db_engine):
+    async with db_engine.begin() as conn:
+        await conn.execute(
+            text("TRUNCATE TABLE users, ingredients RESTART IDENTITY CASCADE;")
+        )
+    yield
 
 
 @pytest_asyncio.fixture(scope="function")
 async def db_session(db_engine):
-    # 테이블 생성
-    async with db_engine.begin() as conn:
-        await conn.run_sync(Base.metadata.create_all)
-
-    # 세션 팩토리 생성 (엔진과 바인딩)
-    session_factory = sessionmaker(
-        bind=db_engine,
-        class_=AsyncSession,
-        expire_on_commit=False,
-        autoflush=False,
-        autocommit=False,
-    )
-
-    # 세션 연결 및 반환
-    async with session_factory() as session:
+    async with AsyncSession(db_engine, expire_on_commit=False) as session:
         yield session
-
-    # 테이블 삭제 (테스트 간 데이터 격리)
-    async with db_engine.begin() as conn:
-        await conn.run_sync(Base.metadata.drop_all)
 
 
 @pytest_asyncio.fixture(scope="function")
-async def client(db_session):
+async def client(db_engine):
     async def override_get_postgres_db():
-        yield db_session
+        async with AsyncSession(db_engine, expire_on_commit=False) as session:
+            yield session
 
     app.dependency_overrides[get_postgres_db] = override_get_postgres_db
 
@@ -60,3 +67,26 @@ async def client(db_session):
         yield ac
 
     app.dependency_overrides.clear()
+
+
+@pytest_asyncio.fixture(scope="function")
+async def test_user(db_session):
+    user_id = uuid.uuid4()
+    user = User(
+        id=user_id,
+        email="test@example.com",
+        nickname="테스트유저",
+        password="hashed_password",
+    )
+    db_session.add(user)
+    await db_session.commit()
+    await db_session.refresh(user)
+    return user
+
+
+@pytest_asyncio.fixture(scope="function")
+async def authorized_client(client, test_user):
+    app.dependency_overrides[get_current_user] = lambda: test_user
+    yield client
+    if get_current_user in app.dependency_overrides:
+        del app.dependency_overrides[get_current_user]
