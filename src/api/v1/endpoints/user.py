@@ -1,18 +1,18 @@
 from fastapi import APIRouter, Depends, Request
 
-from core.di import get_user_service
+from core.di import get_user_service, get_current_user
 from domains.user.exceptions import (
     DuplicateEmailException,
     DuplicateNicknameException,
     DuplicatePhoneNumException,
     InvalidCheckedPasswordException,
-    InvalidCredentialsException,
+    InvalidCredentialsException, UserNotFoundException,
 )
 from domains.user.schemas import (
     SignUpRequest,
     SignUpResponse,
     LogInRequest,
-    LogInResponse,
+    LogInResponse, InfoResponse,
 )
 from domains.user.service import UserService
 from util.docs import create_error_response
@@ -52,3 +52,10 @@ async def user_log_in(
     user_service: UserService = Depends(get_user_service),
 ):
     return await user_service.log_in(request, req)
+
+@router.get("/info", status_code=200, response_model=InfoResponse, responses=create_error_response(UserNotFoundException))
+async def user_info(
+        current_user = Depends(get_current_user),
+        user_service: UserService = Depends(get_user_service),
+):
+    return await user_service.get_user_info(current_user.id)
