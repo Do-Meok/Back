@@ -11,7 +11,12 @@ from domains.user.exceptions import (
     UserNotFoundException,
 )
 from domains.user.repository import UserRepository
-from domains.user.schemas import SignUpRequest, LogInRequest, LogInResponse
+from domains.user.schemas import (
+    SignUpRequest,
+    LogInRequest,
+    LogInResponse,
+    InfoResponse,
+)
 from domains.user.models import User
 
 
@@ -84,3 +89,11 @@ class UserService:
 
         except Exception as e:
             raise e
+
+    async def get_user_info(self, user_id: str) -> InfoResponse:
+        user = await self.user_repo.get_user_by_id(user_id)
+
+        if not user:
+            raise UserNotFoundException()
+
+        return InfoResponse(email=user.email, nickname=user.nickname)

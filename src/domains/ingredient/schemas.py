@@ -27,6 +27,7 @@ class SetIngredientRequest(BaseModel):
     expiration_date: date | None = None
     storage_type: StorageType | None = None
 
+
 class UpdateIngredientRequest(BaseModel):
     purchase_date: date | None = None
     expiration_date: date | None = None
