@@ -1,6 +1,6 @@
 import uuid6
 
-from sqlalchemy import Column, String, TIMESTAMP, text, Date
+from sqlalchemy import Column, String, Date, DateTime, func
 from sqlalchemy.types import Uuid
 from sqlalchemy.orm import relationship
 
@@ -19,10 +19,9 @@ class User(Base):
     phone = Column(String(128))
     phone_hash = Column(String(128), unique=True)
     social_auth = Column(String(10), nullable=False, default="local")
+    deleted_at = Column(DateTime(timezone=True), nullable=True)
     created_at = Column(
-        TIMESTAMP(timezone=True),
-        server_default=text("CURRENT_TIMESTAMP"),
-        nullable=False,
+        DateTime(timezone=True), server_default=func.now(), nullable=False
     )
 
-    ingredients = relationship("Ingredient", back_populates="owner")
+    ingredients = relationship("Ingredient", back_populates="user")

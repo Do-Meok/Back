@@ -1,4 +1,4 @@
-from sqlalchemy import Column, TIMESTAMP, BigInteger, String, Date, text, ForeignKey
+from sqlalchemy import Column, BigInteger, String, Date, ForeignKey, DateTime
 from sqlalchemy.types import Uuid
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
@@ -16,10 +16,9 @@ class Ingredient(Base):
     purchase_date = Column(Date, server_default=func.current_date(), nullable=False)
     expiration_date = Column(Date)
     storage_type = Column(String(10))
+    deleted_at = Column(DateTime(timezone=True), nullable=True)
     created_at = Column(
-        TIMESTAMP(timezone=True),
-        server_default=text("CURRENT_TIMESTAMP"),
-        nullable=False,
+        DateTime(timezone=True), server_default=func.now(), nullable=False
     )
 
-    owner = relationship("User", back_populates="ingredients")
+    user = relationship("User", back_populates="ingredients")
