@@ -61,7 +61,7 @@ async def user_log_in(
 @router.get(
     "/info",
     status_code=200,
-    summary="유저 정보 조회 API",
+    summary="유저 정보 호출 API",
     response_model=InfoResponse,
     responses=create_error_response(UserNotFoundException),
 )
