@@ -8,8 +8,28 @@ from domains.assistant.schemas import (
     SearchRecipeRequest,
     QuickRecipeRequest,
 )
+from domains.assistant.exceptions import (
+    AIServiceException,
+    AIConnectionException,
+    AITimeoutException,
+    AINullResponseException,
+    AIJsonDecodeException,
+    AISchemaMismatchException,
+    InvalidAIRequestException,
+    AIRefusalException,
+)
+from util.docs import create_error_response
 
 router = APIRouter()
+
+COMMON_AI_EXCEPTIONS = [
+    AIServiceException,  # 503: OpenAI API 키/서버 에러
+    AIConnectionException,  # 503: 네트워크 연결 실패
+    AITimeoutException,  # 504: 응답 시간 초과
+    AIJsonDecodeException,  # 500: JSON 파싱 실패
+    AISchemaMismatchException,  # 500: 필수 필드 누락
+    AINullResponseException,  # 500: 빈 응답
+]
 
 
 @router.get(
@@ -17,6 +37,10 @@ router = APIRouter()
     status_code=200,
     summary="보유 식재료 기반 메뉴 추천 (4가지)",
     response_model=RecommendationResponse,
+    responses=create_error_response(
+        InvalidAIRequestException,
+        *COMMON_AI_EXCEPTIONS,
+    ),
 )
 async def get_recommendations(
     service: AssistantService = Depends(get_assistant_service),
@@ -29,6 +53,10 @@ async def get_recommendations(
     status_code=200,
     summary="선택한 메뉴의 상세 조리법 생성",
     response_model=DetailRecipeResponse,
+    responses=create_error_response(
+        AIRefusalException,  # 400: AI가 요리가 아니라고 판단하여 거부할 때
+        *COMMON_AI_EXCEPTIONS,  # 5xx
+    ),
 )
 async def get_recipe_detail(
     request: DetailRecipeRequest,
@@ -45,6 +73,11 @@ async def get_recipe_detail(
     status_code=200,
     summary="요리 이름으로 레시피 검색",
     response_model=DetailRecipeResponse,
+    responses=create_error_response(
+        InvalidAIRequestException,  # 400: 검색어(food_name)가 비어있을 때
+        AIRefusalException,  # 400: 검색어가 요리가 아닐 때 (예: '벽돌')
+        *COMMON_AI_EXCEPTIONS,  # 5xx
+    ),
 )
 async def search_recipe_by_name(
     request: SearchRecipeRequest,
@@ -61,6 +94,11 @@ async def search_recipe_by_name(
     status_code=200,
     summary="대화형 재료 입력 기반 즉시 추천",
     response_model=DetailRecipeResponse,
+    responses=create_error_response(
+        InvalidAIRequestException,  # 400: 채팅 입력(chat)이 비어있을 때
+        AIRefusalException,  # 400: 입력 내용이 부적절할 때
+        *COMMON_AI_EXCEPTIONS,  # 5xx
+    ),
 )
 async def get_quick_recipe(
     request: QuickRecipeRequest,

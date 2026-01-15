@@ -1,6 +1,6 @@
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select, or_, update
+from sqlalchemy import select, update
 from datetime import datetime, timezone, date
 
 from core.exception.exceptions import DatabaseException
@@ -58,10 +58,8 @@ class IngredientRepository:
             )
             if is_unclassified:
                 stmt = stmt.where(
-                    or_(
-                        Ingredient.expiration_date.is_(None),
-                        Ingredient.storage_type.is_(None),
-                    )
+                    Ingredient.expiration_date.is_(None),
+                    Ingredient.storage_type.is_(None),
                 )
 
             elif storage:

@@ -5,6 +5,7 @@ from main import app
 from core.di import get_assistant_service
 from domains.assistant.schemas import RecommendationResponse, RecommendationItem
 
+
 async def mock_get_assistant_service():
     mock_service = AsyncMock()
     mock_service.recommend_menus.return_value = RecommendationResponse(
@@ -13,6 +14,7 @@ async def mock_get_assistant_service():
         ]
     )
     return mock_service
+
 
 @pytest.mark.asyncio
 async def test_get_recommendations_api(authorized_client):
@@ -42,8 +44,7 @@ async def test_search_recipe_api_validation(authorized_client):
 
     # 1. 바로 요청
     response = await authorized_client.post(
-        "/api/v1/assistant/search",
-        json={"wrong_field": "김치찌개"}
+        "/api/v1/assistant/search", json={"wrong_field": "김치찌개"}
     )
 
     assert response.status_code == 422
