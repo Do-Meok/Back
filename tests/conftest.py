@@ -9,11 +9,11 @@ from httpx import AsyncClient, ASGITransport
 
 from main import app
 from core.database import get_db, Base
-from domains.user.models import User
 from core.di import get_current_user
 
+from domains.user.models import User
 
-# 임시 Postgres 컨테이너
+
 @pytest.fixture(scope="session")
 def postgres_container():
     postgres = PostgresContainer("postgres:15-alpine")
@@ -22,7 +22,6 @@ def postgres_container():
     postgres.stop()
 
 
-# 엔진 생성
 @pytest_asyncio.fixture(scope="session")
 async def db_engine(postgres_container):
     connection_url = postgres_container.get_connection_url().replace(
@@ -40,13 +39,22 @@ async def db_engine(postgres_container):
 
 @pytest_asyncio.fixture(scope="function", autouse=True)
 async def init_db(db_engine):
-    async with db_engine.begin() as conn:
-        tables = list(Base.metadata.tables.keys())
+    async with db_engine.connect() as conn:
+        await conn.execute(
+            text("""
+            SELECT pg_terminate_backend(pid)
+            FROM pg_stat_activity
+            WHERE pid <> pg_backend_pid()
+            AND datname = current_database();
+        """)
+        )
 
+        tables = list(Base.metadata.tables.keys())
         if tables:
             await conn.execute(
                 text(f"TRUNCATE TABLE {', '.join(tables)} RESTART IDENTITY CASCADE;")
             )
+            await conn.commit()
     yield
 
 
@@ -54,13 +62,17 @@ async def init_db(db_engine):
 async def db_session(db_engine):
     async with AsyncSession(db_engine, expire_on_commit=False) as session:
         yield session
+        await session.close()
 
 
 @pytest_asyncio.fixture(scope="function")
 async def client(db_engine):
     async def override_get_postgres_db():
         async with AsyncSession(db_engine, expire_on_commit=False) as session:
-            yield session
+            try:
+                yield session
+            finally:
+                await session.close()
 
     app.dependency_overrides[get_db] = override_get_postgres_db
 

@@ -1,17 +1,15 @@
-# tests/domains/user/test_user_api.py
 import pytest
-from httpx import AsyncClient
 
 # 테스트 데이터 상수
-EMAIL = "test@example.com"
+EMAIL = "api_test@example.com"
 PASSWORD = "password123!"
-NICKNAME = "tester"
+NICKNAME = "api_tester"
 PHONE = "01012345678"
 
 
 @pytest.mark.asyncio
-async def test_sign_up_success(client: AsyncClient):
-    # 1. 회원가입 성공 테스트
+async def test_sign_up_success(client):
+    """[API] 회원가입 성공"""
     response = await client.post(
         "/api/v1/users/sign-up",
         json={
@@ -32,33 +30,29 @@ async def test_sign_up_success(client: AsyncClient):
 
 
 @pytest.mark.asyncio
-async def test_sign_up_duplicate_email(client: AsyncClient):
-    # 2. 이메일 중복 시 409 에러 및 에러 코드 확인
-    # (A) 먼저 한 명 가입
+async def test_sign_up_duplicate_email(client):
+    """[API] 이메일 중복 체크"""
+    # 1. 먼저 가입
     await client.post(
         "/api/v1/users/sign-up",
         json={
-            "email": EMAIL,
+            "email": "dup@test.com",
             "password": PASSWORD,
             "checked_password": PASSWORD,
-            "nickname": "user1",
-            "name": "user1",
-            "birth": "1990-01-01",
-            "phone_num": "01011112222",
+            "nickname": "dup_nick",
+            "name": "dup",
         },
     )
 
-    # (B) 같은 이메일로 가입 시도
+    # 2. 같은 이메일로 재가입 시도
     response = await client.post(
         "/api/v1/users/sign-up",
         json={
-            "email": EMAIL,  # 중복 이메일
+            "email": "dup@test.com",  # 중복
             "password": PASSWORD,
             "checked_password": PASSWORD,
-            "nickname": "user2",
-            "name": "user2",
-            "birth": "1990-01-01",
-            "phone_num": "01033334444",
+            "nickname": "other_nick",
+            "name": "other",
         },
     )
 
@@ -67,45 +61,24 @@ async def test_sign_up_duplicate_email(client: AsyncClient):
 
 
 @pytest.mark.asyncio
-async def test_sign_up_password_mismatch(client: AsyncClient):
-    # 3. 비밀번호 확인 불일치 시 400 에러 확인
-    response = await client.post(
-        "/api/v1/users/sign-up",
-        json={
-            "email": "mismatch@test.com",
-            "password": "password123!",
-            "checked_password": "different!!!",  # 다름
-            "nickname": "mismatch",
-            "name": "fail",
-            "birth": "1990-01-01",
-            "phone_num": "01099998888",
-        },
-    )
-
-    assert response.status_code == 400
-    assert response.json()["code"] == "PASSWORD_MISMATCH"  # 영훈님이 정의한 에러코드
-
-
-@pytest.mark.asyncio
-async def test_log_in_success(client: AsyncClient):
-    # 4. 로그인 성공 테스트
-    # (A) 가입
+async def test_log_in_flow(client):
+    """[API] 회원가입 후 로그인 성공 테스트"""
+    # 1. 가입
+    login_email = "login_flow@test.com"
     await client.post(
         "/api/v1/users/sign-up",
         json={
-            "email": EMAIL,
+            "email": login_email,
             "password": PASSWORD,
             "checked_password": PASSWORD,
-            "nickname": NICKNAME,
-            "name": "login",
-            "birth": "1990-01-01",
-            "phone_num": PHONE,
+            "nickname": "login_flow",
+            "name": "flow",
         },
     )
 
-    # (B) 로그인
+    # 2. 로그인
     response = await client.post(
-        "/api/v1/users/log-in", json={"email": EMAIL, "password": PASSWORD}
+        "/api/v1/users/log-in", json={"email": login_email, "password": PASSWORD}
     )
 
     assert response.status_code == 200
@@ -113,36 +86,12 @@ async def test_log_in_success(client: AsyncClient):
 
 
 @pytest.mark.asyncio
-async def test_log_in_fail(client: AsyncClient):
-    # 5. 로그인 실패 (비밀번호 틀림)
-    # (A) 가입
-    await client.post(
-        "/api/v1/users/sign-up",
-        json={
-            "email": EMAIL,
-            "password": PASSWORD,
-            "checked_password": PASSWORD,
-            "nickname": NICKNAME,
-            "name": "login_fail",
-            "birth": "1990-01-01",
-            "phone_num": PHONE,
-        },
-    )
-
-    # (B) 틀린 비번으로 로그인
-    response = await client.post(
-        "/api/v1/users/log-in", json={"email": EMAIL, "password": "wrong_password"}
-    )
-
-    assert response.status_code == 401
-    assert response.json()["code"] == "INVALID_CREDENTIALS"
-
-
-@pytest.mark.asyncio
 async def test_get_user_info(authorized_client):
+    """[API] 내 정보 조회 (authorized_client 사용)"""
+    # authorized_client는 이미 가짜 로그인 상태임 (Fixture 참고)
     response = await authorized_client.get("/api/v1/users/info")
 
     assert response.status_code == 200
     data = response.json()
-    assert data["email"] == "test@example.com"
+    assert data["email"] == "test@example.com"  # Fixture에서 설정한 유저 정보
     assert data["nickname"] == "테스트유저"

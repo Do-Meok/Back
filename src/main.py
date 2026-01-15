@@ -20,6 +20,7 @@ app.add_exception_handler(RequestValidationError, validation_exception_handler)
 
 app.include_router(api_router, prefix="/api/v1")
 
+
 @app.get("/health", status_code=200)
 def health_check():
     return {"status": "ok"}

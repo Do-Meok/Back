@@ -8,6 +8,8 @@ from domains.assistant.service import AssistantService
 
 from domains.ingredient.repository import IngredientRepository
 from domains.ingredient.service import IngredientService
+from domains.recipe.repository import RecipeRepository
+from domains.recipe.service import RecipeService
 from domains.user.repository import UserRepository
 from domains.user.service import UserService
 from domains.user.models import User
@@ -57,3 +59,17 @@ async def get_assistant_service(
     return AssistantService(
         user=user, ingredient_repo=ingredient_repo, llm_handler=llm_handler
     )
+
+
+# --- 레시피 관련 DI ---
+def get_recipe_repo(
+    session: AsyncSession = Depends(get_db),
+) -> RecipeRepository:
+    return RecipeRepository(session)
+
+
+def get_recipe_service(
+    recipe_repo: RecipeRepository = Depends(get_recipe_repo),
+    user: User = Depends(get_current_user),
+) -> RecipeService:
+    return RecipeService(user=user, recipe_repo=recipe_repo)
