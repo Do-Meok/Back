@@ -8,7 +8,7 @@ from testcontainers.postgres import PostgresContainer
 from httpx import AsyncClient, ASGITransport
 
 from main import app
-from core.database import get_postgres_db, Base
+from core.database import get_db, Base
 from domains.user.models import User
 from core.di import get_current_user
 
@@ -41,9 +41,12 @@ async def db_engine(postgres_container):
 @pytest_asyncio.fixture(scope="function", autouse=True)
 async def init_db(db_engine):
     async with db_engine.begin() as conn:
-        await conn.execute(
-            text("TRUNCATE TABLE users, ingredients RESTART IDENTITY CASCADE;")
-        )
+        tables = list(Base.metadata.tables.keys())
+
+        if tables:
+            await conn.execute(
+                text(f"TRUNCATE TABLE {', '.join(tables)} RESTART IDENTITY CASCADE;")
+            )
     yield
 
 
@@ -59,7 +62,7 @@ async def client(db_engine):
         async with AsyncSession(db_engine, expire_on_commit=False) as session:
             yield session
 
-    app.dependency_overrides[get_postgres_db] = override_get_postgres_db
+    app.dependency_overrides[get_db] = override_get_postgres_db
 
     async with AsyncClient(
         transport=ASGITransport(app=app), base_url="http://test"

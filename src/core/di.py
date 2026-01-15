@@ -2,7 +2,9 @@ from fastapi import Depends, Request
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from core.security import get_access_token
-from core.database import get_postgres_db
+from core.database import get_db
+from domains.assistant.llm_handler import LLMHandler
+from domains.assistant.service import AssistantService
 
 from domains.ingredient.repository import IngredientRepository
 from domains.ingredient.service import IngredientService
@@ -12,7 +14,7 @@ from domains.user.models import User
 
 
 # --- 유저 관련 DI ---
-def get_user_repo(session: AsyncSession = Depends(get_postgres_db)) -> UserRepository:
+def get_user_repo(session: AsyncSession = Depends(get_db)) -> UserRepository:
     return UserRepository(session)
 
 
@@ -30,7 +32,7 @@ async def get_current_user(
 
 # --- 재료 관련 DI ---
 def get_ingredient_repo(
-    session: AsyncSession = Depends(get_postgres_db),
+    session: AsyncSession = Depends(get_db),
 ) -> IngredientRepository:
     return IngredientRepository(session)
 
@@ -40,3 +42,18 @@ def get_ingredient_service(
     user: User = Depends(get_current_user),
 ) -> IngredientService:
     return IngredientService(user=user, ingredient_repo=ingredient_repo)
+
+
+# --- Assistant 관련 ---
+async def get_llm_handler() -> LLMHandler:
+    return LLMHandler()
+
+
+async def get_assistant_service(
+    user: User = Depends(get_current_user),
+    ingredient_repo: IngredientRepository = Depends(get_ingredient_repo),
+    llm_handler: LLMHandler = Depends(get_llm_handler),
+) -> AssistantService:
+    return AssistantService(
+        user=user, ingredient_repo=ingredient_repo, llm_handler=llm_handler
+    )
