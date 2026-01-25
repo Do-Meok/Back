@@ -1,5 +1,6 @@
 from sqlalchemy import Column, BigInteger, ForeignKey, String, DateTime
 from sqlalchemy.dialects.postgresql import JSONB
+from sqlalchemy.orm import relationship
 from sqlalchemy.types import Uuid
 from sqlalchemy.sql import func
 
@@ -18,3 +19,5 @@ class Recipe(Base):
     created_at = Column(
         DateTime(timezone=True), server_default=func.now(), nullable=False
     )
+
+    user = relationship("User", back_populates="recipes")

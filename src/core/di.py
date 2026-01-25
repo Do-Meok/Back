@@ -10,6 +10,8 @@ from domains.ingredient.repository import IngredientRepository
 from domains.ingredient.service import IngredientService
 from domains.recipe.repository import RecipeRepository
 from domains.recipe.service import RecipeService
+from domains.shopping.repository import ShoppingRepository
+from domains.shopping.service import ShoppingService
 from domains.user.repository import UserRepository
 from domains.user.service import UserService
 from domains.user.models import User
@@ -73,3 +75,17 @@ def get_recipe_service(
     user: User = Depends(get_current_user),
 ) -> RecipeService:
     return RecipeService(user=user, recipe_repo=recipe_repo)
+
+
+# --- 장보기 관련 DI ---
+def get_shopping_repo(
+    session: AsyncSession = Depends(get_db),
+) -> ShoppingRepository:
+    return ShoppingRepository(session)
+
+
+def get_shopping_service(
+    shopping_repo: ShoppingRepository = Depends(get_shopping_repo),
+    user: User = Depends(get_current_user),
+) -> ShoppingService:
+    return ShoppingService(user=user, shopping_repo=shopping_repo)

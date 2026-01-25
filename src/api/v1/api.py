@@ -1,7 +1,7 @@
 # api/v1/api.py
 
 from fastapi import APIRouter
-from api.v1.endpoints import user, ingredient, assistant, recipe
+from api.v1.endpoints import user, ingredient, assistant, recipe, shopping
 
 api_router = APIRouter()
 
@@ -11,3 +11,4 @@ api_router.include_router(
 )
 api_router.include_router(assistant.router, prefix="/assistant", tags=["Assistant"])
 api_router.include_router(recipe.router, prefix="/recipes", tags=["Recipes"])
+api_router.include_router(shopping.router, prefix="/shopping", tags=["Shopping"])
