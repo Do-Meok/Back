@@ -12,6 +12,7 @@ class Ingredient(Base):
     user_id = Column(
         Uuid(as_uuid=True), ForeignKey("users.id", ondelete="CASCADE"), nullable=False
     )
+    compartment_id = Column(BigInteger, ForeignKey("compartment.id"))
     ingredient_name = Column(String(45), nullable=False)
     purchase_date = Column(Date, server_default=func.current_date(), nullable=False)
     expiration_date = Column(Date)
@@ -22,3 +23,4 @@ class Ingredient(Base):
     )
 
     user = relationship("User", back_populates="ingredients")
+    compartment = relationship("Compartment", back_populates="ingredients")

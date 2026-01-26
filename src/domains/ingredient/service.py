@@ -123,3 +123,12 @@ class IngredientService:
             expiration_date=updated_ingredient.expiration_date,
             storage_type=updated_ingredient.storage_type,
         )
+
+    async def get_ingredients_in_compartment(
+        self, compartment_id: int
+    ) -> list[GetIngredientResponse]:
+        ingredients = await self.ingredient_repo.get_ingredients_by_compartment(
+            compartment_id
+        )
+
+        return [GetIngredientResponse.model_validate(i) for i in ingredients]

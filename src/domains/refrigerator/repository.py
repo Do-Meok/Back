@@ -32,6 +32,6 @@ class RefrigeratorRepository:
             result = await self.session.execute(stmt)
             return result.scalar_one_or_none()
 
-        except:
+        except SQLAlchemyError as e:
             await self.session.rollback()
             raise DatabaseException(detail=f"냉장고 저장 중 오류 발생: {str(e)}")

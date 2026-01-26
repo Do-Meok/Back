@@ -1,6 +1,10 @@
 from domains.refrigerator.exception import RefrigeratorNotFoundException
 from domains.refrigerator.models import Refrigerator, Compartment
-from domains.refrigerator.schemas import AddRefrigeratorRequest, AddRefrigeratorResponse, GetRefrigeratorResponse
+from domains.refrigerator.schemas import (
+    AddRefrigeratorRequest,
+    AddRefrigeratorResponse,
+    GetRefrigeratorResponse,
+)
 from domains.user.models import User
 from domains.refrigerator.repository import RefrigeratorRepository
 
@@ -23,13 +27,12 @@ class RefrigeratorService:
         total_slots = request.pos_x * request.pos_y
 
         for i in range(total_slots):
-            new_compartment = Compartment(
-                name=f"{i+1}번칸",
-                order_index=i
-            )
+            new_compartment = Compartment(name=f"{i + 1}번칸", order_index=i)
             new_refrigerator.compartments.append(new_compartment)
 
-        saved_refrigerator = await self.refrigerator_repo.add_refrigerator(new_refrigerator)
+        saved_refrigerator = await self.refrigerator_repo.add_refrigerator(
+            new_refrigerator
+        )
 
         return AddRefrigeratorResponse.model_validate(saved_refrigerator)
 

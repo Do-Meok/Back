@@ -35,3 +35,4 @@ class Compartment(Base):
     )
 
     refrigerator = relationship("Refrigerator", back_populates="compartments")
+    ingredients = relationship("Ingredient", back_populates="compartment")

@@ -133,3 +133,20 @@ class IngredientRepository:
         except SQLAlchemyError as e:
             await self.session.rollback()
             raise DatabaseException(detail=f"식재료 수정 중 오류 발생: {str(e)}")
+
+    async def get_ingredients_by_compartment(
+        self, compartment_id: int
+    ) -> list[Ingredient]:
+        try:
+            stmt = (
+                select(Ingredient)
+                .where(Ingredient.compartment_id == compartment_id)
+                .where(Ingredient.deleted_at.is_(None))
+                .order_by(Ingredient.purchase_date.asc())
+            )
+            result = await self.session.execute(stmt)
+            return result.scalars().all()
+
+        except SQLAlchemyError as e:
+            await self.session.rollback()
+            raise DatabaseException(detail=f"식재료 조회 중 오류 발생: {str(e)}")

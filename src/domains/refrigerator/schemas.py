@@ -23,6 +23,7 @@ class CompartmentResponse(BaseModel):
 
     model_config = ConfigDict(from_attributes=True)
 
+
 class GetRefrigeratorResponse(BaseModel):
     id: int
     name: str
