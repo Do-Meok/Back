@@ -1,5 +1,6 @@
 from core.exception.exceptions import BaseCustomException
 
+
 class ItemNotFoundException(BaseCustomException):
     def __init__(
         self,

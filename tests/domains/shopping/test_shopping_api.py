@@ -6,10 +6,12 @@ from core.di import get_shopping_service
 from domains.shopping.schemas import AddItemResponse, GetItemResponse
 from domains.shopping.exception import ItemNotFoundException
 
+
 # 가짜 서비스를 만드는 픽스처
 @pytest.fixture
 def mock_shopping_service():
     return AsyncMock()
+
 
 # FastAPI의 의존성을 가짜 서비스로 바꿔치기하는 픽스처
 @pytest.fixture
@@ -17,23 +19,29 @@ def client(mock_shopping_service):
     app.dependency_overrides[get_shopping_service] = lambda: mock_shopping_service
     return TestClient(app)
 
+
 def test_add_item_api(client, mock_shopping_service):
     # Given
-    mock_shopping_service.add_item.return_value = AddItemResponse(id=1, item_name="당근")
+    mock_shopping_service.add_item.return_value = AddItemResponse(
+        id=1, item_name="당근"
+    )
     payload = {"item_name": "당근"}
 
     # When
-    response = client.post("/api/v1/shopping", json=payload) # URL 경로는 실제 설정에 맞게 수정
+    response = client.post(
+        "/api/v1/shopping", json=payload
+    )  # URL 경로는 실제 설정에 맞게 수정
 
     # Then
     assert response.status_code == 201
     assert response.json() == {"id": 1, "item_name": "당근"}
 
+
 def test_get_list_api(client, mock_shopping_service):
     # Given
     mock_shopping_service.get_list.return_value = [
         GetItemResponse(id=1, item_name="콜라"),
-        GetItemResponse(id=2, item_name="사이다")
+        GetItemResponse(id=2, item_name="사이다"),
     ]
 
     # When
@@ -45,6 +53,7 @@ def test_get_list_api(client, mock_shopping_service):
     assert len(data) == 2
     assert data[0]["item_name"] == "콜라"
 
+
 def test_delete_item_api_success(client, mock_shopping_service):
     # Given
     mock_shopping_service.delete_item.return_value = None  # 리턴값 없음
@@ -54,6 +63,7 @@ def test_delete_item_api_success(client, mock_shopping_service):
 
     # Then
     assert response.status_code == 204
+
 
 def test_delete_item_api_not_found(client, mock_shopping_service):
     # Given

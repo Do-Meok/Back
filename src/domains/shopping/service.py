@@ -12,29 +12,20 @@ class ShoppingService:
 
     async def add_item(self, request: AddItemRequest) -> AddItemResponse:
         new_shopping_item = Shopping(
-            user_id=self.user.id,
-            item=request.item_name,
-            status=False
+            user_id=self.user.id, item=request.item_name, status=False
         )
         saved_item = await self.shopping_repo.add_item(new_shopping_item)
 
-        return AddItemResponse(
-            id=saved_item.id,
-            item_name=saved_item.item
-        )
+        return AddItemResponse(id=saved_item.id, item_name=saved_item.item)
 
     async def get_list(self) -> list[GetItemResponse]:
         items = await self.shopping_repo.get_items(self.user.id)
 
-        return [
-            GetItemResponse(id=item.id, item_name=item.item)
-            for item in items
-        ]
+        return [GetItemResponse(id=item.id, item_name=item.item) for item in items]
 
     async def delete_item(self, shopping_id: int):
         is_deleted = await self.shopping_repo.delete_item(
-            shopping_id=shopping_id,
-            user_id=self.user.id
+            shopping_id=shopping_id, user_id=self.user.id
         )
 
         if not is_deleted:

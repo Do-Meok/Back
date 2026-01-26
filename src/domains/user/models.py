@@ -27,3 +27,4 @@ class User(Base):
     ingredients = relationship("Ingredient", back_populates="user")
     recipes = relationship("Recipe", back_populates="user")
     shopping_list = relationship("Shopping", back_populates="user")
+    refrigerator = relationship("Refrigerator", back_populates="user")
