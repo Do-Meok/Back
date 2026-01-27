@@ -1,7 +1,9 @@
 from domains.ingredient.exceptions import (
     IngredientNotFoundException,
     ValueNotFoundException,
+    NotFoundException,
 )
+from core.exception.exceptions import HaveNotPermissionException
 from domains.ingredient.repository import IngredientRepository
 from domains.user.models import User
 from domains.ingredient.schemas import (
@@ -11,6 +13,8 @@ from domains.ingredient.schemas import (
     StorageType,
     GetIngredientResponse,
     UpdateIngredientRequest,
+    BulkMoveIngredientRequest,
+    BulkMoveResponse,
 )
 from domains.ingredient.models import Ingredient
 
@@ -128,7 +132,39 @@ class IngredientService:
         self, compartment_id: int
     ) -> list[GetIngredientResponse]:
         ingredients = await self.ingredient_repo.get_ingredients_by_compartment(
-            compartment_id
+            compartment_id, self.user.id
         )
 
         return [GetIngredientResponse.model_validate(i) for i in ingredients]
+
+    async def get_unassigned_ingredients(self) -> list[GetIngredientResponse]:
+        ingredients = await self.ingredient_repo.get_unassigned_ingredients(
+            self.user.id
+        )
+
+        return [GetIngredientResponse.model_validate(i) for i in ingredients]
+
+    async def move_ingredients(
+        self, target_compartment_id: int, request: BulkMoveIngredientRequest
+    ) -> BulkMoveResponse:
+        is_my_compartment = await self.ingredient_repo.is_my_compartment(
+            target_compartment_id, self.user.id
+        )
+
+        if not is_my_compartment:
+            raise HaveNotPermissionException()
+
+        count = await self.ingredient_repo.bulk_update_compartment(
+            ingredient_ids=request.ingredient_ids,
+            target_compartment_id=target_compartment_id,
+            user_id=self.user.id,
+        )
+
+        if count != len(request.ingredient_ids):
+            raise NotFoundException()
+
+        return BulkMoveResponse(
+            moved_count=count,
+            message=f"식재료 {count}개가 성공적으로 이동되었습니다.",
+            ingredient_ids=request.ingredient_ids,
+        )

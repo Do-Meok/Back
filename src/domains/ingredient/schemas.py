@@ -53,3 +53,13 @@ class GetIngredientResponse(BaseModel):
     storage_type: StorageType | None = None
 
     model_config = ConfigDict(from_attributes=True)
+
+
+class BulkMoveIngredientRequest(BaseModel):
+    ingredient_ids: list[int]
+
+
+class BulkMoveResponse(BaseModel):
+    moved_count: int
+    message: str
+    ingredient_ids: list[int]

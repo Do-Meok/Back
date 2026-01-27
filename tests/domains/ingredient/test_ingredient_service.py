@@ -79,3 +79,95 @@ class TestIngredientService:
 
         with pytest.raises(IngredientNotFoundException):
             await service.delete_ingredient(999)
+
+    async def test_get_unassigned_ingredients(self, mocks):
+        """[Service] 미분류 식재료 조회 및 응답 모델 변환"""
+        user, repo = mocks
+        service = IngredientService(user, repo)
+
+        # Mock Data: Repository가 반환할 Ingredient 객체 리스트
+        mock_ing1 = MagicMock(
+            id=1,
+            ingredient_name="당근",
+            purchase_date=TODAY,
+            expiration_date=None,
+            storage_type=None,
+            compartment_id=None
+        )
+        mock_ing2 = MagicMock(
+            id=2,
+            ingredient_name="오이",
+            purchase_date=TODAY,
+            expiration_date=None,
+            storage_type=None,
+            compartment_id=None
+        )
+
+        # Repository 메서드 호출 시 위 리스트 반환 설정
+        repo.get_unassigned_ingredients.return_value = [mock_ing1, mock_ing2]
+
+        # Call
+        result = await service.get_unassigned_ingredients()
+
+        # Verify
+        assert len(result) == 2
+        # Pydantic 모델로 변환되었는지 속성 확인
+        assert result[0].ingredient_name == "당근"
+        assert result[1].ingredient_name == "오이"
+
+        # Repository가 올바른 user_id로 호출되었는지 확인
+        repo.get_unassigned_ingredients.assert_called_once_with(user.id)
+
+    async def test_move_ingredients_success(self, mocks):
+        """[Service] 식재료 이동 성공 시나리오"""
+        user, repo = mocks
+        service = IngredientService(user, repo)
+
+        target_compartment_id = 10
+        req = MagicMock()
+        req.ingredient_ids = [1, 2, 3]
+
+        # Mock 설정
+        repo.is_my_compartment.return_value = True  # 내 칸 맞음
+        repo.bulk_update_compartment.return_value = 3  # 3개 모두 업데이트 성공
+
+        # Call
+        res = await service.move_ingredients(target_compartment_id, req)
+
+        # Verify
+        assert res.moved_count == 3
+        repo.is_my_compartment.assert_called_once_with(target_compartment_id, user.id)
+        repo.bulk_update_compartment.assert_called_once()
+
+    async def test_move_ingredients_forbidden(self, mocks):
+        """[Service] 내 냉장고 칸이 아닌 경우 Forbidden 예외"""
+        user, repo = mocks
+        service = IngredientService(user, repo)
+
+        req = MagicMock()
+        req.ingredient_ids = [1]
+
+        # Mock: 내 칸이 아님
+        repo.is_my_compartment.return_value = False
+
+        from core.exception.exceptions import HaveNotPermissionException
+
+        with pytest.raises(HaveNotPermissionException):
+            await service.move_ingredients(99, req)
+
+    async def test_move_ingredients_count_mismatch(self, mocks):
+        """[Service] 요청 ID 수와 실제 업데이트 수가 다르면 NotFound(또는 예외) 처리"""
+        user, repo = mocks
+        service = IngredientService(user, repo)
+
+        req = MagicMock()
+        req.ingredient_ids = [1, 2, 3]  # 3개 요청
+
+        # Mock 설정
+        repo.is_my_compartment.return_value = True
+        repo.bulk_update_compartment.return_value = 2  # 실제로는 2개만 업데이트됨 (하나가 없거나 삭제됨)
+
+        from domains.ingredient.exceptions import NotFoundException
+
+        with pytest.raises(NotFoundException):
+            await service.move_ingredients(10, req)

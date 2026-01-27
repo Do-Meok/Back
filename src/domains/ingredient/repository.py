@@ -1,10 +1,11 @@
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select, update
+from sqlalchemy import select, update, exists
 from datetime import datetime, timezone, date
 
 from core.exception.exceptions import DatabaseException
 from domains.ingredient.models import Ingredient
+from domains.refrigerator.models import Compartment, Refrigerator
 
 
 class IngredientRepository:
@@ -135,12 +136,13 @@ class IngredientRepository:
             raise DatabaseException(detail=f"식재료 수정 중 오류 발생: {str(e)}")
 
     async def get_ingredients_by_compartment(
-        self, compartment_id: int
+        self, compartment_id: int, user_id: str
     ) -> list[Ingredient]:
         try:
             stmt = (
                 select(Ingredient)
                 .where(Ingredient.compartment_id == compartment_id)
+                .where(Ingredient.user_id == user_id)
                 .where(Ingredient.deleted_at.is_(None))
                 .order_by(Ingredient.purchase_date.asc())
             )
@@ -150,3 +152,40 @@ class IngredientRepository:
         except SQLAlchemyError as e:
             await self.session.rollback()
             raise DatabaseException(detail=f"식재료 조회 중 오류 발생: {str(e)}")
+
+    async def is_my_compartment(self, compartment_id: int, user_id: str) -> bool:
+        stmt = select(
+            exists().where(
+                Compartment.id == compartment_id,
+                Compartment.refrigerator.has(Refrigerator.user_id == user_id),
+            )
+        )
+        result = await self.session.execute(stmt)
+        return result.scalar()
+
+    async def get_unassigned_ingredients(self, user_id: str) -> list[Ingredient]:
+        stmt = (
+            select(Ingredient)
+            .where(Ingredient.user_id == user_id)
+            .where(Ingredient.compartment_id.is_(None))
+            .where(Ingredient.deleted_at.is_(None))
+            .order_by(Ingredient.purchase_date.desc())
+        )
+
+        result = await self.session.execute(stmt)
+        return result.scalars().all()
+
+    async def bulk_update_compartment(
+        self, ingredient_ids: list[int], target_compartment_id: int, user_id: str
+    ) -> int:
+        stmt = (
+            update(Ingredient)
+            .where(Ingredient.id.in_(ingredient_ids))
+            .where(Ingredient.user_id == user_id)
+            .values(compartment_id=target_compartment_id)
+        )
+
+        result = await self.session.execute(stmt)
+        await self.session.commit()
+
+        return result.rowcount
