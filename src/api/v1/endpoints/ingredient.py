@@ -12,6 +12,8 @@ from domains.ingredient.schemas import (
     StorageType,
     UpdateIngredientRequest,
     GetIngredientResponse,
+    BulkMoveIngredientRequest,
+    BulkMoveResponse,
 )
 from domains.ingredient.service import IngredientService
 from util.docs import create_error_response
@@ -118,3 +120,34 @@ async def update_ingredient(
     ## null로 주면 null대신 기존에 있던 값 그대로 쓰는 것
     """
     return await ingredient_service.update_ingredient(ingredient_id, request)
+
+
+@router.get(
+    "/unassigned",
+    summary="냉장고 칸 미분류 식재료 조회 API",
+    response_model=list[GetIngredientResponse],
+)
+async def get_unassigned_ingredients(
+    service: IngredientService = Depends(get_ingredient_service),
+):
+    """
+    아직 냉장고 칸에 배정되지 않은(미분류) 식재료 목록을 조회
+    """
+    return await service.get_unassigned_ingredients()
+
+
+@router.patch(
+    "/{compartment_id}/ingredients",
+    summary="미분류된 식재료들 칸 이동 API",
+    response_model=BulkMoveResponse,
+)
+async def move_ingredients_to_compartment(
+    compartment_id: int,
+    request: BulkMoveIngredientRequest,
+    service: IngredientService = Depends(get_ingredient_service),
+):
+    """
+    선택한 미분류 식재료들을 특정 칸(compartment_id)으로 일괄 이동시킴
+    ingredient_ids로 옮기고 옮기는 방식은 6,7,11 이런식으로 옮기면 됌
+    """
+    return await service.move_ingredients(compartment_id, request)

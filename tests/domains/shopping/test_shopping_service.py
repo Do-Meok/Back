@@ -43,7 +43,7 @@ async def test_get_list(shopping_service, mock_repo):
     # Given
     mock_repo.get_items.return_value = [
         Shopping(id=1, item="사과"),
-        Shopping(id=2, item="배")
+        Shopping(id=2, item="배"),
     ]
 
     # When

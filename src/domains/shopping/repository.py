@@ -21,7 +21,7 @@ class ShoppingRepository:
             await self.session.rollback()
             raise DatabaseException(detail=f"장보기 일괄 저장 중 오류 발생: {str(e)}")
 
-    async def get_items(self, user_id: int) -> list[Shopping]:
+    async def get_items(self, user_id: str) -> list[Shopping]:
         try:
             stmt = (
                 select(Shopping)
@@ -36,12 +36,8 @@ class ShoppingRepository:
 
     async def delete_item(self, shopping_id: int, user_id: str):
         try:
-            stmt = (
-                delete(Shopping)
-                .where(
-                    Shopping.id == shopping_id,
-                    Shopping.user_id == user_id
-                )
+            stmt = delete(Shopping).where(
+                Shopping.id == shopping_id, Shopping.user_id == user_id
             )
             result = await self.session.execute(stmt)
 

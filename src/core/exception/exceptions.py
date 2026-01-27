@@ -26,3 +26,8 @@ class GlobalErrorResponse(BaseModel):
     code: str = Field(..., examples=["ERROR_CODE_STRING"])
     detail: str = Field(..., examples=["에러에 대한 상세 메시지입니다."])
     errors: list[Any] | None = Field(None, description="유효성 검사 에러 시 상세 내용")
+
+
+class HaveNotPermissionException(BaseCustomException):
+    def __init__(self, detail="접근 권한이 없습니다."):
+        super().__init__(status_code=404, detail=detail, code="HAVE_NOT_PERMISSION")
