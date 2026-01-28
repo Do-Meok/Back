@@ -1,5 +1,3 @@
-# api/v1/api.py
-
 from fastapi import APIRouter
 from api.v1.endpoints import user, ingredient, assistant, recipe, shopping, refrigerator
 
