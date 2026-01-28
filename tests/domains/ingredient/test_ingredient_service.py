@@ -1,6 +1,6 @@
 import pytest
 from unittest.mock import AsyncMock, MagicMock
-from datetime import date, timedelta
+from datetime import date
 from domains.ingredient.service import IngredientService
 from domains.ingredient.schemas import (
     AddIngredientRequest,
@@ -8,8 +8,10 @@ from domains.ingredient.schemas import (
     StorageType,
     UpdateIngredientRequest,
 )
-from domains.ingredient.exceptions import ValueNotFoundException, NotFoundException
-from core.exception.exceptions import HaveNotPermissionException
+from domains.ingredient.exceptions import (
+    IngredientNotFoundException,
+    ValueNotFoundException,
+)
 from domains.user.models import User
 
 TODAY = date.today()
@@ -23,191 +25,149 @@ class TestIngredientService:
         repo = AsyncMock()
         return user, repo
 
-    # Helper function to create a proper mock ingredient
-    def _create_mock_ingredient(
-        self, id, name, p_date=TODAY, e_date=None, storage=None
-    ):
-        m = MagicMock()
-        m.id = id
-        m.ingredient_name = name
-        m.purchase_date = p_date
-        m.expiration_date = e_date
-        m.storage_type = storage
-        return m
-
-    async def test_add_ingredient_with_missing_log(self, mocks):
-        """[Service] 식재료 추가: DB에 정보가 없으면 MissingLog 저장"""
+    async def test_add_ingredient(self, mocks):
+        """[Service] 식재료 추가 로직"""
         user, repo = mocks
         service = IngredientService(user, repo)
 
-        req = AddIngredientRequest(ingredients=["희귀템"], purchase_date=TODAY)
+        req = AddIngredientRequest(ingredients=["사과"], purchase_date=TODAY)
 
-        # [Fix] Mock 속성 설정
-        mock_saved = self._create_mock_ingredient(1, "희귀템")
-        repo.add_ingredients.return_value = [mock_saved]
-        repo.get_expiry_infos.return_value = {}
+        # Mock 반환값 설정
+        mock_ing = MagicMock(id=1, ingredient_name="사과", purchase_date=TODAY)
+        repo.add_ingredients.return_value = [mock_ing]
 
-        await service.add_ingredient(req)
+        # Call
+        res = await service.add_ingredient(req)
 
-        repo.add_ingredients.assert_called_once()
-        repo.add_missing_logs.assert_called_once()
-
-    async def test_add_ingredient_no_missing_log(self, mocks):
-        """[Service] 식재료 추가: DB에 정보가 있으면 MissingLog 저장 안 함"""
-        user, repo = mocks
-        service = IngredientService(user, repo)
-
-        req = AddIngredientRequest(ingredients=["양파"], purchase_date=TODAY)
-
-        mock_saved = self._create_mock_ingredient(1, "양파")
-        repo.add_ingredients.return_value = [mock_saved]
-        repo.get_expiry_infos.return_value = {"양파": MagicMock()}
-
-        await service.add_ingredient(req)
-
-        repo.add_missing_logs.assert_not_called()
-
-    async def test_set_detail_deviation_log(self, mocks):
-        """[Service] 상세 설정: 날짜 편차가 2일 이상이거나 보관타입이 다르면 로그 저장"""
-        user, repo = mocks
-        service = IngredientService(user, repo)
-
-        ing_id = 1
-        # [Fix] FROZEN -> FREEZER (Enum에 정의된 값 사용)
-        req = SetIngredientRequest(
-            expiration_date=TODAY + timedelta(days=10), storage_type=StorageType.FREEZER
-        )
-
-        mock_ing = self._create_mock_ingredient(ing_id, "양파", TODAY)
-        repo.get_ingredient.return_value = mock_ing
-
-        mock_info = MagicMock(expiry_day=7, storage_type="ROOM")
-        repo.get_expiry_infos.return_value = {"양파": mock_info}
-
-        mock_updated = self._create_mock_ingredient(
-            ing_id, "양파", TODAY, req.expiration_date, "FREEZER"
-        )
-        repo.set_ingredient.return_value = mock_updated
-
-        res = await service.set_expiration_and_storage(ing_id, req)
-
-        repo.add_deviation_log.assert_called_once()
-        assert res.is_auto_fillable is True
-
-    async def test_get_ingredients_flag_check(self, mocks):
-        """[Service] 목록 조회: is_auto_fillable 플래그가 올바르게 매핑되는지"""
-        user, repo = mocks
-        service = IngredientService(user, repo)
-
-        # [Fix] Mock 속성 설정
-        ing1 = self._create_mock_ingredient(1, "감자")
-        ing2 = self._create_mock_ingredient(2, "고구마")
-        repo.get_ingredients.return_value = [ing1, ing2]
-
-        repo.get_expiry_infos.return_value = {"감자": MagicMock()}
-
-        res = await service.get_ingredients()
-
-        assert res[0].ingredient_name == "감자"
-        assert res[0].is_auto_fillable is True
-
-        assert res[1].ingredient_name == "고구마"
-        assert res[1].is_auto_fillable is False
-
-    async def test_get_ingredient_single_flag_check(self, mocks):
-        """[Service] 단일 조회: is_auto_fillable 플래그 확인"""
-        user, repo = mocks
-        service = IngredientService(user, repo)
-
-        mock_ing = self._create_mock_ingredient(1, "감자")
-        repo.get_ingredient.return_value = mock_ing
-        repo.get_expiry_infos.return_value = {"감자": MagicMock()}
-
-        res = await service.get_ingredient(1)
-
-        assert res.is_auto_fillable is True
-
-    async def test_update_ingredient(self, mocks):
-        """[Service] 수정 시에도 is_auto_fillable 반환 확인"""
-        user, repo = mocks
-        service = IngredientService(user, repo)
-
-        mock_updated = self._create_mock_ingredient(1, "감자")
-        repo.update_ingredient.return_value = mock_updated
-        repo.get_expiry_infos.return_value = {}
-
-        req = UpdateIngredientRequest(storage_type=StorageType.ROOM)
-        res = await service.update_ingredient(1, req)
-
-        assert res.is_auto_fillable is False
-
-    async def test_get_unassigned_ingredients(self, mocks):
-        """[Service] 미분류 조회"""
-        user, repo = mocks
-        service = IngredientService(user, repo)
-
-        mock_ing = self._create_mock_ingredient(1, "대파")
-        repo.get_unassigned_ingredients.return_value = [mock_ing]
-        repo.get_expiry_infos.return_value = {}
-
-        res = await service.get_unassigned_ingredients()
+        # Verify
         assert len(res) == 1
-        assert res[0].ingredient_name == "대파"
-        assert res[0].is_auto_fillable is False
-
-    # ... (나머지 테스트 메서드 - delete, move, set_auto_expiration 등은 Mock 이슈가 없으므로 기존 유지) ...
-    async def test_set_auto_expiration_success(self, mocks):
-        user, repo = mocks
-        service = IngredientService(user, repo)
-        ing_id = 1
-        mock_ing = self._create_mock_ingredient(ing_id, "마늘", TODAY)
-        repo.get_ingredient.return_value = mock_ing
-        mock_info = MagicMock(expiry_day=30, storage_type="FREEZER")
-        repo.get_expiry_infos.return_value = {"마늘": mock_info}
-        repo.set_ingredient.return_value = MagicMock()
-        await service.set_auto_expiration_and_storage(ing_id)
-        expected_date = TODAY + timedelta(days=30)
-        repo.set_ingredient.assert_called_once_with(
-            ing_id, user.id, expected_date, "FREEZER"
-        )
-
-    async def test_set_auto_expiration_fail_no_data(self, mocks):
-        user, repo = mocks
-        service = IngredientService(user, repo)
-        repo.get_ingredient.return_value = self._create_mock_ingredient(1, "희귀템")
-        repo.get_expiry_infos.return_value = {}
-        with pytest.raises(NotFoundException):
-            await service.set_auto_expiration_and_storage(1)
+        assert res[0].ingredient_name == "사과"
+        repo.add_ingredients.assert_called_once()
 
     async def test_set_detail_validation_error(self, mocks):
+        """[Service] 초기 설정 시 필수값 누락 예외 발생"""
         user, repo = mocks
         service = IngredientService(user, repo)
+
+        # 날짜 누락
         req = SetIngredientRequest(
             expiration_date=None, storage_type=StorageType.FRIDGE
         )
+
         with pytest.raises(ValueNotFoundException):
             await service.set_expiration_and_storage(1, req)
 
-    async def test_delete_ingredient(self, mocks):
+    async def test_update_ingredient_not_found(self, mocks):
+        """[Service] 수정 시 존재하지 않는 ID면 예외 발생"""
         user, repo = mocks
         service = IngredientService(user, repo)
-        repo.delete_ingredient.return_value = True
-        await service.delete_ingredient(1)
-        repo.delete_ingredient.assert_called_once()
+
+        # Repository가 None 반환 (수정 실패)
+        repo.update_ingredient.return_value = None
+
+        req = UpdateIngredientRequest(storage_type=StorageType.ROOM)
+
+        with pytest.raises(IngredientNotFoundException):
+            await service.update_ingredient(999, req)
+
+    async def test_delete_ingredient_not_found(self, mocks):
+        """[Service] 삭제 실패 시 예외 발생"""
+        user, repo = mocks
+        service = IngredientService(user, repo)
+
+        repo.delete_ingredient.return_value = False  # 삭제된 행 0개
+
+        with pytest.raises(IngredientNotFoundException):
+            await service.delete_ingredient(999)
+
+    async def test_get_unassigned_ingredients(self, mocks):
+        """[Service] 미분류 식재료 조회 및 응답 모델 변환"""
+        user, repo = mocks
+        service = IngredientService(user, repo)
+
+        # Mock Data: Repository가 반환할 Ingredient 객체 리스트
+        mock_ing1 = MagicMock(
+            id=1,
+            ingredient_name="당근",
+            purchase_date=TODAY,
+            expiration_date=None,
+            storage_type=None,
+            compartment_id=None
+        )
+        mock_ing2 = MagicMock(
+            id=2,
+            ingredient_name="오이",
+            purchase_date=TODAY,
+            expiration_date=None,
+            storage_type=None,
+            compartment_id=None
+        )
+
+        # Repository 메서드 호출 시 위 리스트 반환 설정
+        repo.get_unassigned_ingredients.return_value = [mock_ing1, mock_ing2]
+
+        # Call
+        result = await service.get_unassigned_ingredients()
+
+        # Verify
+        assert len(result) == 2
+        # Pydantic 모델로 변환되었는지 속성 확인
+        assert result[0].ingredient_name == "당근"
+        assert result[1].ingredient_name == "오이"
+
+        # Repository가 올바른 user_id로 호출되었는지 확인
+        repo.get_unassigned_ingredients.assert_called_once_with(user.id)
 
     async def test_move_ingredients_success(self, mocks):
+        """[Service] 식재료 이동 성공 시나리오"""
         user, repo = mocks
         service = IngredientService(user, repo)
-        req = MagicMock()
-        req.ingredient_ids = [1, 2]
-        repo.is_my_compartment.return_value = True
-        repo.bulk_update_compartment.return_value = 2
-        res = await service.move_ingredients(100, req)
-        assert res.moved_count == 2
 
-    async def test_move_ingredients_fail_permission(self, mocks):
+        target_compartment_id = 10
+        req = MagicMock()
+        req.ingredient_ids = [1, 2, 3]
+
+        # Mock 설정
+        repo.is_my_compartment.return_value = True  # 내 칸 맞음
+        repo.bulk_update_compartment.return_value = 3  # 3개 모두 업데이트 성공
+
+        # Call
+        res = await service.move_ingredients(target_compartment_id, req)
+
+        # Verify
+        assert res.moved_count == 3
+        repo.is_my_compartment.assert_called_once_with(target_compartment_id, user.id)
+        repo.bulk_update_compartment.assert_called_once()
+
+    async def test_move_ingredients_forbidden(self, mocks):
+        """[Service] 내 냉장고 칸이 아닌 경우 Forbidden 예외"""
         user, repo = mocks
         service = IngredientService(user, repo)
+
+        req = MagicMock()
+        req.ingredient_ids = [1]
+
+        # Mock: 내 칸이 아님
         repo.is_my_compartment.return_value = False
+
+        from core.exception.exceptions import HaveNotPermissionException
+
         with pytest.raises(HaveNotPermissionException):
-            await service.move_ingredients(999, MagicMock())
+            await service.move_ingredients(99, req)
+
+    async def test_move_ingredients_count_mismatch(self, mocks):
+        """[Service] 요청 ID 수와 실제 업데이트 수가 다르면 NotFound(또는 예외) 처리"""
+        user, repo = mocks
+        service = IngredientService(user, repo)
+
+        req = MagicMock()
+        req.ingredient_ids = [1, 2, 3]  # 3개 요청
+
+        # Mock 설정
+        repo.is_my_compartment.return_value = True
+        repo.bulk_update_compartment.return_value = 2  # 실제로는 2개만 업데이트됨 (하나가 없거나 삭제됨)
+
+        from domains.ingredient.exceptions import NotFoundException
+
+        with pytest.raises(NotFoundException):
+            await service.move_ingredients(10, req)

@@ -17,5 +17,7 @@ class CompartmentNotFoundException(BaseCustomException):
 
 
 class NotFoundException(BaseCustomException):
-    def __init__(self, detail="데이터가 없습니다."):
-        super().__init__(status_code=404, detail=detail, code="NOT_FOUND")
+    def __init__(
+        self, detail="요청한 식재료 중 권한이 없거나 존재하지 않는 항목이 있습니다."
+    ):
+        super().__init__(status_code=404, detail=detail, code="COMPARTMENT_NOT_FOUND")

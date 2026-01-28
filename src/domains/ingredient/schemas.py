@@ -41,9 +41,6 @@ class AddIngredientResponse(BaseModel):
     id: int
     ingredient_name: str
     purchase_date: date
-    expiration_date: date | None = None
-    storage_type: StorageType | None = None
-    is_auto_fillable: bool
 
     model_config = ConfigDict(from_attributes=True)
 
@@ -54,7 +51,6 @@ class GetIngredientResponse(BaseModel):
     purchase_date: date
     expiration_date: date | None = None
     storage_type: StorageType | None = None
-    is_auto_fillable: bool
 
     model_config = ConfigDict(from_attributes=True)
 

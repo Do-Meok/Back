@@ -28,7 +28,3 @@ class User(Base):
     recipes = relationship("Recipe", back_populates="user")
     shopping_list = relationship("Shopping", back_populates="user")
     refrigerator = relationship("Refrigerator", back_populates="user")
-    expiry_deviation_logs = relationship("ExpiryDeviationLog", back_populates="user")
-    missing_ingredients_logs = relationship(
-        "MissingIngredientLog", back_populates="user"
-    )

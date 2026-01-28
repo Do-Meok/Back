@@ -52,31 +52,6 @@ async def set_ingredient_details(
     return await service.set_expiration_and_storage(ingredient_id, request)
 
 
-@router.patch(
-    "/{ingredient_id}/auto",
-    summary="식재료 유통기한/보관방법 자동 채우기 API",
-    response_model=GetIngredientResponse,
-)
-async def set_auto_ingredient_details(
-    ingredient_id: int,
-    service: IngredientService = Depends(get_ingredient_service),
-):
-    """
-    특정 식재료에 대해 서버 DB 데이터를 기반으로
-    유통기한과 보관방법을 자동으로 입력함
-    """
-    updated_ingredient = await service.set_auto_expiration_and_storage(ingredient_id)
-
-    return GetIngredientResponse(
-        id=updated_ingredient.id,
-        ingredient_name=updated_ingredient.ingredient_name,
-        purchase_date=updated_ingredient.purchase_date,
-        expiration_date=updated_ingredient.expiration_date,
-        storage_type=updated_ingredient.storage_type,
-        is_auto_fillable=True,
-    )
-
-
 @router.get(
     "",
     summary="식재료 조회 API",
