@@ -1,203 +1,284 @@
 import pytest
-from datetime import date, datetime
-from domains.ingredient.models import Ingredient
+from datetime import date, timedelta
+from sqlalchemy import select
+
+from domains.ingredient.models import (
+    Ingredient,
+    IngredientExpiry,
+    MissingIngredientLog,
+    ExpiryDeviationLog,
+)
 from domains.ingredient.repository import IngredientRepository
-from domains.refrigerator.models import Compartment, Refrigerator
+from domains.refrigerator.models import Refrigerator, Compartment
 
 TODAY = date.today()
 
 
 @pytest.mark.asyncio
-async def test_add_and_get_ingredient(db_session, test_user):
-    """[Repository] 식재료 저장 및 단일 조회"""
+async def test_get_expiry_infos(db_session):
+    """
+    [New] 유통기한 메타 데이터(IngredientExpiry) 조회 테스트
+    - 여러 개의 이름으로 조회 시, 존재하는 데이터만 Dict 형태로 반환되는지 확인
+    """
     repo = IngredientRepository(db_session)
 
-    # Given
-    ingredients = [
-        Ingredient(
-            user_id=test_user.id, ingredient_name="테스트양파", purchase_date=TODAY
-        )
-    ]
+    # 1. 테스트 데이터 주입
+    expiry_data_1 = IngredientExpiry(
+        ingredient_name="양파", expiry_day=7, storage_type="ROOM"
+    )
+    expiry_data_2 = IngredientExpiry(
+        ingredient_name="우유", expiry_day=10, storage_type="FRIDGE"
+    )
+    db_session.add_all([expiry_data_1, expiry_data_2])
+    await db_session.commit()
 
-    # When
-    saved_list = await repo.add_ingredients(ingredients)
-    saved_id = saved_list[0].id
+    # 2. 조회 요청 (DB에 있는 것과 없는 것 섞어서)
+    names_to_search = ["양파", "우유", "없는재료"]
+    result = await repo.get_expiry_infos(names_to_search)
 
-    # Then
-    found = await repo.get_ingredient(saved_id, test_user.id)
-    assert found is not None
-    assert found.ingredient_name == "테스트양파"
+    # 3. 검증
+    assert len(result) == 2
+    assert "양파" in result
+    assert "우유" in result
+    assert "없는재료" not in result
+
+    assert result["양파"].expiry_day == 7
+    assert result["우유"].storage_type == "FRIDGE"
 
 
 @pytest.mark.asyncio
-async def test_set_ingredient_details(db_session, test_user):
-    """[Repository] 보관 정보(유통기한/장소) 설정"""
+async def test_add_missing_logs(db_session, test_user):
+    """
+    [New] 누락 식재료 로그 일괄 저장 테스트
+    """
     repo = IngredientRepository(db_session)
 
-    # 1. 저장
-    ing = Ingredient(user_id=test_user.id, ingredient_name="우유", purchase_date=TODAY)
-    saved = (await repo.add_ingredients([ing]))[0]
+    # 1. 로그 객체 생성
+    logs = [
+        MissingIngredientLog(user_id=test_user.id, ingredient_name="희귀템1"),
+        MissingIngredientLog(user_id=test_user.id, ingredient_name="희귀템2"),
+    ]
 
-    # 2. 수정 (set_ingredient)
-    exp_date = date(2099, 12, 31)
-    updated = await repo.set_ingredient(
-        saved.id, test_user.id, expiration_date=exp_date, storage_type="FRIDGE"
+    # 2. 저장 실행
+    await repo.add_missing_logs(logs)
+
+    # 3. DB 조회하여 검증
+    stmt = select(MissingIngredientLog).where(
+        MissingIngredientLog.user_id == test_user.id
+    )
+    saved_logs = (await db_session.execute(stmt)).scalars().all()
+
+    assert len(saved_logs) == 2
+    names = [log.ingredient_name for log in saved_logs]
+    assert "희귀템1" in names
+    assert "희귀템2" in names
+
+
+@pytest.mark.asyncio
+async def test_add_deviation_log(db_session, test_user):
+    """
+    [New] 유통기한 편차 로그 저장 테스트 (storage_type 포함)
+    """
+    repo = IngredientRepository(db_session)
+
+    log = ExpiryDeviationLog(
+        user_id=test_user.id,
+        ingredient_name="감자",
+        deviation_day=5,
+        storage_type="FROZEN",  # 유저가 선택한 보관타입
+    )
+
+    # 1. 저장 실행
+    await repo.add_deviation_log(log)
+
+    # 2. DB 조회하여 검증
+    stmt = select(ExpiryDeviationLog).where(ExpiryDeviationLog.user_id == test_user.id)
+    saved_log = (await db_session.execute(stmt)).scalar_one()
+
+    assert saved_log.ingredient_name == "감자"
+    assert saved_log.deviation_day == 5
+    assert saved_log.storage_type == "FROZEN"
+
+
+@pytest.mark.asyncio
+async def test_add_and_get_ingredient(db_session, test_user):
+    """[Basic] 식재료 저장 및 단일 조회"""
+    repo = IngredientRepository(db_session)
+
+    ingredients = [
+        Ingredient(
+            user_id=test_user.id, ingredient_name="기본재료", purchase_date=TODAY
+        )
+    ]
+
+    # 저장
+    saved_list = await repo.add_ingredients(ingredients)
+    saved_id = saved_list[0].id
+
+    # 조회
+    found = await repo.get_ingredient(saved_id, test_user.id)
+    assert found is not None
+    assert found.ingredient_name == "기본재료"
+
+
+@pytest.mark.asyncio
+async def test_update_ingredient_partial(db_session, test_user):
+    """
+    [Update] 부분 수정 테스트 (update_ingredient)
+    - purchase_date만 수정하고 나머지는 유지되는지 확인
+    """
+    repo = IngredientRepository(db_session)
+
+    # 1. 초기 데이터 저장
+    ing = Ingredient(
+        user_id=test_user.id,
+        ingredient_name="수정전",
+        purchase_date=TODAY,
+        storage_type="ROOM",
+    )
+    db_session.add(ing)
+    await db_session.commit()
+    await db_session.refresh(ing)
+
+    # 2. 부분 수정 요청 (구매일만 변경, 나머지는 None)
+    new_date = TODAY + timedelta(days=1)
+    updated = await repo.update_ingredient(
+        ingredient_id=ing.id,
+        user_id=test_user.id,
+        purchase_date=new_date,
+        expiration_date=None,  # 변경 안 함
+        storage_type=None,  # 변경 안 함
     )
 
     # 3. 검증
-    assert updated.expiration_date == exp_date
-    assert updated.storage_type == "FRIDGE"
+    assert updated.purchase_date == new_date
+    assert updated.storage_type == "ROOM"  # 기존 값 유지
 
 
 @pytest.mark.asyncio
 async def test_get_ingredients_filtering(db_session, test_user):
-    """[Repository] 목록 조회 필터링 (미분류 vs 보관장소)"""
+    """[Filter] 목록 조회 필터링 (미분류 vs 보관장소별)"""
     repo = IngredientRepository(db_session)
 
-    # Given:
-    # 1) 미분류 (둘 다 없음) -> OK
-    i1 = Ingredient(
-        user_id=test_user.id, ingredient_name="미분류템", purchase_date=TODAY
-    )
-
-    # 2) 냉장 (✅ 수정: 보관장소가 있으면 유통기한도 있어야 함!)
+    # 1. 데이터 준비
+    # A: 미분류 (보관장소/유통기한 없음)
+    i1 = Ingredient(user_id=test_user.id, ingredient_name="미분류", purchase_date=TODAY)
+    # B: 냉장 보관
     i2 = Ingredient(
         user_id=test_user.id,
-        ingredient_name="냉장템",
+        ingredient_name="냉장",
         purchase_date=TODAY,
         storage_type="FRIDGE",
-        expiration_date=TODAY,  # 👈 이걸 추가해주세요!
+        expiration_date=TODAY,
     )
 
     await repo.add_ingredients([i1, i2])
 
-    # When A: 미분류 조회
+    # 2. 미분류 조회 테스트
     unclassified = await repo.get_ingredients(test_user.id, is_unclassified=True)
-
-    # Then: 이제 정확히 1개만 나옵니다 (i1만)
     assert len(unclassified) == 1
-    assert unclassified[0].ingredient_name == "미분류템"
+    assert unclassified[0].ingredient_name == "미분류"
 
-    # When B: 냉장 조회
-    fridge = await repo.get_ingredients(test_user.id, storage="FRIDGE")
-    assert len(fridge) == 1
-    assert fridge[0].ingredient_name == "냉장템"
-
-
-@pytest.mark.asyncio
-async def test_soft_delete(db_session, test_user):
-    """[Repository] 삭제 시 deleted_at 갱신 및 조회 제외"""
-    repo = IngredientRepository(db_session)
-
-    ing = Ingredient(
-        user_id=test_user.id, ingredient_name="삭제될거", purchase_date=TODAY
-    )
-    saved = (await repo.add_ingredients([ing]))[0]
-
-    # When: 삭제
-    success = await repo.delete_ingredient(saved.id, test_user.id)
-    assert success is True
-
-    # Then: 조회 안 돼야 함
-    found = await repo.get_ingredient(saved.id, test_user.id)
-    assert found is None
+    # 3. 냉장 조회 테스트
+    fridge_items = await repo.get_ingredients(test_user.id, storage="FRIDGE")
+    assert len(fridge_items) == 1
+    assert fridge_items[0].ingredient_name == "냉장"
 
 
 @pytest.mark.asyncio
 async def test_get_unassigned_ingredients_logic(db_session, test_user):
     """
-    [Repository] 미분류 식재료 조회
-    - 조건: compartment_id가 None인 식재료만 조회되어야 함
-    - 검증: 특정 칸(Compartment)에 할당된 재료는 조회되지 않아야 함
+    [Compartment] 미분류(냉장고 칸 미배정) 식재료 조회
+    - 조건: compartment_id IS NULL
     """
     repo = IngredientRepository(db_session)
 
-    # 1. 테스트를 위한 기반 데이터 생성 (User -> Refrigerator -> Compartment)
-
-    # [수정] 스키마에 맞춰 필수 필드(pos_x, pos_y) 포함 및 없는 필드(type) 제거
-    fridge = Refrigerator(
-        user_id=test_user.id,
-        name="테스트냉장고",
-        pos_x=1,  # NOT NULL constraints
-        pos_y=1  # NOT NULL constraints
-    )
+    # 1. 냉장고 및 칸 생성 (스키마 필수 필드 pos_x, pos_y, order_index 포함)
+    fridge = Refrigerator(user_id=test_user.id, name="테스트냉장고", pos_x=1, pos_y=1)
     db_session.add(fridge)
     await db_session.commit()
     await db_session.refresh(fridge)
 
-    # [수정] 스키마에 맞춰 필수 필드(order_index) 포함 및 없는 필드(type) 제거
-    comp = Compartment(
-        refrigerator_id=fridge.id,
-        name="야채칸",
-        order_index=1  # NOT NULL constraints
-    )
+    comp = Compartment(refrigerator_id=fridge.id, name="야채칸", order_index=1)
     db_session.add(comp)
     await db_session.commit()
     await db_session.refresh(comp)
 
-    real_compartment_id = comp.id
-
-    # 2. 식재료 데이터 준비
-
-    # (A) 미분류 식재료 (우리가 조회하려는 대상 -> compartment_id IS NULL)
+    # 2. 식재료 준비
     unassigned_ing = Ingredient(
         user_id=test_user.id,
-        ingredient_name="미분류양파",
-        purchase_date=TODAY,
-        compartment_id=None
-    )
-
-    # (B) 분류된 식재료 (조회되면 안 됨 -> compartment_id IS NOT NULL)
-    assigned_ing = Ingredient(
-        user_id=test_user.id,
-        ingredient_name="칸에있는두부",
-        purchase_date=TODAY,
-        compartment_id=real_compartment_id
-    )
-
-    # (C) 삭제된 식재료 (조회되면 안 됨)
-    deleted_ing = Ingredient(
-        user_id=test_user.id,
-        ingredient_name="삭제된고기",
+        ingredient_name="칸없음",
         purchase_date=TODAY,
         compartment_id=None,
-        deleted_at=datetime.now()
+    )
+    assigned_ing = Ingredient(
+        user_id=test_user.id,
+        ingredient_name="칸있음",
+        purchase_date=TODAY,
+        compartment_id=comp.id,
     )
 
-    await repo.add_ingredients([unassigned_ing, assigned_ing, deleted_ing])
+    await repo.add_ingredients([unassigned_ing, assigned_ing])
 
-    # When: 미분류 식재료 조회 실행
+    # 3. 조회 및 검증
     results = await repo.get_unassigned_ingredients(test_user.id)
 
-    # Then
     assert len(results) == 1
-    assert results[0].ingredient_name == "미분류양파"
-    assert results[0].compartment_id is None
+    assert results[0].ingredient_name == "칸없음"
 
-    @pytest.mark.asyncio
-    async def test_bulk_update_compartment(db_session, test_user):
-        """[Repository] 다중 식재료 compartment_id 일괄 업데이트"""
-        repo = IngredientRepository(db_session)
 
-        # Given: 미분류 식재료 3개 생성
-        ing1 = Ingredient(user_id=test_user.id, ingredient_name="재료1", purchase_date=TODAY, compartment_id=None)
-        ing2 = Ingredient(user_id=test_user.id, ingredient_name="재료2", purchase_date=TODAY, compartment_id=None)
-        ing3 = Ingredient(user_id=test_user.id, ingredient_name="재료3", purchase_date=TODAY, compartment_id=None)
+@pytest.mark.asyncio
+async def test_bulk_update_compartment(db_session, test_user):
+    """[Compartment] 일괄 이동 테스트"""
+    repo = IngredientRepository(db_session)
 
-        await repo.add_ingredients([ing1, ing2, ing3])
+    # 1. 냉장고/칸 생성
+    fridge = Refrigerator(user_id=test_user.id, name="Main", pos_x=0, pos_y=0)
+    db_session.add(fridge)
+    await db_session.commit()
+    await db_session.refresh(fridge)
 
-        target_ids = [ing1.id, ing2.id]  # 3번은 제외하고 1, 2번만 이동
-        target_compartment_id = 5
+    comp = Compartment(refrigerator_id=fridge.id, name="1칸", order_index=0)
+    db_session.add(comp)
+    await db_session.commit()
+    await db_session.refresh(comp)
 
-        # When: 일괄 업데이트 실행
-        count = await repo.bulk_update_compartment(target_ids, target_compartment_id, test_user.id)
+    # 2. 재료 준비
+    ing1 = Ingredient(user_id=test_user.id, ingredient_name="A", purchase_date=TODAY)
+    ing2 = Ingredient(user_id=test_user.id, ingredient_name="B", purchase_date=TODAY)
+    await repo.add_ingredients([ing1, ing2])
 
-        # Then
-        assert count == 2  # 2개가 업데이트되어야 함
+    # 3. 이동 실행
+    count = await repo.bulk_update_compartment(
+        [ing1.id, ing2.id], comp.id, test_user.id
+    )
 
-        # DB 상태 확인
-        await db_session.refresh(ing1)
-        await db_session.refresh(ing3)
+    # 4. 검증
+    assert count == 2
+    await db_session.refresh(ing1)
+    assert ing1.compartment_id == comp.id
 
-        assert ing1.compartment_id == 5  # 변경됨
-        assert ing3.compartment_id is None  # 변경 안 됨
+
+@pytest.mark.asyncio
+async def test_delete_ingredient(db_session, test_user):
+    """[Delete] Soft Delete 테스트"""
+    repo = IngredientRepository(db_session)
+
+    ing = Ingredient(
+        user_id=test_user.id, ingredient_name="삭제대상", purchase_date=TODAY
+    )
+    db_session.add(ing)
+    await db_session.commit()
+
+    # 삭제
+    success = await repo.delete_ingredient(ing.id, test_user.id)
+    assert success is True
+
+    # 조회 시 없어야 함
+    found = await repo.get_ingredient(ing.id, test_user.id)
+    assert found is None
+
+    # 실제 DB에는 남아있어야 함 (deleted_at 확인)
+    stmt = select(Ingredient).where(Ingredient.id == ing.id)
+    real_row = (await db_session.execute(stmt)).scalar_one()
+    assert real_row.deleted_at is not None
