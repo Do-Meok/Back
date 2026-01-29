@@ -30,6 +30,18 @@ async def get_list(
 ):
     return await service.get_list()
 
+@router.patch(
+    "/{shopping_id}",
+    status_code=200,
+    summary="장보기 상태 변경 (토글)",
+    response_model=GetItemResponse,
+    responses=create_error_response(ItemNotFoundException)
+)
+async def change_status(
+    shopping_id: int,
+    service: ShoppingService = Depends(get_shopping_service),
+):
+    return await service.toggle_item(shopping_id)
 
 @router.delete(
     "/{shopping_id}",

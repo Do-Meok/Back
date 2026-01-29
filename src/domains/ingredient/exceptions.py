@@ -19,3 +19,7 @@ class CompartmentNotFoundException(BaseCustomException):
 class NotFoundException(BaseCustomException):
     def __init__(self, detail="데이터가 없습니다."):
         super().__init__(status_code=404, detail=detail, code="NOT_FOUND")
+
+class InvalidIngredientException(BaseCustomException):
+    def __init__(self, detail="등록할 수 없는 식재료가 포함되어 있습니다."):
+        super().__init__(status_code=400, detail=detail, code="INVALID_INGREDIENT")

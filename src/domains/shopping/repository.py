@@ -34,6 +34,26 @@ class ShoppingRepository:
         except SQLAlchemyError as e:
             raise DatabaseException(detail=f"장보기 목록 조회 실패: {str(e)}")
 
+    async def toggle_status(self, shopping_id: int, user_id: str) -> Shopping | None:
+        try:
+            stmt = select(Shopping).where(
+                Shopping.id == shopping_id,
+                Shopping.user_id == user_id
+            )
+            result = await self.session.execute(stmt)
+            item = result.scalar_one_or_none()
+
+            if item:
+                item.status = not item.status
+                await self.session.commit()
+                await self.session.refresh(item)
+
+            return item
+
+        except SQLAlchemyError as e:
+            await self.session.rollback()
+            raise DatabaseException(detail=f"상태 변경 중 오류 발생: {str(e)}")
+
     async def delete_item(self, shopping_id: int, user_id: str):
         try:
             stmt = delete(Shopping).where(

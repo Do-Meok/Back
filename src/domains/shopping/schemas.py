@@ -13,3 +13,4 @@ class AddItemResponse(BaseModel):
 class GetItemResponse(BaseModel):
     id: int
     item_name: str
+    status: bool
