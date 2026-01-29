@@ -58,3 +58,8 @@ class MissingIngredientLog(Base):
     )
 
     user = relationship("User", back_populates="missing_ingredients_logs")
+
+class NonIngredient(Base):
+    __tablename__ = "non_ingredients"
+    id = Column(Integer, primary_key=True, index=True)
+    ingredient_name = Column(String(45), nullable=False)

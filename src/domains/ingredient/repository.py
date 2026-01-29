@@ -8,7 +8,7 @@ from domains.ingredient.models import (
     Ingredient,
     IngredientExpiry,
     MissingIngredientLog,
-    ExpiryDeviationLog,
+    ExpiryDeviationLog, NonIngredient,
 )
 from domains.refrigerator.models import Compartment, Refrigerator
 
@@ -59,6 +59,16 @@ class IngredientRepository:
         except SQLAlchemyError as e:
             await self.session.rollback()
             raise DatabaseException(detail=f"식재료 일괄 저장 중 오류 발생: {str(e)}")
+
+    async def get_existing_non_ingredients(self, ingredient_names: list[str]) -> list[str]:
+        try:
+            stmt = select(NonIngredient.ingredient_name).where(
+                NonIngredient.ingredient_name.in_(ingredient_names)
+            )
+            result = await self.session.execute(stmt)
+            return result.scalars().all()
+        except SQLAlchemyError as e:
+            raise DatabaseException(detail=f"제외 식재료 확인 중 오류 발생: {str(e)}")
 
     async def set_ingredient(
         self, ingredient_id: int, user_id: str, expiration_date: date, storage_type: str
