@@ -40,8 +40,8 @@ def test_add_item_api(client, mock_shopping_service):
 def test_get_list_api(client, mock_shopping_service):
     # Given
     mock_shopping_service.get_list.return_value = [
-        GetItemResponse(id=1, item_name="콜라"),
-        GetItemResponse(id=2, item_name="사이다"),
+        GetItemResponse(id=1, item_name="콜라", status=False),
+        GetItemResponse(id=2, item_name="사이다", status=False),
     ]
 
     # When
@@ -52,6 +52,7 @@ def test_get_list_api(client, mock_shopping_service):
     data = response.json()
     assert len(data) == 2
     assert data[0]["item_name"] == "콜라"
+    assert data[0]["status"] is False
 
 
 def test_delete_item_api_success(client, mock_shopping_service):

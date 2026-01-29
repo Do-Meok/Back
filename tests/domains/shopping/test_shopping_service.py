@@ -42,8 +42,8 @@ async def test_add_item(shopping_service, mock_repo):
 async def test_get_list(shopping_service, mock_repo):
     # Given
     mock_repo.get_items.return_value = [
-        Shopping(id=1, item="사과"),
-        Shopping(id=2, item="배"),
+        Shopping(id=1, item="사과", status=False),
+        Shopping(id=2, item="배", status=False),
     ]
 
     # When
@@ -52,6 +52,7 @@ async def test_get_list(shopping_service, mock_repo):
     # Then
     assert len(response) == 2
     assert response[0].item_name == "사과"
+    assert response[0].status is False # 검증 추가
     assert response[1].item_name == "배"
 
 
