@@ -14,9 +14,7 @@ class RefrigeratorService:
         self.user = user
         self.refrigerator_repo = refrigerator_repo
 
-    async def add_refrigerator(
-        self, request: AddRefrigeratorRequest
-    ) -> AddRefrigeratorResponse:
+    async def add_refrigerator(self, request: AddRefrigeratorRequest) -> AddRefrigeratorResponse:
         new_refrigerator = Refrigerator(
             user_id=self.user.id,
             name=request.name,
@@ -30,9 +28,7 @@ class RefrigeratorService:
             new_compartment = Compartment(name=f"{i + 1}번칸", order_index=i)
             new_refrigerator.compartments.append(new_compartment)
 
-        saved_refrigerator = await self.refrigerator_repo.add_refrigerator(
-            new_refrigerator
-        )
+        saved_refrigerator = await self.refrigerator_repo.add_refrigerator(new_refrigerator)
 
         return AddRefrigeratorResponse.model_validate(saved_refrigerator)
 

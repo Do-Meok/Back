@@ -54,9 +54,7 @@ class TestRecipeService:
         service = RecipeService(user, repo)
 
         # Given
-        request_dto = SaveRecipeRequest(
-            food="이상한요리", use_ingredients=[], steps=[], tip="", difficulty=1
-        )
+        request_dto = SaveRecipeRequest(food="이상한요리", use_ingredients=[], steps=[], tip="", difficulty=1)
 
         # Mock Repo가 반환할 Entity (필수 필드 누락시킴)
         bad_entity = MagicMock()

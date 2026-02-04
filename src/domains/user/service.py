@@ -82,9 +82,7 @@ class UserService:
         try:
             user = await self.user_repo.get_user_by_email(email=request.email)
 
-            if not user or not security.verify_password(
-                request.password, user.password
-            ):
+            if not user or not security.verify_password(request.password, user.password):
                 raise InvalidCredentialsException()
 
             user_id = str(user.id)

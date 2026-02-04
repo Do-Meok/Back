@@ -17,22 +17,16 @@ class AssistantService:
         self.ingredient_repo = ingredient_repo
 
     async def recommend_menus(self):
-        ingredients_objects = await self.ingredient_repo.get_ingredients(
-            user_id=self.user.id
-        )
+        ingredients_objects = await self.ingredient_repo.get_ingredients(user_id=self.user.id)
 
         if not ingredients_objects:
-            raise InvalidAIRequestException(
-                "냉장고에 재료가 하나도 없어요! 재료를 먼저 등록해주세요."
-            )
+            raise InvalidAIRequestException("냉장고에 재료가 하나도 없어요! 재료를 먼저 등록해주세요.")
 
         ingredient_names = [i.ingredient_name for i in ingredients_objects]
         return await self.llm_handler.recommend_menus(ingredient_names)
 
     async def generate_recipe_detail(self, request: DetailRecipeRequest):
-        return await self.llm_handler.generate_detail(
-            food=request.food, ingredients=request.use_ingredients
-        )
+        return await self.llm_handler.generate_detail(food=request.food, ingredients=request.use_ingredients)
 
     async def search_recipe(self, food_name: str):
         if not food_name or not food_name.strip():

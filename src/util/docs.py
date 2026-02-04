@@ -22,9 +22,7 @@ def create_error_response(*exception_classes: Type[BaseCustomException]):
 
         # 3. examples에 해당 예외 추가
         # 예: examples["DuplicateEmailException"] = { ... }
-        responses[status_code]["content"]["application/json"]["examples"][
-            exc_class.__name__
-        ] = {
+        responses[status_code]["content"]["application/json"]["examples"][exc_class.__name__] = {
             "summary": exc.detail,  # Swagger UI 드롭다운에 표시될 이름
             "value": {
                 "status_code": status_code,

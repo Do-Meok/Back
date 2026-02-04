@@ -36,9 +36,7 @@ class LLMClient:
 
         try:
             async with httpx.AsyncClient(timeout=self.timeout) as client:
-                response = await client.post(
-                    self.base_url, headers=headers, json=payload
-                )
+                response = await client.post(self.base_url, headers=headers, json=payload)
 
                 response.raise_for_status()
 
@@ -50,15 +48,11 @@ class LLMClient:
 
         except httpx.HTTPStatusError as e:
             if e.response.status_code == 429:
-                raise AIServiceException(
-                    "AI 요청 한도를 초과했습니다. 잠시 후 시도해주세요."
-                )
+                raise AIServiceException("AI 요청 한도를 초과했습니다. 잠시 후 시도해주세요.")
             if e.response.status_code == 401:
                 raise AIServiceException("AI 인증에 실패했습니다. (API Key 확인 필요)")
 
-            raise AIServiceException(
-                f"OpenAI 에러 ({e.response.status_code}): {e.response.text}"
-            )
+            raise AIServiceException(f"OpenAI 에러 ({e.response.status_code}): {e.response.text}")
 
         except httpx.RequestError as e:
             raise AIConnectionException(f"네트워크 연결 오류: {str(e)}")

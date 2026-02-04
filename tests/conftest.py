@@ -26,9 +26,7 @@ def postgres_container():
 
 @pytest_asyncio.fixture(scope="session")
 async def db_engine(postgres_container):
-    connection_url = postgres_container.get_connection_url().replace(
-        "psycopg2", "asyncpg"
-    )
+    connection_url = postgres_container.get_connection_url().replace("psycopg2", "asyncpg")
     engine = create_async_engine(connection_url, echo=False, poolclass=NullPool)
 
     async with engine.begin() as conn:
@@ -54,9 +52,7 @@ async def init_db(db_engine):
 
         tables = list(Base.metadata.tables.keys())
         if tables:
-            await conn.execute(
-                text(f"TRUNCATE TABLE {', '.join(tables)} RESTART IDENTITY CASCADE;")
-            )
+            await conn.execute(text(f"TRUNCATE TABLE {', '.join(tables)} RESTART IDENTITY CASCADE;"))
             await conn.commit()
     yield
 
@@ -105,9 +101,7 @@ async def client(db_engine, mock_redis):  # 여기에 mock_redis 주입
     app.dependency_overrides[get_db] = override_get_db
     app.dependency_overrides[get_redis] = override_get_redis
 
-    async with AsyncClient(
-        transport=ASGITransport(app=app), base_url="http://test"
-    ) as ac:
+    async with AsyncClient(transport=ASGITransport(app=app), base_url="http://test") as ac:
         yield ac
 
     # 테스트 끝나면 오버라이드 해제

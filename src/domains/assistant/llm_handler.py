@@ -29,9 +29,7 @@ class LLMHandler:
         prompt = PromptBuilder.build_suggestion_prompt(ingredients)
         return await self._process(prompt, RecommendationResponse)
 
-    async def generate_detail(
-        self, food: str, ingredients: List[Dict]
-    ) -> DetailRecipeResponse:
+    async def generate_detail(self, food: str, ingredients: List[Dict]) -> DetailRecipeResponse:
         prompt = PromptBuilder.build_recipe_prompt(food, ingredients)
         return await self._process(prompt, DetailRecipeResponse)
 

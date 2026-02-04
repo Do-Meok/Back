@@ -44,9 +44,7 @@ async def test_get_refrigerator_api(authorized_client, db_session, test_user):
 
 
 @pytest.mark.asyncio
-async def test_get_ingredients_in_compartment_api(
-    authorized_client, db_session, test_user
-):
+async def test_get_ingredients_in_compartment_api(authorized_client, db_session, test_user):
     """[API] 칸 내부 식재료 조회 GET"""
     # 1. 냉장고/칸 생성
     fridge = Refrigerator(user_id=test_user.id, name="재료테스트", pos_x=1, pos_y=1)

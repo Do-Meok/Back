@@ -20,9 +20,7 @@ async def test_add_ingredient_check_auto_flag(authorized_client, db_session):
     [API] 식재료 추가 시 is_auto_fillable 플래그 확인
     """
     # 1. 메타 데이터 주입 (감자)
-    expiry_data = IngredientExpiry(
-        ingredient_name="감자", expiry_day=10, storage_type="ROOM"
-    )
+    expiry_data = IngredientExpiry(ingredient_name="감자", expiry_day=10, storage_type="ROOM")
     db_session.add(expiry_data)
     await db_session.commit()
 
@@ -41,9 +39,7 @@ async def test_add_ingredient_check_auto_flag(authorized_client, db_session):
     assert sweet_potato["is_auto_fillable"] is False
 
     # 4. MissingLog 검증 (고구마)
-    stmt = select(MissingIngredientLog).where(
-        MissingIngredientLog.ingredient_name == "고구마"
-    )
+    stmt = select(MissingIngredientLog).where(MissingIngredientLog.ingredient_name == "고구마")
     log = (await db_session.execute(stmt)).scalar_one_or_none()
     assert log is not None
 
@@ -54,9 +50,7 @@ async def test_set_auto_ingredient_details(authorized_client, db_session, test_u
     [API] 유통기한 자동 채우기 (PATCH /{id}/auto)
     """
     # 1. 메타 데이터 및 식재료 준비
-    expiry_data = IngredientExpiry(
-        ingredient_name="우유", expiry_day=7, storage_type="FRIDGE"
-    )
+    expiry_data = IngredientExpiry(ingredient_name="우유", expiry_day=7, storage_type="FRIDGE")
     db_session.add(expiry_data)
 
     ing = Ingredient(user_id=test_user.id, ingredient_name="우유", purchase_date=TODAY)
@@ -83,9 +77,7 @@ async def test_set_details_with_deviation_log(authorized_client, db_session, tes
     [API] 상세 설정 시 편차 발생 -> 로그 저장 확인
     """
     # 1. 메타 데이터 (양파: 실온, 5일)
-    db_session.add(
-        IngredientExpiry(ingredient_name="양파", expiry_day=5, storage_type="ROOM")
-    )
+    db_session.add(IngredientExpiry(ingredient_name="양파", expiry_day=5, storage_type="ROOM"))
 
     # 2. 식재료 (양파)
     ing = Ingredient(user_id=test_user.id, ingredient_name="양파", purchase_date=TODAY)
@@ -98,9 +90,7 @@ async def test_set_details_with_deviation_log(authorized_client, db_session, tes
         "expiration_date": str(TODAY + timedelta(days=20)),
         "storage_type": "FREEZER",  # [Fix] FROZEN -> FREEZER 로 수정!
     }
-    response = await authorized_client.patch(
-        f"/api/v1/ingredients/{ing.id}", json=payload
-    )
+    response = await authorized_client.patch(f"/api/v1/ingredients/{ing.id}", json=payload)
 
     assert response.status_code == 200  # 성공해야 함
 
@@ -139,16 +129,12 @@ async def test_full_lifecycle(authorized_client, db_session):
     assert res2.json()["storage_type"] == "FRIDGE"
 
     # 3. 수정 (PATCH /update/{id})
-    res3 = await authorized_client.patch(
-        f"/api/v1/ingredients/update/{ing_id}", json={"storage_type": "FREEZER"}
-    )
+    res3 = await authorized_client.patch(f"/api/v1/ingredients/update/{ing_id}", json={"storage_type": "FREEZER"})
     assert res3.status_code == 200
     assert res3.json()["storage_type"] == "FREEZER"
 
     # 4. 조회 (GET /detail)
-    res4 = await authorized_client.get(
-        f"/api/v1/ingredients/detail?ingredient_id={ing_id}"
-    )
+    res4 = await authorized_client.get(f"/api/v1/ingredients/detail?ingredient_id={ing_id}")
     assert res4.status_code == 200
 
     # 5. 삭제 (DELETE)
@@ -168,9 +154,7 @@ async def test_get_unassigned_ingredients_api(authorized_client):
     assert response.status_code == 200
 
     data = response.json()
-    found = next(
-        (item for item in data if item["ingredient_name"] == "미분류대파"), None
-    )
+    found = next((item for item in data if item["ingredient_name"] == "미분류대파"), None)
     assert found is not None
     assert found["is_auto_fillable"] is False
 
@@ -202,9 +186,7 @@ async def test_bulk_move_ingredients_api(authorized_client, db_session, test_use
 
     # 3. 이동 요청
     payload = {"ingredient_ids": [ing1.id, ing2.id]}
-    response = await authorized_client.patch(
-        f"/api/v1/ingredients/{target_compartment_id}/ingredients", json=payload
-    )
+    response = await authorized_client.patch(f"/api/v1/ingredients/{target_compartment_id}/ingredients", json=payload)
 
     # 4. 검증
     assert response.status_code == 200

@@ -12,8 +12,6 @@ class Shopping(Base):
     user_id = Column(ForeignKey("users.id", ondelete="CASCADE"), nullable=False)
     item = Column(String(45), nullable=False)
     status = Column(Boolean, default=False, nullable=False)
-    created_at = Column(
-        DateTime(timezone=True), server_default=func.now(), nullable=False
-    )
+    created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
 
     user = relationship("User", back_populates="shopping_list")

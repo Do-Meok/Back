@@ -31,12 +31,8 @@ class IngredientService:
         self.user = user
         self.ingredient_repo = ingredient_repo
 
-    async def add_ingredient(
-        self, request: AddIngredientRequest
-    ) -> list[AddIngredientResponse]:
-        banned_names = await self.ingredient_repo.get_existing_non_ingredients(
-            request.ingredients
-        )
+    async def add_ingredient(self, request: AddIngredientRequest) -> list[AddIngredientResponse]:
+        banned_names = await self.ingredient_repo.get_existing_non_ingredients(request.ingredients)
 
         banned_set = set(banned_names)
 
@@ -54,9 +50,7 @@ class IngredientService:
             for name in valid_names
         ]
 
-        saved_ingredients = await self.ingredient_repo.add_ingredients(
-            ingredients_to_save
-        )
+        saved_ingredients = await self.ingredient_repo.add_ingredients(ingredients_to_save)
 
         expiry_info_map = await self.ingredient_repo.get_expiry_infos(valid_names)
 
@@ -65,11 +59,7 @@ class IngredientService:
 
         for ing in saved_ingredients:
             if ing.ingredient_name not in expiry_info_map:
-                missing_logs.append(
-                    MissingIngredientLog(
-                        user_id=self.user.id, ingredient_name=ing.ingredient_name
-                    )
-                )
+                missing_logs.append(MissingIngredientLog(user_id=self.user.id, ingredient_name=ing.ingredient_name))
 
             can_auto = ing.ingredient_name in expiry_info_map
 
@@ -96,15 +86,11 @@ class IngredientService:
         if not request.storage_type:
             raise ValueNotFoundException()
 
-        ingredient = await self.ingredient_repo.get_ingredient(
-            ingredient_id, self.user.id
-        )
+        ingredient = await self.ingredient_repo.get_ingredient(ingredient_id, self.user.id)
         if not ingredient:
             raise IngredientNotFoundException()
 
-        expiry_infos = await self.ingredient_repo.get_expiry_infos(
-            [ingredient.ingredient_name]
-        )
+        expiry_infos = await self.ingredient_repo.get_expiry_infos([ingredient.ingredient_name])
         can_auto = ingredient.ingredient_name in expiry_infos
 
         if can_auto:
@@ -145,15 +131,11 @@ class IngredientService:
         )
 
     async def set_auto_expiration_and_storage(self, ingredient_id: int):
-        ingredient = await self.ingredient_repo.get_ingredient(
-            ingredient_id, self.user.id
-        )
+        ingredient = await self.ingredient_repo.get_ingredient(ingredient_id, self.user.id)
         if not ingredient:
             raise IngredientNotFoundException()
 
-        expiry_infos = await self.ingredient_repo.get_expiry_infos(
-            [ingredient.ingredient_name]
-        )
+        expiry_infos = await self.ingredient_repo.get_expiry_infos([ingredient.ingredient_name])
 
         if ingredient.ingredient_name not in expiry_infos:
             raise NotFoundException(detail="자동 입력 데이터가 없는 식재료입니다.")
@@ -167,9 +149,7 @@ class IngredientService:
 
         return updated
 
-    async def get_ingredients(
-        self, storage: StorageType | None = None, is_unclassified: bool | None = None
-    ):
+    async def get_ingredients(self, storage: StorageType | None = None, is_unclassified: bool | None = None):
         ingredient_list = await self.ingredient_repo.get_ingredients(
             user_id=self.user.id, storage=storage, is_unclassified=is_unclassified
         )
@@ -196,16 +176,12 @@ class IngredientService:
         return response_list
 
     async def get_ingredient(self, ingredient_id: int) -> GetIngredientResponse | None:
-        ingredient = await self.ingredient_repo.get_ingredient(
-            ingredient_id, self.user.id
-        )
+        ingredient = await self.ingredient_repo.get_ingredient(ingredient_id, self.user.id)
 
         if not ingredient:
             raise IngredientNotFoundException()
 
-        expiry_infos = await self.ingredient_repo.get_expiry_infos(
-            [ingredient.ingredient_name]
-        )
+        expiry_infos = await self.ingredient_repo.get_expiry_infos([ingredient.ingredient_name])
         can_auto = ingredient.ingredient_name in expiry_infos
 
         return GetIngredientResponse(
@@ -218,15 +194,11 @@ class IngredientService:
         )
 
     async def delete_ingredient(self, ingredient_id: int):
-        is_deleted = await self.ingredient_repo.delete_ingredient(
-            ingredient_id, self.user.id
-        )
+        is_deleted = await self.ingredient_repo.delete_ingredient(ingredient_id, self.user.id)
         if not is_deleted:
             raise IngredientNotFoundException()
 
-    async def update_ingredient(
-        self, ingredient_id: int, request: UpdateIngredientRequest
-    ) -> GetIngredientResponse:
+    async def update_ingredient(self, ingredient_id: int, request: UpdateIngredientRequest) -> GetIngredientResponse:
         storage_value = request.storage_type.value if request.storage_type else None
 
         updated = await self.ingredient_repo.update_ingredient(
@@ -240,9 +212,7 @@ class IngredientService:
         if not updated:
             raise IngredientNotFoundException()
 
-        expiry_infos = await self.ingredient_repo.get_expiry_infos(
-            [updated.ingredient_name]
-        )
+        expiry_infos = await self.ingredient_repo.get_expiry_infos([updated.ingredient_name])
         can_auto = updated.ingredient_name in expiry_infos
 
         return GetIngredientResponse(
@@ -254,12 +224,8 @@ class IngredientService:
             is_auto_fillable=can_auto,
         )
 
-    async def get_ingredients_in_compartment(
-        self, compartment_id: int
-    ) -> list[GetIngredientResponse]:
-        ingredients = await self.ingredient_repo.get_ingredients_by_compartment(
-            compartment_id, self.user.id
-        )
+    async def get_ingredients_in_compartment(self, compartment_id: int) -> list[GetIngredientResponse]:
+        ingredients = await self.ingredient_repo.get_ingredients_by_compartment(compartment_id, self.user.id)
 
         if not ingredients:
             return []
@@ -280,9 +246,7 @@ class IngredientService:
         ]
 
     async def get_unassigned_ingredients(self) -> list[GetIngredientResponse]:
-        ingredients = await self.ingredient_repo.get_unassigned_ingredients(
-            self.user.id
-        )
+        ingredients = await self.ingredient_repo.get_unassigned_ingredients(self.user.id)
 
         if not ingredients:
             return []
@@ -305,9 +269,7 @@ class IngredientService:
     async def move_ingredients(
         self, target_compartment_id: int, request: BulkMoveIngredientRequest
     ) -> BulkMoveResponse:
-        is_my_compartment = await self.ingredient_repo.is_my_compartment(
-            target_compartment_id, self.user.id
-        )
+        is_my_compartment = await self.ingredient_repo.is_my_compartment(target_compartment_id, self.user.id)
 
         if not is_my_compartment:
             raise HaveNotPermissionException()

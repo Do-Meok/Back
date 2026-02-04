@@ -24,9 +24,7 @@ class TestIngredientService:
         return user, repo
 
     # Helper function to create a proper mock ingredient
-    def _create_mock_ingredient(
-        self, id, name, p_date=TODAY, e_date=None, storage=None
-    ):
+    def _create_mock_ingredient(self, id, name, p_date=TODAY, e_date=None, storage=None):
         m = MagicMock()
         m.id = id
         m.ingredient_name = name
@@ -74,9 +72,7 @@ class TestIngredientService:
 
         ing_id = 1
         # [Fix] FROZEN -> FREEZER (Enum에 정의된 값 사용)
-        req = SetIngredientRequest(
-            expiration_date=TODAY + timedelta(days=10), storage_type=StorageType.FREEZER
-        )
+        req = SetIngredientRequest(expiration_date=TODAY + timedelta(days=10), storage_type=StorageType.FREEZER)
 
         mock_ing = self._create_mock_ingredient(ing_id, "양파", TODAY)
         repo.get_ingredient.return_value = mock_ing
@@ -84,9 +80,7 @@ class TestIngredientService:
         mock_info = MagicMock(expiry_day=7, storage_type="ROOM")
         repo.get_expiry_infos.return_value = {"양파": mock_info}
 
-        mock_updated = self._create_mock_ingredient(
-            ing_id, "양파", TODAY, req.expiration_date, "FREEZER"
-        )
+        mock_updated = self._create_mock_ingredient(ing_id, "양파", TODAY, req.expiration_date, "FREEZER")
         repo.set_ingredient.return_value = mock_updated
 
         res = await service.set_expiration_and_storage(ing_id, req)
@@ -167,9 +161,7 @@ class TestIngredientService:
         repo.set_ingredient.return_value = MagicMock()
         await service.set_auto_expiration_and_storage(ing_id)
         expected_date = TODAY + timedelta(days=30)
-        repo.set_ingredient.assert_called_once_with(
-            ing_id, user.id, expected_date, "FREEZER"
-        )
+        repo.set_ingredient.assert_called_once_with(ing_id, user.id, expected_date, "FREEZER")
 
     async def test_set_auto_expiration_fail_no_data(self, mocks):
         user, repo = mocks
@@ -182,9 +174,7 @@ class TestIngredientService:
     async def test_set_detail_validation_error(self, mocks):
         user, repo = mocks
         service = IngredientService(user, repo)
-        req = SetIngredientRequest(
-            expiration_date=None, storage_type=StorageType.FRIDGE
-        )
+        req = SetIngredientRequest(expiration_date=None, storage_type=StorageType.FRIDGE)
         with pytest.raises(ValueNotFoundException):
             await service.set_expiration_and_storage(1, req)
 

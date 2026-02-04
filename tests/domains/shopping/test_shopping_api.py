@@ -22,15 +22,11 @@ def client(mock_shopping_service):
 
 def test_add_item_api(client, mock_shopping_service):
     # Given
-    mock_shopping_service.add_item.return_value = AddItemResponse(
-        id=1, item_name="당근"
-    )
+    mock_shopping_service.add_item.return_value = AddItemResponse(id=1, item_name="당근")
     payload = {"item_name": "당근"}
 
     # When
-    response = client.post(
-        "/api/v1/shopping", json=payload
-    )  # URL 경로는 실제 설정에 맞게 수정
+    response = client.post("/api/v1/shopping", json=payload)  # URL 경로는 실제 설정에 맞게 수정
 
     # Then
     assert response.status_code == 201

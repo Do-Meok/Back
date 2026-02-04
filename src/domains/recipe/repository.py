@@ -24,11 +24,7 @@ class RecipeRepository:
 
     async def get_recipes(self, user_id: str):
         try:
-            stmt = (
-                select(Recipe)
-                .where(Recipe.user_id == user_id)
-                .order_by(Recipe.created_at.desc())
-            )
+            stmt = select(Recipe).where(Recipe.user_id == user_id).order_by(Recipe.created_at.desc())
             result = await self.session.execute(stmt)
             return result.scalars().all()
         except SQLAlchemyError as e:

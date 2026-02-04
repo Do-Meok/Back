@@ -23,11 +23,7 @@ class ShoppingRepository:
 
     async def get_items(self, user_id: str) -> list[Shopping]:
         try:
-            stmt = (
-                select(Shopping)
-                .where(Shopping.user_id == user_id)
-                .order_by(Shopping.created_at.desc())
-            )
+            stmt = select(Shopping).where(Shopping.user_id == user_id).order_by(Shopping.created_at.desc())
             result = await self.session.execute(stmt)
             return result.scalars().all()
 
@@ -36,9 +32,7 @@ class ShoppingRepository:
 
     async def toggle_status(self, shopping_id: int, user_id: str) -> Shopping | None:
         try:
-            stmt = select(Shopping).where(
-                Shopping.id == shopping_id, Shopping.user_id == user_id
-            )
+            stmt = select(Shopping).where(Shopping.id == shopping_id, Shopping.user_id == user_id)
             result = await self.session.execute(stmt)
             item = result.scalar_one_or_none()
 
@@ -55,9 +49,7 @@ class ShoppingRepository:
 
     async def delete_item(self, shopping_id: int, user_id: str):
         try:
-            stmt = delete(Shopping).where(
-                Shopping.id == shopping_id, Shopping.user_id == user_id
-            )
+            stmt = delete(Shopping).where(Shopping.id == shopping_id, Shopping.user_id == user_id)
             result = await self.session.execute(stmt)
 
             await self.session.commit()

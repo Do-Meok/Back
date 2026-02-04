@@ -19,9 +19,7 @@ class TestRefrigeratorService:
         user, repo = mocks
         service = RefrigeratorService(user, repo)
 
-        req = AddRefrigeratorRequest(
-            name="메인냉장고", pos_x=2, pos_y=3
-        )  # 2x3 = 6칸 예상
+        req = AddRefrigeratorRequest(name="메인냉장고", pos_x=2, pos_y=3)  # 2x3 = 6칸 예상
 
         # Mock: 저장된 후 반환될 객체 흉내
         mock_saved = MagicMock()

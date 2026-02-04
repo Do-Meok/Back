@@ -9,9 +9,7 @@ from util.docs import create_error_response
 router = APIRouter()
 
 
-@router.post(
-    "", status_code=201, summary="장보기 리스트 추가", response_model=AddItemResponse
-)
+@router.post("", status_code=201, summary="장보기 리스트 추가", response_model=AddItemResponse)
 async def add_item(
     request: AddItemRequest,
     service: ShoppingService = Depends(get_shopping_service),

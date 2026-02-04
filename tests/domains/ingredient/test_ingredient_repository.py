@@ -23,12 +23,8 @@ async def test_get_expiry_infos(db_session):
     repo = IngredientRepository(db_session)
 
     # 1. 테스트 데이터 주입
-    expiry_data_1 = IngredientExpiry(
-        ingredient_name="양파", expiry_day=7, storage_type="ROOM"
-    )
-    expiry_data_2 = IngredientExpiry(
-        ingredient_name="우유", expiry_day=10, storage_type="FRIDGE"
-    )
+    expiry_data_1 = IngredientExpiry(ingredient_name="양파", expiry_day=7, storage_type="ROOM")
+    expiry_data_2 = IngredientExpiry(ingredient_name="우유", expiry_day=10, storage_type="FRIDGE")
     db_session.add_all([expiry_data_1, expiry_data_2])
     await db_session.commit()
 
@@ -63,9 +59,7 @@ async def test_add_missing_logs(db_session, test_user):
     await repo.add_missing_logs(logs)
 
     # 3. DB 조회하여 검증
-    stmt = select(MissingIngredientLog).where(
-        MissingIngredientLog.user_id == test_user.id
-    )
+    stmt = select(MissingIngredientLog).where(MissingIngredientLog.user_id == test_user.id)
     saved_logs = (await db_session.execute(stmt)).scalars().all()
 
     assert len(saved_logs) == 2
@@ -105,11 +99,7 @@ async def test_add_and_get_ingredient(db_session, test_user):
     """[Basic] 식재료 저장 및 단일 조회"""
     repo = IngredientRepository(db_session)
 
-    ingredients = [
-        Ingredient(
-            user_id=test_user.id, ingredient_name="기본재료", purchase_date=TODAY
-        )
-    ]
+    ingredients = [Ingredient(user_id=test_user.id, ingredient_name="기본재료", purchase_date=TODAY)]
 
     # 저장
     saved_list = await repo.add_ingredients(ingredients)
@@ -249,9 +239,7 @@ async def test_bulk_update_compartment(db_session, test_user):
     await repo.add_ingredients([ing1, ing2])
 
     # 3. 이동 실행
-    count = await repo.bulk_update_compartment(
-        [ing1.id, ing2.id], comp.id, test_user.id
-    )
+    count = await repo.bulk_update_compartment([ing1.id, ing2.id], comp.id, test_user.id)
 
     # 4. 검증
     assert count == 2
@@ -264,9 +252,7 @@ async def test_delete_ingredient(db_session, test_user):
     """[Delete] Soft Delete 테스트"""
     repo = IngredientRepository(db_session)
 
-    ing = Ingredient(
-        user_id=test_user.id, ingredient_name="삭제대상", purchase_date=TODAY
-    )
+    ing = Ingredient(user_id=test_user.id, ingredient_name="삭제대상", purchase_date=TODAY)
     db_session.add(ing)
     await db_session.commit()
 

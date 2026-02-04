@@ -18,16 +18,12 @@ class IngredientRepository:
     def __init__(self, session: AsyncSession):
         self.session = session
 
-    async def get_expiry_infos(
-        self, ingredient_names: list[str]
-    ) -> dict[str, IngredientExpiry]:
+    async def get_expiry_infos(self, ingredient_names: list[str]) -> dict[str, IngredientExpiry]:
         if not ingredient_names:
             return {}
 
         try:
-            stmt = select(IngredientExpiry).where(
-                IngredientExpiry.ingredient_name.in_(ingredient_names)
-            )
+            stmt = select(IngredientExpiry).where(IngredientExpiry.ingredient_name.in_(ingredient_names))
             result = await self.session.execute(stmt)
 
             return {row.ingredient_name: row for row in result.scalars().all()}
@@ -61,25 +57,17 @@ class IngredientRepository:
             await self.session.rollback()
             raise DatabaseException(detail=f"식재료 일괄 저장 중 오류 발생: {str(e)}")
 
-    async def get_existing_non_ingredients(
-        self, ingredient_names: list[str]
-    ) -> list[str]:
+    async def get_existing_non_ingredients(self, ingredient_names: list[str]) -> list[str]:
         try:
-            stmt = select(NonIngredient.ingredient_name).where(
-                NonIngredient.ingredient_name.in_(ingredient_names)
-            )
+            stmt = select(NonIngredient.ingredient_name).where(NonIngredient.ingredient_name.in_(ingredient_names))
             result = await self.session.execute(stmt)
             return result.scalars().all()
         except SQLAlchemyError as e:
             raise DatabaseException(detail=f"제외 식재료 확인 중 오류 발생: {str(e)}")
 
-    async def set_ingredient(
-        self, ingredient_id: int, user_id: str, expiration_date: date, storage_type: str
-    ):
+    async def set_ingredient(self, ingredient_id: int, user_id: str, expiration_date: date, storage_type: str):
         try:
-            stmt = select(Ingredient).where(
-                Ingredient.id == ingredient_id, Ingredient.user_id == user_id
-            )
+            stmt = select(Ingredient).where(Ingredient.id == ingredient_id, Ingredient.user_id == user_id)
             result = await self.session.execute(stmt)
             ingredient = result.scalar_one_or_none()
 
@@ -117,9 +105,7 @@ class IngredientRepository:
         except SQLAlchemyError as e:
             raise DatabaseException(detail=f"식재료 목록 조회 실패: {str(e)}")
 
-    async def get_ingredient(
-        self, ingredient_id: int, user_id: str
-    ) -> Ingredient | None:
+    async def get_ingredient(self, ingredient_id: int, user_id: str) -> Ingredient | None:
         stmt = select(Ingredient).where(
             Ingredient.id == ingredient_id,
             Ingredient.user_id == user_id,
@@ -156,9 +142,7 @@ class IngredientRepository:
         storage_type: str | None,
     ):
         try:
-            stmt = select(Ingredient).where(
-                Ingredient.id == ingredient_id, Ingredient.user_id == user_id
-            )
+            stmt = select(Ingredient).where(Ingredient.id == ingredient_id, Ingredient.user_id == user_id)
             result = await self.session.execute(stmt)
             ingredient = result.scalar_one_or_none()
             if ingredient:
@@ -175,9 +159,7 @@ class IngredientRepository:
             await self.session.rollback()
             raise DatabaseException(detail=f"식재료 수정 중 오류 발생: {str(e)}")
 
-    async def get_ingredients_by_compartment(
-        self, compartment_id: int, user_id: str
-    ) -> list[Ingredient]:
+    async def get_ingredients_by_compartment(self, compartment_id: int, user_id: str) -> list[Ingredient]:
         try:
             stmt = (
                 select(Ingredient)
@@ -217,9 +199,7 @@ class IngredientRepository:
         result = await self.session.execute(stmt)
         return result.scalars().all()
 
-    async def bulk_update_compartment(
-        self, ingredient_ids: list[int], target_compartment_id: int, user_id: str
-    ) -> int:
+    async def bulk_update_compartment(self, ingredient_ids: list[int], target_compartment_id: int, user_id: str) -> int:
         stmt = (
             update(Ingredient)
             .where(Ingredient.id.in_(ingredient_ids), Ingredient.user_id == user_id)

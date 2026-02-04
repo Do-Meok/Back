@@ -16,9 +16,7 @@ router = APIRouter()
     response_model=SavedRecipeResponse,
     responses=create_error_response(RecipeDataCorruptionException),
 )
-async def save_recipe(
-    request: SaveRecipeRequest, service: RecipeService = Depends(get_recipe_service)
-):
+async def save_recipe(request: SaveRecipeRequest, service: RecipeService = Depends(get_recipe_service)):
     """
     레시피 저장 버튼을 누르면 LLM이 응답한 Recipe를 그대로 JSON 형태로 가져와서 저장함
     """

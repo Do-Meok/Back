@@ -81,9 +81,7 @@ async def test_log_in_flow(client):
     )
 
     # 2. 로그인
-    response = await client.post(
-        "/api/v1/users/log-in", json={"email": login_email, "password": PASSWORD}
-    )
+    response = await client.post("/api/v1/users/log-in", json={"email": login_email, "password": PASSWORD})
 
     assert response.status_code == 200
     data = response.json()
@@ -124,16 +122,12 @@ async def test_refresh_token_success(client):
     )
 
     # 2. 로그인하여 토큰 발급
-    login_res = await client.post(
-        "/api/v1/users/log-in", json={"email": email, "password": PASSWORD}
-    )
+    login_res = await client.post("/api/v1/users/log-in", json={"email": email, "password": PASSWORD})
     tokens = login_res.json()
     refresh_token = tokens["refresh_token"]
 
     # 3. 토큰 재발급 요청 (/refresh)
-    refresh_res = await client.post(
-        "/api/v1/users/refresh", json={"refresh_token": refresh_token}
-    )
+    refresh_res = await client.post("/api/v1/users/refresh", json={"refresh_token": refresh_token})
 
     assert refresh_res.status_code == 200
     new_data = refresh_res.json()
@@ -144,9 +138,7 @@ async def test_refresh_token_success(client):
 
 
 @pytest.mark.asyncio
-async def test_refresh_token_fail_invalid(
-    client, mock_redis
-):  # [수정] mock_redis 인자 추가
+async def test_refresh_token_fail_invalid(client, mock_redis):  # [수정] mock_redis 인자 추가
     """[API] 유효하지 않은 리프레시 토큰으로 요청 시 실패"""
 
     # [핵심] 이 테스트에서는 Redis가 "모르는 토큰이다(None)"라고 답하게 설정
@@ -180,10 +172,7 @@ async def test_logout_flow(client, mock_redis):
     )
 
     # 2. 로그인 (Access Token, Refresh Token 모두 확보)
-    login_res = await client.post(
-        "/api/v1/users/log-in",
-        json={"email": email, "password": PASSWORD}
-    )
+    login_res = await client.post("/api/v1/users/log-in", json={"email": email, "password": PASSWORD})
     tokens = login_res.json()
     access_token = tokens["access_token"]  # [헤더용]
     refresh_token = tokens["refresh_token"]  # [바디용]
@@ -201,7 +190,7 @@ async def test_logout_flow(client, mock_redis):
     logout_res = await client.post(
         "/api/v1/users/log-out",
         json={"refresh_token": refresh_token},
-        headers={"Authorization": f"Bearer {access_token}"}
+        headers={"Authorization": f"Bearer {access_token}"},
     )
 
     assert logout_res.status_code == 200
@@ -211,9 +200,6 @@ async def test_logout_flow(client, mock_redis):
     # 로그아웃 후에는 Redis에 데이터가 없어야 하므로 None 반환 설정
     mock_redis.get.return_value = None
 
-    retry_refresh_res = await client.post(
-        "/api/v1/users/refresh",
-        json={"refresh_token": refresh_token}
-    )
+    retry_refresh_res = await client.post("/api/v1/users/refresh", json={"refresh_token": refresh_token})
 
     assert retry_refresh_res.status_code == 401

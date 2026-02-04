@@ -31,9 +31,7 @@ async def test_find_by_email(db_session):
     repo = UserRepository(db_session)
 
     # Given
-    user = User(
-        email="find@example.com", password="pw", nickname="finder", phone_hash="hash123"
-    )
+    user = User(email="find@example.com", password="pw", nickname="finder", phone_hash="hash123")
     await repo.save_user(user)
 
     # When

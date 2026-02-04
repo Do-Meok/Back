@@ -15,9 +15,7 @@ class SignUpRequest(BaseModel):
 
 class SignUpResponse(BaseModel):
     email: str = Field(..., examples=["test@example.com"])
-    message: str = Field(
-        default="회원가입이 완료되었습니다.", examples=["회원가입이 완료되었습니다."]
-    )
+    message: str = Field(default="회원가입이 완료되었습니다.", examples=["회원가입이 완료되었습니다."])
 
     model_config = ConfigDict(from_attributes=True)
 

@@ -9,9 +9,7 @@ from domains.assistant.schemas import RecommendationResponse, RecommendationItem
 async def mock_get_assistant_service():
     mock_service = AsyncMock()
     mock_service.recommend_menus.return_value = RecommendationResponse(
-        recipes=[
-            RecommendationItem(food="가짜요리", use_ingredients=["물"], difficulty=1)
-        ]
+        recipes=[RecommendationItem(food="가짜요리", use_ingredients=["물"], difficulty=1)]
     )
     return mock_service
 
@@ -43,8 +41,6 @@ async def test_search_recipe_api_validation(authorized_client):
     # 로그인(get_current_user)은 authorized_client가 이미 처리했음!
 
     # 1. 바로 요청
-    response = await authorized_client.post(
-        "/api/v1/assistant/search", json={"wrong_field": "김치찌개"}
-    )
+    response = await authorized_client.post("/api/v1/assistant/search", json={"wrong_field": "김치찌개"})
 
     assert response.status_code == 422

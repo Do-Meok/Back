@@ -32,9 +32,7 @@ class TestLLMHandler:
         """
 
         # Client의 get_response 메서드를 Mocking (가로채기)
-        with patch.object(
-            handler.client, "get_response", new_callable=AsyncMock
-        ) as mock_get:
+        with patch.object(handler.client, "get_response", new_callable=AsyncMock) as mock_get:
             mock_get.return_value = fake_response
 
             # When
@@ -51,9 +49,7 @@ class TestLLMHandler:
         # Given: 'recipes' 키가 없는 엉뚱한 JSON
         fake_response = '{"wrong_key": "잘못된 데이터"}'
 
-        with patch.object(
-            handler.client, "get_response", new_callable=AsyncMock
-        ) as mock_get:
+        with patch.object(handler.client, "get_response", new_callable=AsyncMock) as mock_get:
             mock_get.return_value = fake_response
 
             # When & Then
@@ -66,9 +62,7 @@ class TestLLMHandler:
         # Given: JSON 형식이 아님
         fake_response = "미안해, 레시피를 못 찾겠어."
 
-        with patch.object(
-            handler.client, "get_response", new_callable=AsyncMock
-        ) as mock_get:
+        with patch.object(handler.client, "get_response", new_callable=AsyncMock) as mock_get:
             mock_get.return_value = fake_response
 
             # When & Then
@@ -81,9 +75,7 @@ class TestLLMHandler:
         # Given: 거부 메시지 JSON
         fake_response = '{"error": "식재료가 아닙니다."}'
 
-        with patch.object(
-            handler.client, "get_response", new_callable=AsyncMock
-        ) as mock_get:
+        with patch.object(handler.client, "get_response", new_callable=AsyncMock) as mock_get:
             mock_get.return_value = fake_response
 
             # When & Then

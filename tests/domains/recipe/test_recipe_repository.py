@@ -17,9 +17,7 @@ async def test_save_recipe_success(db_session, test_user):
     }
 
     # When
-    saved_entity = await repo.save_recipe(
-        user_id=test_user.id, food_name="김치찌개", recipe=recipe_data
-    )
+    saved_entity = await repo.save_recipe(user_id=test_user.id, food_name="김치찌개", recipe=recipe_data)
 
     # Then
     assert saved_entity.id is not None
@@ -34,9 +32,7 @@ async def test_get_recipes_ordering(db_session, test_user):
 
     # Given: 2개의 레시피 저장
     await repo.save_recipe(test_user.id, "라면", {"food": "라면", "steps": []})
-    await repo.save_recipe(
-        test_user.id, "볶음밥", {"food": "볶음밥", "steps": []}
-    )  # 이게 더 나중에 생성됨
+    await repo.save_recipe(test_user.id, "볶음밥", {"food": "볶음밥", "steps": []})  # 이게 더 나중에 생성됨
 
     # When
     results = await repo.get_recipes(test_user.id)

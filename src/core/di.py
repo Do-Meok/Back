@@ -25,9 +25,7 @@ def get_user_repo(session: AsyncSession = Depends(get_db)) -> UserRepository:
     return UserRepository(session)
 
 
-def get_user_service(
-    session: AsyncSession = Depends(get_db), redis: Redis = Depends(get_redis)
-) -> UserService:
+def get_user_service(session: AsyncSession = Depends(get_db), redis: Redis = Depends(get_redis)) -> UserService:
     repo = UserRepository(session)
     return UserService(user_repo=repo, redis=redis)
 
@@ -64,9 +62,7 @@ async def get_assistant_service(
     ingredient_repo: IngredientRepository = Depends(get_ingredient_repo),
     llm_handler: LLMHandler = Depends(get_llm_handler),
 ) -> AssistantService:
-    return AssistantService(
-        user=user, ingredient_repo=ingredient_repo, llm_handler=llm_handler
-    )
+    return AssistantService(user=user, ingredient_repo=ingredient_repo, llm_handler=llm_handler)
 
 
 # --- 레시피 관련 DI ---

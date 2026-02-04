@@ -36,9 +36,7 @@ router = APIRouter()
         InvalidCheckedPasswordException,
     ),
 )
-async def user_sign_up(
-    request: SignUpRequest, user_service: UserService = Depends(get_user_service)
-):
+async def user_sign_up(request: SignUpRequest, user_service: UserService = Depends(get_user_service)):
     user = await user_service.sign_up(request)
     return SignUpResponse(email=user.email)
 

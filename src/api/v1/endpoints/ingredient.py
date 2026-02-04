@@ -97,9 +97,7 @@ async def get_ingredients(
     ## 2) 보관 데이터가 있는 식재료(냉장, 냉동, 실온) -> is_unclassified=false & storage=StorageType
     ## 3) 보관 데이터가 있든 없든 모든 식재료 -> default(아무값도 없이)
     """
-    return await service.get_ingredients(
-        storage=storage, is_unclassified=is_unclassified
-    )
+    return await service.get_ingredients(storage=storage, is_unclassified=is_unclassified)
 
 
 @router.get(
@@ -109,9 +107,7 @@ async def get_ingredients(
     response_model=GetIngredientResponse,
     responses=create_error_response(IngredientNotFoundException),
 )
-async def get_ingredient(
-    ingredient_id: int, service: IngredientService = Depends(get_ingredient_service)
-):
+async def get_ingredient(ingredient_id: int, service: IngredientService = Depends(get_ingredient_service)):
     return await service.get_ingredient(ingredient_id)
 
 

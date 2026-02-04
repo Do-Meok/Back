@@ -78,9 +78,7 @@ def decode_jwt(access_token: str) -> str:
 
 # --- 토큰 ---
 def get_access_token(
-    auth_header: HTTPAuthorizationCredentials | None = Depends(
-        HTTPBearer(auto_error=False)
-    ),
+    auth_header: HTTPAuthorizationCredentials | None = Depends(HTTPBearer(auto_error=False)),
 ) -> str:
     if auth_header is None:
         raise UnauthorizedException()

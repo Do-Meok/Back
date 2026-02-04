@@ -53,9 +53,7 @@ class IncorrectPasswordException(BaseCustomException):
 
 class PasswordUnchangedException(BaseCustomException):
     def __init__(self):
-        super().__init__(
-            status_code=400, detail="현재 비밀번호와 새 비밀번호가 같습니다."
-        )
+        super().__init__(status_code=400, detail="현재 비밀번호와 새 비밀번호가 같습니다.")
 
 
 class PasswordMismatchException(BaseCustomException):
@@ -68,6 +66,4 @@ class PasswordMismatchException(BaseCustomException):
 
 class PasswordLengthException(BaseCustomException):
     def __init__(self):
-        super().__init__(
-            status_code=400, detail="비밀번호는 최소 8자에서 20자 사이여야 합니다."
-        )
+        super().__init__(status_code=400, detail="비밀번호는 최소 8자에서 20자 사이여야 합니다.")

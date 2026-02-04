@@ -25,18 +25,14 @@ class RecipeService:
                 **saved_entity.recipe,
             )
         except ValidationError:
-            raise RecipeDataCorruptionException(
-                "레시피 저장 중 데이터 변환 오류가 발생했습니다."
-            )
+            raise RecipeDataCorruptionException("레시피 저장 중 데이터 변환 오류가 발생했습니다.")
 
     async def get_recipes(self) -> list[SavedRecipeResponse]:
         entities = await self.recipe_repo.get_recipes(self.user.id)
 
         result = []
         for entity in entities:
-            dto = SavedRecipeResponse(
-                id=entity.id, created_at=entity.created_at, **entity.recipe
-            )
+            dto = SavedRecipeResponse(id=entity.id, created_at=entity.created_at, **entity.recipe)
             result.append(dto)
 
         return result

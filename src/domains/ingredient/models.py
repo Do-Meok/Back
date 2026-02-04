@@ -9,18 +9,14 @@ from core.database import Base
 class Ingredient(Base):
     __tablename__ = "ingredients"
     id = Column(BigInteger, primary_key=True, index=True)
-    user_id = Column(
-        Uuid(as_uuid=True), ForeignKey("users.id", ondelete="CASCADE"), nullable=False
-    )
+    user_id = Column(Uuid(as_uuid=True), ForeignKey("users.id", ondelete="CASCADE"), nullable=False)
     compartment_id = Column(BigInteger, ForeignKey("compartment.id"))
     ingredient_name = Column(String(45), nullable=False)
     purchase_date = Column(Date, server_default=func.current_date(), nullable=False)
     expiration_date = Column(Date)
     storage_type = Column(String(10))
     deleted_at = Column(DateTime(timezone=True), nullable=True)
-    created_at = Column(
-        DateTime(timezone=True), server_default=func.now(), nullable=False
-    )
+    created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
 
     user = relationship("User", back_populates="ingredients")
     compartment = relationship("Compartment", back_populates="ingredients")
@@ -41,9 +37,7 @@ class ExpiryDeviationLog(Base):
     ingredient_name = Column(String(45), nullable=False)
     deviation_day = Column(Integer, nullable=False)
     storage_type = Column(String(10), nullable=False)
-    created_at = Column(
-        DateTime(timezone=True), server_default=func.now(), nullable=False
-    )
+    created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
 
     user = relationship("User", back_populates="expiry_deviation_logs")
 
@@ -53,9 +47,7 @@ class MissingIngredientLog(Base):
     id = Column(BigInteger, primary_key=True, index=True)
     user_id = Column(ForeignKey("users.id", ondelete="CASCADE"), nullable=False)
     ingredient_name = Column(String(45), nullable=False)
-    created_at = Column(
-        DateTime(timezone=True), server_default=func.now(), nullable=False
-    )
+    created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
 
     user = relationship("User", back_populates="missing_ingredients_logs")
 

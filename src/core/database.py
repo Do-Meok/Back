@@ -29,9 +29,7 @@ async def get_db():
         yield session
 
 
-redis_pool = redis.ConnectionPool.from_url(
-    settings.REDIS_URL, decode_responses=True, encoding="utf-8"
-)
+redis_pool = redis.ConnectionPool.from_url(settings.REDIS_URL, decode_responses=True, encoding="utf-8")
 
 
 async def get_redis():

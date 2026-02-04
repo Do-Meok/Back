@@ -9,9 +9,7 @@ async def test_add_refrigerator_with_compartments(db_session, test_user):
     repo = RefrigeratorRepository(db_session)
 
     # Given
-    refrigerator = Refrigerator(
-        user_id=test_user.id, name="테스트냉장고", pos_x=2, pos_y=2
-    )
+    refrigerator = Refrigerator(user_id=test_user.id, name="테스트냉장고", pos_x=2, pos_y=2)
     # 칸 4개 수동 추가 (Service 로직 흉내)
     for i in range(4):
         refrigerator.compartments.append(Compartment(name=f"{i}번", order_index=i))
