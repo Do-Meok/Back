@@ -11,6 +11,7 @@ from domains.user.exceptions import (
     InvalidCredentialsException,
     UserNotFoundException,
     TokenExpiredException,
+    TokenForbiddenException,
 )
 from domains.user.repository import UserRepository
 from domains.user.schemas import (
@@ -129,12 +130,17 @@ class UserService:
             refresh_token=request.refresh_token,
         )
 
-    async def log_out(self, request: LogOutRequest) -> None:
+    async def log_out(self, request: LogOutRequest, user_id: str) -> None:
         redis_key = f"RT:{request.refresh_token}"
 
-        deleted_count = await self.redis.delete(redis_key)
+        stored_user_id = await self.redis.get(redis_key)
 
-        if deleted_count == 0:
+        if not stored_user_id:
             raise TokenExpiredException()
+
+        if stored_user_id != str(user_id):
+            raise TokenForbiddenException()
+
+        await self.redis.delete(redis_key)
 
         return None

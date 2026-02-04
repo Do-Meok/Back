@@ -41,6 +41,11 @@ class InvalidCredentialsException(BaseCustomException):
         super().__init__(status_code=401, detail=detail, code="INVALID_CREDENTIALS")
 
 
+class TokenForbiddenException(BaseCustomException):
+    def __init__(self, detail: str = "해당 토큰에 대한 권한이 없습니다"):
+        super().__init__(status_code=403, detail=detail, code="TOKEN_FORBIDDEN")
+
+
 class IncorrectPasswordException(BaseCustomException):
     def __init__(self, detail: str = "현재 비밀번호가 잘못되었습니다"):
         super().__init__(status_code=401, detail=detail, code="INCORRECT_PASSWORD")

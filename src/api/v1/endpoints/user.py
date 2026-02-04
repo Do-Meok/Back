@@ -90,11 +90,12 @@ async def user_info(
 @router.post(
     "/log-out",
     status_code=200,
-    summary="로그아웃 API (리프레시 토큰 삭제)",
+    summary="로그아웃 API",
 )
 async def user_log_out(
     request: LogOutRequest,
+    current_user=Depends(get_current_user),
     user_service: UserService = Depends(get_user_service),
 ):
-    await user_service.log_out(request)
+    await user_service.log_out(request, current_user.id)
     return {"message": "로그아웃 되었습니다."}
