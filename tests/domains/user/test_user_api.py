@@ -200,4 +200,3 @@ async def test_logout_flow(client, mock_redis):  # [수정] mock_redis 인자 �
     )
 
     assert retry_refresh_res.status_code == 401
-g
