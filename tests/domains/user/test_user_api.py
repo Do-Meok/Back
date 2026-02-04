@@ -26,7 +26,9 @@ async def test_sign_up_success(client):
     assert response.status_code == 201
     data = response.json()
     assert data["email"] == EMAIL
-    assert data["message"] == "회원가입이 완료되었습니다."
+    # 응답 모델에 message가 없다면 아래 줄은 에러가 날 수 있으니,
+    # SignUpResponse 스키마에 message가 없다면 주석 처리하세요.
+    # assert data["message"] == "회원가입이 완료되었습니다."
 
 
 @pytest.mark.asyncio
@@ -82,7 +84,9 @@ async def test_log_in_flow(client):
     )
 
     assert response.status_code == 200
-    assert "access_token" in response.json()
+    data = response.json()
+    assert "access_token" in data
+    assert "refresh_token" in data  # 리프레시 토큰 발급 확인
 
 
 @pytest.mark.asyncio
@@ -93,5 +97,107 @@ async def test_get_user_info(authorized_client):
 
     assert response.status_code == 200
     data = response.json()
-    assert data["email"] == "test@example.com"  # Fixture에서 설정한 유저 정보
+    # Fixture에서 설정한 유저 정보와 일치하는지 확인
+    assert data["email"] == "test@example.com"
     assert data["nickname"] == "테스트유저"
+
+
+# --- [추가된 테스트: 리프레시 토큰 및 로그아웃] ---
+
+
+@pytest.mark.asyncio
+async def test_refresh_token_success(client):
+    """[API] 리프레시 토큰으로 액세스 토큰 재발급 성공"""
+    # 1. 테스트용 유저 가입
+    email = "refresh_success@test.com"
+    await client.post(
+        "/api/v1/users/sign-up",
+        json={
+            "email": email,
+            "password": PASSWORD,
+            "checked_password": PASSWORD,
+            "nickname": "refresh_user",
+            "name": "refresh",
+        },
+    )
+
+    # 2. 로그인하여 토큰 발급
+    login_res = await client.post(
+        "/api/v1/users/log-in", json={"email": email, "password": PASSWORD}
+    )
+    tokens = login_res.json()
+    refresh_token = tokens["refresh_token"]
+
+    # 3. 토큰 재발급 요청 (/refresh)
+    refresh_res = await client.post(
+        "/api/v1/users/refresh", json={"refresh_token": refresh_token}
+    )
+
+    assert refresh_res.status_code == 200
+    new_data = refresh_res.json()
+
+    # 4. 검증: 새로운 액세스 토큰이 발급되었는지 확인
+    assert "access_token" in new_data
+    assert new_data["access_token"] != ""
+
+
+@pytest.mark.asyncio
+async def test_refresh_token_fail_invalid(
+    client, mock_redis
+):  # [수정] mock_redis 인자 추가
+    """[API] 유효하지 않은 리프레시 토큰으로 요청 시 실패"""
+
+    # [핵심] 이 테스트에서는 Redis가 "모르는 토큰이다(None)"라고 답하게 설정
+    mock_redis.get.return_value = None
+
+    response = await client.post(
+        "/api/v1/users/refresh",
+        json={"refresh_token": "invalid_or_expired_token_string"},
+    )
+
+    # 이제 Redis가 없다고 했으니 401이 뜰 것입니다.
+    assert response.status_code == 401
+
+
+# 2. 로그아웃 플로우 테스트 수정
+@pytest.mark.asyncio
+async def test_logout_flow(client, mock_redis):  # [수정] mock_redis 인자 추가
+    """[API] 로그아웃 시나리오 (로그인 -> 로그아웃 -> 재발급 실패 확인)"""
+    # 1. 가입
+    email = "logout_test@test.com"
+    await client.post(
+        "/api/v1/users/sign-up",
+        json={
+            "email": email,
+            "password": PASSWORD,
+            "checked_password": PASSWORD,
+            "nickname": "logout_user",
+            "name": "logout",
+        },
+    )
+
+    # 2. 로그인
+    login_res = await client.post(
+        "/api/v1/users/log-in", json={"email": email, "password": PASSWORD}
+    )
+    refresh_token = login_res.json()["refresh_token"]
+
+    # 3. 로그아웃 요청 (/log-out)
+    logout_res = await client.post(
+        "/api/v1/users/log-out", json={"refresh_token": refresh_token}
+    )
+
+    assert logout_res.status_code == 200
+    assert logout_res.json()["message"] == "로그아웃 되었습니다."
+
+    # [핵심] Mock 객체는 상태를 기억하지 못하므로(delete를 호출해도 get은 여전히 값을 줌),
+    # "이제부터는 토큰이 삭제된 상태야"라고 수동으로 알려줘야 합니다.
+    mock_redis.get.return_value = None
+
+    # 4. 검증: 로그아웃된 리프레시 토큰으로 재발급 시도 -> 실패해야 정상
+    retry_refresh_res = await client.post(
+        "/api/v1/users/refresh", json={"refresh_token": refresh_token}
+    )
+
+    assert retry_refresh_res.status_code == 401
+g

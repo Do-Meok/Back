@@ -15,6 +15,8 @@ from domains.user.schemas import (
     LogInRequest,
     LogInResponse,
     InfoResponse,
+    RefreshTokenRequest,
+    LogOutRequest,
 )
 from domains.user.service import UserService
 from util.docs import create_error_response
@@ -58,6 +60,19 @@ async def user_log_in(
     return await user_service.log_in(request, req)
 
 
+@router.post(
+    "/refresh",
+    status_code=200,
+    summary="토큰 재발급 API",
+    response_model=LogInResponse,
+)
+async def refresh_token(
+    request: RefreshTokenRequest,
+    user_service: UserService = Depends(get_user_service),
+):
+    return await user_service.refresh_token(request)
+
+
 @router.get(
     "/info",
     status_code=200,
@@ -70,3 +85,16 @@ async def user_info(
     user_service: UserService = Depends(get_user_service),
 ):
     return await user_service.get_user_info(current_user.id)
+
+
+@router.post(
+    "/log-out",
+    status_code=200,
+    summary="로그아웃 API (리프레시 토큰 삭제)",
+)
+async def user_log_out(
+    request: LogOutRequest,
+    user_service: UserService = Depends(get_user_service),
+):
+    await user_service.log_out(request)
+    return {"message": "로그아웃 되었습니다."}
