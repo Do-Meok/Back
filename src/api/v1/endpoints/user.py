@@ -8,6 +8,9 @@ from domains.user.exceptions import (
     InvalidCheckedPasswordException,
     InvalidCredentialsException,
     UserNotFoundException,
+    IncorrectPasswordException,
+    PasswordUnchangedException,
+    PasswordMismatchException,
 )
 from domains.user.schemas import (
     SignUpRequest,
@@ -17,6 +20,10 @@ from domains.user.schemas import (
     InfoResponse,
     RefreshTokenRequest,
     LogOutRequest,
+    FindEmailRequest,
+    ChangePasswordRequest,
+    ResetPasswordRequest,
+    ChangeNicknameRequest,
 )
 from domains.user.service import UserService
 from util.docs import create_error_response
@@ -97,3 +104,63 @@ async def user_log_out(
 ):
     await user_service.log_out(request, current_user.id)
     return {"message": "로그아웃 되었습니다."}
+
+
+@router.post(
+    "/find-email",
+    status_code=200,
+    summary="아이디 찾기 API",
+)
+async def find_email(
+    request: FindEmailRequest,
+    user_service: UserService = Depends(get_user_service),
+):
+    return await user_service.find_email(request)
+
+
+@router.patch(
+    "/change-pw",
+    status_code=200,
+    summary="비밀번호 변경 API (로그인 상태)",
+    responses=create_error_response(
+        IncorrectPasswordException,
+        PasswordUnchangedException,
+        PasswordMismatchException,
+    ),
+)
+async def change_pw(
+    request: ChangePasswordRequest,
+    current_user=Depends(get_current_user),
+    user_service: UserService = Depends(get_user_service),
+):
+    await user_service.change_password(request, current_user.id)
+    return {"message": "비밀번호가 성공적으로 변경되었습니다."}
+
+
+@router.post(
+    "/reset-pw",
+    status_code=200,
+    summary="비밀번호 재설정 API (비밀번호 찾기)",
+)
+async def reset_pw(
+    request: ResetPasswordRequest,
+    user_service: UserService = Depends(get_user_service),
+):
+    await user_service.reset_password(request)
+    return {"message": "비밀번호가 재설정되었습니다. 새 비밀번호로 로그인해주세요."}
+
+
+@router.patch(
+    "/nickname",
+    status_code=200,
+    summary="닉네임 변경 API",
+    responses=create_error_response(DuplicateNicknameException),
+)
+async def change_nickname(
+    request: ChangeNicknameRequest,
+    current_user=Depends(get_current_user),
+    user_service: UserService = Depends(get_user_service),
+):
+    await user_service.change_nickname(request, current_user.id)
+
+    return {"message": "닉네임이 변경되었습니다.", "nickname": request.nickname}

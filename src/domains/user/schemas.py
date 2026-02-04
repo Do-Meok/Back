@@ -33,6 +33,31 @@ class LogOutRequest(BaseModel):
     refresh_token: str
 
 
+class FindEmailRequest(BaseModel):
+    name: str
+    birth: date
+    phone_num: constr(min_length=10, max_length=11)
+
+
+class ChangePasswordRequest(BaseModel):
+    current_password: constr(min_length=8, max_length=20)
+    new_password: constr(min_length=8, max_length=20)
+    checked_new_password: constr(min_length=8, max_length=20)
+
+
+class ResetPasswordRequest(BaseModel):
+    email: EmailStr
+    name: str
+    birth: date
+    phone_num: str
+    new_password: constr(min_length=8, max_length=20)
+    checked_new_password: constr(min_length=8, max_length=20)
+
+
+class ChangeNicknameRequest(BaseModel):
+    nickname: constr(min_length=2, max_length=20)
+
+
 class LogInResponse(BaseModel):
     access_token: str
     refresh_token: str
@@ -41,3 +66,7 @@ class LogInResponse(BaseModel):
 class InfoResponse(BaseModel):
     email: EmailStr
     nickname: str
+
+
+class FindEmailResponse(BaseModel):
+    email: str

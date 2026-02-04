@@ -41,3 +41,17 @@ class UserRepository:
 
     async def get_user_by_id(self, user_id: str) -> User | None:
         return await self._get_one(User.id == user_id)
+
+    async def find_user_by_recovery_info(self, name: str, birth: str, phone_hash: str) -> User | None:
+        stmt = select(User).where(User.name == name, User.birth == birth, User.phone_hash == phone_hash)
+        result = await self.session.execute(stmt)
+        return result.scalar_one_or_none()
+
+    async def update_user(self, user: User) -> None:
+        try:
+            self.session.add(user)
+            await self.session.commit()
+            await self.session.refresh(user)
+        except SQLAlchemyError as e:
+            await self.session.rollback()
+            raise DatabaseException(detail=f"데이터 업데이트 실패: {str(e)}")

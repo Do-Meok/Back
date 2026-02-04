@@ -53,14 +53,13 @@ class IncorrectPasswordException(BaseCustomException):
 
 class PasswordUnchangedException(BaseCustomException):
     def __init__(self):
-        super().__init__(status_code=400, detail="현재 비밀번호와 새 비밀번호가 같습니다.")
+        super().__init__(status_code=400, detail="현재 비밀번호와 새 비밀번호가 같습니다.", code="PASSWORD_UNCHANGED")
 
 
 class PasswordMismatchException(BaseCustomException):
     def __init__(self):
         super().__init__(
-            status_code=400,
-            detail="변경할 비밀번호와 확인 비밀번호가 일치하지 않습니다.",
+            status_code=400, detail="변경할 비밀번호와 확인 비밀번호가 일치하지 않습니다.", code="PASSWORD_MISMATCH"
         )
 
 
