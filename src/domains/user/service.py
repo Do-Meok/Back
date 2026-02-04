@@ -12,6 +12,9 @@ from domains.user.exceptions import (
     UserNotFoundException,
     TokenExpiredException,
     TokenForbiddenException,
+    PasswordUnchangedException,
+    PasswordMismatchException,
+    IncorrectPasswordException,
 )
 from domains.user.repository import UserRepository
 from domains.user.schemas import (
@@ -21,6 +24,11 @@ from domains.user.schemas import (
     InfoResponse,
     RefreshTokenRequest,
     LogOutRequest,
+    FindEmailRequest,
+    FindEmailResponse,
+    ChangePasswordRequest,
+    ResetPasswordRequest,
+    ChangeNicknameRequest,
 )
 from domains.user.models import User
 
@@ -142,3 +150,64 @@ class UserService:
         await self.redis.delete(redis_key)
 
         return None
+
+    async def find_email(self, request: FindEmailRequest) -> FindEmailResponse:
+        phone_hash = security.make_phone_hash(request.phone_num)
+
+        user = await self.user_repo.find_user_by_recovery_info(
+            name=request.name, birth=request.birth, phone_hash=phone_hash
+        )
+
+        if not user:
+            raise UserNotFoundException()
+
+        return FindEmailResponse(email=user.email)
+
+    async def change_password(self, request: ChangePasswordRequest, user_id: str) -> None:
+        user = await self.user_repo.get_user_by_id(user_id)
+        if not user:
+            raise UserNotFoundException()
+
+        if not security.verify_password(request.current_password, user.password):
+            raise IncorrectPasswordException()
+
+        if security.verify_password(request.new_password, user.password):
+            raise PasswordUnchangedException()
+
+        if request.new_password != request.checked_new_password:
+            raise PasswordMismatchException()
+
+        user.password = security.hash_password(request.new_password)
+        await self.user_repo.update_user(user)
+
+    async def reset_password(self, request: ResetPasswordRequest) -> None:
+        if request.new_password != request.checked_new_password:
+            raise PasswordMismatchException()
+
+        phone_hash = security.make_phone_hash(request.phone_num)
+        user = await self.user_repo.get_user_by_email(request.email)
+
+        if not user or user.name != request.name or user.birth != request.birth or user.phone_hash != phone_hash:
+            raise UserNotFoundException()
+
+        if security.verify_password(request.new_password, user.password):
+            raise PasswordUnchangedException()
+
+        user.password = security.hash_password(request.new_password)
+        await self.user_repo.update_user(user)
+
+    async def change_nickname(self, request: ChangeNicknameRequest, user_id: str) -> None:
+        user = await self.user_repo.get_user_by_id(user_id)
+        if not user:
+            raise UserNotFoundException()
+
+        if user.nickname == request.nickname:
+            raise DuplicateNicknameException(detail="현재 닉네임과 동일합니다.")
+
+        existing_user = await self.user_repo.get_user_by_nickname(request.nickname)
+
+        if existing_user:
+            raise DuplicateNicknameException(detail="이미 사용 중인 닉네임입니다.")
+
+        user.nickname = request.nickname
+        await self.user_repo.update_user(user)
