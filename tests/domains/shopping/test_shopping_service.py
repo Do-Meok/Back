@@ -52,7 +52,7 @@ async def test_get_list(shopping_service, mock_repo):
     # Then
     assert len(response) == 2
     assert response[0].item_name == "사과"
-    assert response[0].status is False # 검증 추가
+    assert response[0].status is False  # 검증 추가
     assert response[1].item_name == "배"
 
 

@@ -13,6 +13,7 @@ class Settings(BaseSettings):
     DB_HOST: str
     DB_PORT: int = 5432
     DB_NAME: str = "domeok"
+    REDIS_URL: str
 
     JWT_SECRET_KEY: SecretStr
     PHONE_AES_KEY: SecretStr

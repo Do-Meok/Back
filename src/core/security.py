@@ -1,3 +1,4 @@
+import secrets
 import hmac
 import hashlib
 
@@ -57,7 +58,7 @@ def create_jwt(user_id: str) -> str:
     payload = {
         "sub": str(user_id),
         "iat": now,
-        "exp": now + timedelta(days=1),
+        "exp": now + timedelta(minutes=30),
     }
     return jwt.encode(payload, JWT_SECRET_KEY, algorithm=JWT_ALGORITHM)
 
@@ -84,3 +85,7 @@ def get_access_token(
     if auth_header is None:
         raise UnauthorizedException()
     return auth_header.credentials
+
+
+def create_refresh_token() -> str:
+    return secrets.token_hex(32)

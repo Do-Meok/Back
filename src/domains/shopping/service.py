@@ -20,23 +20,23 @@ class ShoppingService:
 
     async def toggle_item(self, shopping_id: int) -> GetItemResponse:
         updated_item = await self.shopping_repo.toggle_status(
-            shopping_id=shopping_id,
-            user_id=self.user.id
+            shopping_id=shopping_id, user_id=self.user.id
         )
 
         if not updated_item:
             raise ItemNotFoundException(detail="상태를 변경할 항목을 찾을 수 없습니다.")
 
         return GetItemResponse(
-            id=updated_item.id,
-            item_name=updated_item.item,
-            status=updated_item.status
+            id=updated_item.id, item_name=updated_item.item, status=updated_item.status
         )
 
     async def get_list(self) -> list[GetItemResponse]:
         items = await self.shopping_repo.get_items(self.user.id)
 
-        return [GetItemResponse(id=item.id, item_name=item.item, status=item.status) for item in items]
+        return [
+            GetItemResponse(id=item.id, item_name=item.item, status=item.status)
+            for item in items
+        ]
 
     async def delete_item(self, shopping_id: int):
         is_deleted = await self.shopping_repo.delete_item(

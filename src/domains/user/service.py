@@ -1,4 +1,5 @@
 from fastapi import Request
+from redis.asyncio import Redis
 
 from core import security
 
@@ -9,6 +10,7 @@ from domains.user.exceptions import (
     DuplicatePhoneNumException,
     InvalidCredentialsException,
     UserNotFoundException,
+    TokenExpiredException,
 )
 from domains.user.repository import UserRepository
 from domains.user.schemas import (
@@ -16,13 +18,16 @@ from domains.user.schemas import (
     LogInRequest,
     LogInResponse,
     InfoResponse,
+    RefreshTokenRequest,
+    LogOutRequest,
 )
 from domains.user.models import User
 
 
 class UserService:
-    def __init__(self, user_repo: UserRepository):
+    def __init__(self, user_repo: UserRepository, redis: Redis):
         self.user_repo = user_repo
+        self.redis = redis
 
     async def get_user_by_token(self, access_token: str, req: Request) -> User:
         user_id: str = security.decode_jwt(access_token=access_token)
@@ -81,8 +86,20 @@ class UserService:
             ):
                 raise InvalidCredentialsException()
 
+            user_id = str(user.id)
+
             access_token = security.create_jwt(user_id=user.id)
-            return LogInResponse(access_token=access_token)
+            refresh_token = security.create_refresh_token()
+            await self.redis.set(
+                name=f"RT:{refresh_token}",
+                value=user_id,
+                ex=60 * 60 * 24 * 14,  # 14일 뒤 자동 삭제
+            )
+
+            return LogInResponse(
+                access_token=access_token,
+                refresh_token=refresh_token,
+            )
 
         except InvalidCredentialsException:
             raise
@@ -97,3 +114,27 @@ class UserService:
             raise UserNotFoundException()
 
         return InfoResponse(email=user.email, nickname=user.nickname)
+
+    async def refresh_token(self, request: RefreshTokenRequest) -> LogInResponse:
+        redis_key = f"RT:{request.refresh_token}"
+        user_id = await self.redis.get(redis_key)
+
+        if not user_id:
+            raise TokenExpiredException()
+
+        new_access_token = security.create_jwt(user_id=user_id)
+
+        return LogInResponse(
+            access_token=new_access_token,
+            refresh_token=request.refresh_token,
+        )
+
+    async def log_out(self, request: LogOutRequest) -> None:
+        redis_key = f"RT:{request.refresh_token}"
+
+        deleted_count = await self.redis.delete(redis_key)
+
+        if deleted_count == 0:
+            raise TokenExpiredException()
+
+        return None

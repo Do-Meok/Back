@@ -3,7 +3,8 @@ from datetime import timedelta
 from domains.ingredient.exceptions import (
     IngredientNotFoundException,
     ValueNotFoundException,
-    NotFoundException, InvalidIngredientException,
+    NotFoundException,
+    InvalidIngredientException,
 )
 from core.exception.exceptions import HaveNotPermissionException
 from domains.ingredient.repository import IngredientRepository
@@ -31,17 +32,15 @@ class IngredientService:
         self.ingredient_repo = ingredient_repo
 
     async def add_ingredient(
-            self, request: AddIngredientRequest
+        self, request: AddIngredientRequest
     ) -> list[AddIngredientResponse]:
-
-        banned_names = await self.ingredient_repo.get_existing_non_ingredients(request.ingredients)
+        banned_names = await self.ingredient_repo.get_existing_non_ingredients(
+            request.ingredients
+        )
 
         banned_set = set(banned_names)
 
-        valid_names = [
-            name for name in request.ingredients
-            if name not in banned_set
-        ]
+        valid_names = [name for name in request.ingredients if name not in banned_set]
 
         if not valid_names:
             raise InvalidIngredientException()
@@ -59,9 +58,7 @@ class IngredientService:
             ingredients_to_save
         )
 
-        expiry_info_map = await self.ingredient_repo.get_expiry_infos(
-            valid_names
-        )
+        expiry_info_map = await self.ingredient_repo.get_expiry_infos(valid_names)
 
         missing_logs = []
         response_list = []

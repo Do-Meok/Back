@@ -1,8 +1,9 @@
 from fastapi import Depends, Request
 from sqlalchemy.ext.asyncio import AsyncSession
+from redis.asyncio import Redis
 
 from core.security import get_access_token
-from core.database import get_db
+from core.database import get_db, get_redis
 from domains.assistant.llm_handler import LLMHandler
 from domains.assistant.service import AssistantService
 
@@ -24,8 +25,11 @@ def get_user_repo(session: AsyncSession = Depends(get_db)) -> UserRepository:
     return UserRepository(session)
 
 
-def get_user_service(user_repo: UserRepository = Depends(get_user_repo)) -> UserService:
-    return UserService(user_repo)
+def get_user_service(
+    session: AsyncSession = Depends(get_db), redis: Redis = Depends(get_redis)
+) -> UserService:
+    repo = UserRepository(session)
+    return UserService(user_repo=repo, redis=redis)
 
 
 async def get_current_user(

@@ -37,8 +37,7 @@ class ShoppingRepository:
     async def toggle_status(self, shopping_id: int, user_id: str) -> Shopping | None:
         try:
             stmt = select(Shopping).where(
-                Shopping.id == shopping_id,
-                Shopping.user_id == user_id
+                Shopping.id == shopping_id, Shopping.user_id == user_id
             )
             result = await self.session.execute(stmt)
             item = result.scalar_one_or_none()
