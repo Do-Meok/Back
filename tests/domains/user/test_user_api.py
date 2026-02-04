@@ -1,5 +1,7 @@
 import pytest
 
+from core import security
+
 # 테스트 데이터 상수
 EMAIL = "api_test@example.com"
 PASSWORD = "password123!"
@@ -161,8 +163,9 @@ async def test_refresh_token_fail_invalid(
 
 # 2. 로그아웃 플로우 테스트 수정
 @pytest.mark.asyncio
-async def test_logout_flow(client, mock_redis):  # [수정] mock_redis 인자 추가
-    """[API] 로그아웃 시나리오 (로그인 -> 로그아웃 -> 재발급 실패 확인)"""
+async def test_logout_flow(client, mock_redis):
+    """[API] 로그아웃 시나리오 (로그인 -> 헤더 포함 로그아웃 -> 재발급 실패 확인)"""
+
     # 1. 가입
     email = "logout_test@test.com"
     await client.post(
@@ -176,27 +179,41 @@ async def test_logout_flow(client, mock_redis):  # [수정] mock_redis 인자 �
         },
     )
 
-    # 2. 로그인
+    # 2. 로그인 (Access Token, Refresh Token 모두 확보)
     login_res = await client.post(
-        "/api/v1/users/log-in", json={"email": email, "password": PASSWORD}
+        "/api/v1/users/log-in",
+        json={"email": email, "password": PASSWORD}
     )
-    refresh_token = login_res.json()["refresh_token"]
+    tokens = login_res.json()
+    access_token = tokens["access_token"]  # [헤더용]
+    refresh_token = tokens["refresh_token"]  # [바디용]
 
-    # 3. 로그아웃 요청 (/log-out)
+    # -------------------------------------------------------------
+    # [핵심] DB 조회 없이 토큰을 까서 User ID 확인 (Clean Way)
+    # -------------------------------------------------------------
+    user_id = security.decode_jwt(access_token)
+
+    # 서비스 로직(본인 확인) 통과를 위해 Mock Redis가 "이 토큰 주인은 얘야"라고 응답하게 설정
+    mock_redis.get.return_value = user_id
+
+    # 3. 로그아웃 요청
+    # [핵심] Authorization 헤더 추가 (current_user 의존성 해결)
     logout_res = await client.post(
-        "/api/v1/users/log-out", json={"refresh_token": refresh_token}
+        "/api/v1/users/log-out",
+        json={"refresh_token": refresh_token},
+        headers={"Authorization": f"Bearer {access_token}"}
     )
 
     assert logout_res.status_code == 200
     assert logout_res.json()["message"] == "로그아웃 되었습니다."
 
-    # [핵심] Mock 객체는 상태를 기억하지 못하므로(delete를 호출해도 get은 여전히 값을 줌),
-    # "이제부터는 토큰이 삭제된 상태야"라고 수동으로 알려줘야 합니다.
+    # 4. 검증: 로그아웃된 토큰으로 재발급 시도 -> 실패해야 함
+    # 로그아웃 후에는 Redis에 데이터가 없어야 하므로 None 반환 설정
     mock_redis.get.return_value = None
 
-    # 4. 검증: 로그아웃된 리프레시 토큰으로 재발급 시도 -> 실패해야 정상
     retry_refresh_res = await client.post(
-        "/api/v1/users/refresh", json={"refresh_token": refresh_token}
+        "/api/v1/users/refresh",
+        json={"refresh_token": refresh_token}
     )
 
     assert retry_refresh_res.status_code == 401
