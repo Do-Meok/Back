@@ -16,7 +16,7 @@ from domains.refrigerator.service import RefrigeratorService
 from domains.shopping.repository import ShoppingRepository
 from domains.shopping.service import ShoppingService
 from domains.user.repository import UserRepository
-from domains.user.service import UserService
+from domains.user.service import UserService, SocialAuthService
 from domains.user.models import User
 
 
@@ -36,6 +36,14 @@ async def get_current_user(
     user_service: UserService = Depends(get_user_service),
 ) -> User:
     return await user_service.get_user_by_token(access_token, req)
+
+
+async def get_social_auth_service(
+    session: AsyncSession = Depends(get_db),
+    redis: Redis = Depends(get_redis),
+) -> SocialAuthService:
+    user_repo = UserRepository(session)
+    return SocialAuthService(user_repo, redis)
 
 
 # --- 재료 관련 DI ---

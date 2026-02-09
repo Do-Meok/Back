@@ -11,14 +11,15 @@ class User(Base):
     __tablename__ = "users"
 
     id = Column(Uuid(as_uuid=True), primary_key=True, default=uuid6.uuid7)
-    email = Column(String(128), nullable=False, unique=True)
-    password = Column(String(128), nullable=False)
+    email = Column(String(128), unique=True)
+    password = Column(String(128))
     nickname = Column(String(20), nullable=False, unique=True)
     name = Column(String(20))
     birth = Column(Date)
     phone = Column(String(128))
     phone_hash = Column(String(128), unique=True)
-    social_auth = Column(String(10), nullable=False, default="local")
+    provider = Column(String(10), nullable=False, default="local")
+    social_id = Column(String(128), unique=True)
     deleted_at = Column(DateTime(timezone=True), nullable=True)
     created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
 

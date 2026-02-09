@@ -17,7 +17,7 @@ async def test_save_user(db_session):
         password="hashed_password",
         nickname="repo_nick",
         name="김테스트",
-        social_auth="local",
+        provider="local",
     )
 
     # When

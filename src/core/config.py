@@ -22,6 +22,9 @@ class Settings(BaseSettings):
     OPENAI_API_KEY: SecretStr
     NAVER_OCR_SECRET_KEY: SecretStr
     NAVER_OCR_API_URL: str
+    KAKAO_REST_API_KEY: str
+    KAKAO_REDIRECT_URI: str
+    KAKAO_CLIENT_SECRET: SecretStr
 
     @property
     def POSTGRES_DATABASE_URL(self) -> str:
