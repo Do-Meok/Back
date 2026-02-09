@@ -20,6 +20,8 @@ class Settings(BaseSettings):
     HMAC_SECRET: SecretStr
 
     OPENAI_API_KEY: SecretStr
+    NAVER_OCR_SECRET_KEY: SecretStr
+    NAVER_OCR_API_URL: str
 
     @property
     def POSTGRES_DATABASE_URL(self) -> str:

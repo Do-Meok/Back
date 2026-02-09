@@ -1,3 +1,6 @@
+from fastapi import UploadFile
+
+from domains.assistant.clients import ocr_client
 from domains.assistant.llm_handler import LLMHandler
 from domains.assistant.schemas import DetailRecipeRequest
 from domains.assistant.exceptions import InvalidAIRequestException
@@ -39,3 +42,19 @@ class AssistantService:
             raise InvalidAIRequestException("재료나 상황을 입력해주세요.")
 
         return await self.llm_handler.quick_recipe(chat)
+
+    async def process_receipt_image(self, file: UploadFile):
+        if not file.content_type.startswith("image/"):
+            raise InvalidAIRequestException("이미지 파일만 업로드 가능합니다.")
+
+        content = await file.read()
+
+        ext = file.filename.split(".")[-1] if "." in file.filename else "jpg"
+        raw_text = await ocr_client.get_ocr_text(content, ext)
+
+        if not raw_text.strip():
+            raise InvalidAIRequestException("영수증에서 글자를 인식하지 못했습니다.")
+
+        result = await self.llm_handler.parse_receipt_ingredients(raw_text)
+
+        return result

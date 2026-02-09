@@ -36,3 +36,8 @@ class SearchRecipeRequest(BaseModel):
 
 class QuickRecipeRequest(BaseModel):
     chat: str = Field(..., description="가지고 있는 재료나 상황 설명 (예: 계란)")
+
+
+# --- OCR 관련 ---
+class ReceiptIngredientResponse(BaseModel):
+    ingredients: list[str] = Field(..., description="영수증에서 추출된 식재료 이름 목록")
