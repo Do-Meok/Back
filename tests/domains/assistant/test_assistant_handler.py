@@ -2,7 +2,7 @@ import pytest
 from unittest.mock import AsyncMock, patch
 
 from domains.assistant.llm_handler import LLMHandler
-from domains.assistant.schemas import RecommendationResponse
+from domains.assistant.schemas import RecommendationResponse, ReceiptIngredientResponse
 from domains.assistant.exceptions import (
     AIJsonDecodeException,
     AISchemaMismatchException,
@@ -83,3 +83,61 @@ class TestLLMHandler:
                 await handler.recommend_menus(["벽돌"])
 
             assert str(exc.value.detail) == "식재료가 아닙니다."
+
+    async def test_parse_receipt_ingredients_success(self, handler):
+        """[성공] 영수증 OCR 텍스트를 주면 식재료 목록으로 변환된다."""
+
+        # Given: LLM이 반환할 가짜 JSON (식재료 목록)
+        fake_response = """
+        ```json
+        {
+            "ingredients": ["삼겹살", "쌈장", "깐마늘"]
+        }
+        ```
+        """
+
+        ocr_text = "2024-02-09 돼지상회 삼겹살 15000원 쌈장 3000원 깐마늘 1000원 합계 19000원"
+
+        # Client Mocking
+        with patch.object(handler.client, "get_response", new_callable=AsyncMock) as mock_get:
+            mock_get.return_value = fake_response
+
+            # When
+            result = await handler.parse_receipt_ingredients(ocr_text)
+
+            # Then
+            assert isinstance(result, ReceiptIngredientResponse)
+            assert len(result.ingredients) == 3
+            assert "삼겹살" in result.ingredients
+            assert "깐마늘" in result.ingredients
+
+    async def test_parse_receipt_ingredients_empty(self, handler):
+        """[성공] 식재료가 하나도 없는 경우 빈 리스트를 반환해야 한다."""
+
+        # Given: 식재료가 없다는 응답
+        fake_response = '{"ingredients": []}'
+
+        ocr_text = "종량제봉투 20L 500원 합계 500원"
+
+        with patch.object(handler.client, "get_response", new_callable=AsyncMock) as mock_get:
+            mock_get.return_value = fake_response
+
+            # When
+            result = await handler.parse_receipt_ingredients(ocr_text)
+
+            # Then
+            assert isinstance(result, ReceiptIngredientResponse)
+            assert result.ingredients == []
+
+    async def test_parse_receipt_ingredients_schema_error(self, handler):
+        """[실패] AI가 'ingredients' 키를 빼먹으면 SchemaMismatchException 발생"""
+
+        # Given: 약속된 키("ingredients")가 아닌 다른 키("items")를 보냄
+        fake_response = '{"items": ["사과", "배"]}'
+
+        with patch.object(handler.client, "get_response", new_callable=AsyncMock) as mock_get:
+            mock_get.return_value = fake_response
+
+            # When & Then
+            with pytest.raises(AISchemaMismatchException):
+                await handler.parse_receipt_ingredients("사과 배")

@@ -5,7 +5,7 @@ from domains.assistant.clients import llm_client
 from domains.assistant.exceptions import AISchemaMismatchException
 from domains.assistant.parser import LLMParser
 from domains.assistant.prompt_builder import PromptBuilder
-from domains.assistant.schemas import RecommendationResponse, DetailRecipeResponse
+from domains.assistant.schemas import RecommendationResponse, DetailRecipeResponse, ReceiptIngredientResponse
 
 T = TypeVar("T", bound=BaseModel)
 
@@ -40,3 +40,7 @@ class LLMHandler:
     async def quick_recipe(self, chat: str) -> DetailRecipeResponse:
         prompt = PromptBuilder.build_quick_prompt(chat)
         return await self._process(prompt, DetailRecipeResponse)
+
+    async def parse_receipt_ingredients(self, ocr_text: str) -> ReceiptIngredientResponse:
+        prompt = PromptBuilder.build_receipt_parsing_prompt(ocr_text)
+        return await self._process(prompt, ReceiptIngredientResponse)

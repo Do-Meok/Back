@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, UploadFile, File
 from core.di import get_assistant_service
 from domains.assistant.service import AssistantService
 from domains.assistant.schemas import (
@@ -7,6 +7,7 @@ from domains.assistant.schemas import (
     DetailRecipeRequest,
     SearchRecipeRequest,
     QuickRecipeRequest,
+    ReceiptIngredientResponse,
 )
 from domains.assistant.exceptions import (
     AIServiceException,
@@ -109,3 +110,17 @@ async def get_quick_recipe(
     AI가 계란이 들어가는 최적의 요리 1개를 선정하여 즉시 상세 레시피를 제공함
     """
     return await service.get_quick_recipe(request.chat)
+
+
+@router.post(
+    "/receipt/extract", response_model=ReceiptIngredientResponse, status_code=200, summary="영수증 인식 및 식재료 추출"
+)
+async def extract_ingredients_from_receipt(
+    file: UploadFile = File(...), service: AssistantService = Depends(get_assistant_service)
+):
+    """
+    영수증 사진을 업로드하면 식재료 목록을 반환
+    1. OCR로 텍스트 추출
+    2. LLM으로 식재료 필터링
+    """
+    return await service.process_receipt_image(file)
