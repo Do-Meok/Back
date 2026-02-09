@@ -55,3 +55,6 @@ class UserRepository:
         except SQLAlchemyError as e:
             await self.session.rollback()
             raise DatabaseException(detail=f"데이터 업데이트 실패: {str(e)}")
+
+    async def get_user_by_social_id(self, provider: str, social_id: str) -> User | None:
+        return await self._get_one(User.provider == provider, User.social_id == social_id)
