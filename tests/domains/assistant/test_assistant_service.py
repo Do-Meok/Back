@@ -13,7 +13,6 @@ from domains.user.models import User
 class TestAssistantService:
     @pytest.fixture
     def mock_deps(self):
-        """테스트에 필요한 가짜 객체들을 생성"""
         user = User(id="user-123", email="test@test.com")
         repo = AsyncMock()
         handler = AsyncMock()
