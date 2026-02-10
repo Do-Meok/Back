@@ -19,7 +19,6 @@ from domains.user.repository import UserRepository
 from domains.user.service import UserService, SocialAuthService
 from domains.user.models import User
 
-
 # --- 유저 관련 DI ---
 def get_user_repo(session: AsyncSession = Depends(get_db)) -> UserRepository:
     return UserRepository(session)
@@ -69,8 +68,9 @@ async def get_assistant_service(
     user: User = Depends(get_current_user),
     ingredient_repo: IngredientRepository = Depends(get_ingredient_repo),
     llm_handler: LLMHandler = Depends(get_llm_handler),
+    redis: Redis = Depends(get_redis),
 ) -> AssistantService:
-    return AssistantService(user=user, ingredient_repo=ingredient_repo, llm_handler=llm_handler)
+    return AssistantService(user=user, ingredient_repo=ingredient_repo, llm_handler=llm_handler, redis=redis)
 
 
 # --- 레시피 관련 DI ---
