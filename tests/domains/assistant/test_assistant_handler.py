@@ -2,11 +2,7 @@ import pytest
 from unittest.mock import AsyncMock, patch
 
 from domains.assistant.llm_handler import LLMHandler
-from domains.assistant.schemas import (
-    RecommendationResponse,
-    ReceiptIngredientResponse,
-    DetailRecipeResponse
-)
+from domains.assistant.schemas import RecommendationResponse, ReceiptIngredientResponse, DetailRecipeResponse
 from domains.assistant.exceptions import (
     AIJsonDecodeException,
     AISchemaMismatchException,

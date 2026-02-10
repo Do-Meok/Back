@@ -3,17 +3,16 @@ from unittest.mock import AsyncMock, MagicMock, patch
 from datetime import datetime
 
 from fastapi import UploadFile
-from redis.asyncio import Redis
 
 # 실제 프로젝트 경로에 맞게 import 경로를 확인해주세요.
-from domains.assistant.service import AssistantService, LIMIT_RECIPE_DAILY, LIMIT_OCR_DAILY
+from domains.assistant.service import AssistantService, LIMIT_RECIPE_DAILY
 from domains.assistant.exceptions import InvalidAIRequestException
 from domains.assistant.schemas import (
     RecommendationResponse,
     RecommendationItem,
     DetailRecipeRequest,
     DetailRecipeResponse,
-    IngredientDetail
+    IngredientDetail,
 )
 from domains.user.models import User
 
@@ -51,13 +50,13 @@ class TestAssistantService:
             food_en="Egg Roll",
             use_ingredients=["계란", "양파"],
             difficulty=1,
-            image_url=None  # 초기엔 없음
+            image_url=None,  # 초기엔 없음
         )
         llm_response = RecommendationResponse(recipes=[mock_recipe])
         handler.recommend_menus.return_value = llm_response
 
         # Given 3: 이미지 검색 메서드 Mocking (실제 네트워크 차단)
-        with patch.object(service, '_fetch_unsplash_image', return_value="https://fake-url.com/egg.jpg") as mock_fetch:
+        with patch.object(service, "_fetch_unsplash_image", return_value="https://fake-url.com/egg.jpg") as mock_fetch:
             # When
             result = await service.recommend_menus()
 
@@ -127,12 +126,12 @@ class TestAssistantService:
             use_ingredients=[IngredientDetail(name="계란", amount="1개")],
             steps=["끓인다"],
             tip="맛있다",
-            image_url=None
+            image_url=None,
         )
         handler.generate_detail.return_value = mock_response
 
         # Image Fetch Mock
-        with patch.object(service, '_fetch_unsplash_image', return_value="https://fake.com/ramen.jpg") as mock_fetch:
+        with patch.object(service, "_fetch_unsplash_image", return_value="https://fake.com/ramen.jpg") as mock_fetch:
             # When
             result = await service.generate_recipe_detail(request)
 
@@ -156,16 +155,11 @@ class TestAssistantService:
         food_name = "김치찌개"
 
         mock_response = DetailRecipeResponse(
-            food="김치찌개",
-            food_en="Kimchi Stew",
-            use_ingredients=[],
-            steps=[],
-            tip="",
-            image_url=None
+            food="김치찌개", food_en="Kimchi Stew", use_ingredients=[], steps=[], tip="", image_url=None
         )
         handler.search_recipe.return_value = mock_response
 
-        with patch.object(service, '_fetch_unsplash_image', return_value="https://fake.com/kimchi.jpg") as mock_fetch:
+        with patch.object(service, "_fetch_unsplash_image", return_value="https://fake.com/kimchi.jpg") as mock_fetch:
             # When
             result = await service.search_recipe(food_name)
 
@@ -188,16 +182,11 @@ class TestAssistantService:
 
         # LLM 응답 Mock (food_en이 None인 경우)
         mock_response = DetailRecipeResponse(
-            food="간장계란밥",
-            food_en=None,
-            use_ingredients=[],
-            steps=[],
-            tip="",
-            image_url=None
+            food="간장계란밥", food_en=None, use_ingredients=[], steps=[], tip="", image_url=None
         )
         handler.quick_recipe.return_value = mock_response
 
-        with patch.object(service, '_fetch_unsplash_image', return_value="https://fake.com/rice.jpg") as mock_fetch:
+        with patch.object(service, "_fetch_unsplash_image", return_value="https://fake.com/rice.jpg") as mock_fetch:
             # When
             result = await service.get_quick_recipe(chat)
 
@@ -287,9 +276,7 @@ class TestAssistantService:
             # Mock Response 설정
             mock_response = MagicMock()
             mock_response.status_code = 200
-            mock_response.json.return_value = {
-                "results": [{"urls": {"regular": "https://api-result.com/img.jpg"}}]
-            }
+            mock_response.json.return_value = {"results": [{"urls": {"regular": "https://api-result.com/img.jpg"}}]}
             mock_client.get.return_value = mock_response
 
             # When
@@ -299,4 +286,4 @@ class TestAssistantService:
             assert url == "https://api-result.com/img.jpg"
             mock_client.get.assert_called_once()
             call_kwargs = mock_client.get.call_args.kwargs
-            assert call_kwargs['params']['query'] == "Kimchi"
+            assert call_kwargs["params"]["query"] == "Kimchi"

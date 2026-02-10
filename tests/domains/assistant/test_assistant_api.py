@@ -1,6 +1,5 @@
 import pytest
 from unittest.mock import AsyncMock
-from fastapi import UploadFile
 
 from domains.assistant.exceptions import InvalidAIRequestException
 from main import app
@@ -16,7 +15,7 @@ async def mock_get_assistant_service_success():
         food_en="Fake Food",  # [New] 필수 필드
         use_ingredients=["물", "불"],
         difficulty=1,
-        image_url="http://fake.com/image.jpg"  # [New]
+        image_url="http://fake.com/image.jpg",  # [New]
     )
     # Service는 RecommendationResponse 객체를 반환함
     mock_service.recommend_menus.return_value = RecommendationResponse(recipes=[mock_item])
@@ -68,9 +67,7 @@ async def test_extract_receipt_api_success(authorized_client):
     # --- [Mock 설정] ---
     async def mock_service_ocr_success():
         mock_svc = AsyncMock()
-        mock_svc.process_receipt_image.return_value = ReceiptIngredientResponse(
-            ingredients=["콩나물", "두부", "대파"]
-        )
+        mock_svc.process_receipt_image.return_value = ReceiptIngredientResponse(ingredients=["콩나물", "두부", "대파"])
         return mock_svc
 
     app.dependency_overrides[get_assistant_service] = mock_service_ocr_success

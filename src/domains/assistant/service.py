@@ -14,16 +14,11 @@ from domains.ingredient.repository import IngredientRepository
 from domains.user.models import User
 
 LIMIT_RECIPE_DAILY = 10  # 하루 레시피 10회
-LIMIT_OCR_DAILY = 2     # 하루 영수증 2회
+LIMIT_OCR_DAILY = 2  # 하루 영수증 2회
+
 
 class AssistantService:
-    def __init__(
-        self,
-        user: User,
-        llm_handler: LLMHandler,
-        ingredient_repo: IngredientRepository,
-        redis: Redis
-    ):
+    def __init__(self, user: User, llm_handler: LLMHandler, ingredient_repo: IngredientRepository, redis: Redis):
         self.user = user
         self.llm_handler = llm_handler
         self.ingredient_repo = ingredient_repo
@@ -59,7 +54,7 @@ class AssistantService:
             "page": 1,
             "per_page": 1,
             "orientation": "landscape",
-            "client_id": settings.UNSPLASH_ACCESS_KEY
+            "client_id": settings.UNSPLASH_ACCESS_KEY,
         }
 
         try:
