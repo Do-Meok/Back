@@ -19,6 +19,7 @@ from domains.user.repository import UserRepository
 from domains.user.service import UserService, SocialAuthService
 from domains.user.models import User
 
+
 # --- 유저 관련 DI ---
 def get_user_repo(session: AsyncSession = Depends(get_db)) -> UserRepository:
     return UserRepository(session)
