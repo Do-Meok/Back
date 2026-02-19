@@ -11,7 +11,8 @@ from cryptography.fernet import Fernet
 from jose import jwt, JWTError
 
 from core.config import settings
-from domains.user.exceptions import TokenExpiredException, UnauthorizedException
+from domains.user.exceptions import UnauthorizedException
+from domains.auth.exceptions import TokenExpiredException
 
 JWT_ALGORITHM = "HS256"
 JWT_SECRET_KEY = settings.JWT_SECRET_KEY.get_secret_value()
@@ -73,7 +74,7 @@ def decode_jwt(access_token: str) -> str:
         return user_id
 
     except JWTError:
-        return TokenExpiredException()
+        raise TokenExpiredException()
 
 
 # --- 토큰 ---

@@ -20,19 +20,6 @@ class SignUpResponse(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
 
-class LogInRequest(BaseModel):
-    email: EmailStr
-    password: constr(min_length=8, max_length=20)
-
-
-class RefreshTokenRequest(BaseModel):
-    refresh_token: str
-
-
-class LogOutRequest(BaseModel):
-    refresh_token: str
-
-
 class FindEmailRequest(BaseModel):
     name: str
     birth: date
@@ -56,11 +43,6 @@ class ResetPasswordRequest(BaseModel):
 
 class ChangeNicknameRequest(BaseModel):
     nickname: constr(min_length=2, max_length=20)
-
-
-class LogInResponse(BaseModel):
-    access_token: str
-    refresh_token: str
 
 
 class InfoResponse(BaseModel):

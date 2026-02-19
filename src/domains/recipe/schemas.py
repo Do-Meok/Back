@@ -1,3 +1,4 @@
+from pydantic import ConfigDict
 from datetime import datetime
 
 from domains.assistant.schemas import DetailRecipeResponse
@@ -11,5 +12,4 @@ class SavedRecipeResponse(DetailRecipeResponse):
     id: int
     created_at: datetime
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
