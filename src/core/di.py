@@ -1,4 +1,4 @@
-from fastapi import Depends, Request
+from fastapi import Depends
 from sqlalchemy.ext.asyncio import AsyncSession
 from redis.asyncio import Redis
 
@@ -6,6 +6,7 @@ from core.security import get_access_token
 from core.database import get_db, get_redis
 from domains.assistant.llm_handler import LLMHandler
 from domains.assistant.service import AssistantService
+from domains.auth.service import AuthService
 
 from domains.ingredient.repository import IngredientRepository
 from domains.ingredient.service import IngredientService
@@ -16,7 +17,8 @@ from domains.refrigerator.service import RefrigeratorService
 from domains.shopping.repository import ShoppingRepository
 from domains.shopping.service import ShoppingService
 from domains.user.repository import UserRepository
-from domains.user.service import UserService, SocialAuthService
+from domains.user.service import UserService
+from domains.auth.social_service import SocialAuthService
 from domains.user.models import User
 
 
@@ -25,17 +27,21 @@ def get_user_repo(session: AsyncSession = Depends(get_db)) -> UserRepository:
     return UserRepository(session)
 
 
-def get_user_service(session: AsyncSession = Depends(get_db), redis: Redis = Depends(get_redis)) -> UserService:
-    repo = UserRepository(session)
-    return UserService(user_repo=repo, redis=redis)
+def get_user_service(user_repo: UserRepository = Depends(get_user_repo)) -> UserService:
+    return UserService(user_repo=user_repo)
+
+
+def get_auth_service(
+    user_repo: UserRepository = Depends(get_user_repo), redis: Redis = Depends(get_redis)
+) -> AuthService:
+    return AuthService(user_repo=user_repo, redis=redis)
 
 
 async def get_current_user(
-    req: Request,
     access_token: str = Depends(get_access_token),
-    user_service: UserService = Depends(get_user_service),
+    auth_service: AuthService = Depends(get_auth_service),
 ) -> User:
-    return await user_service.get_user_by_token(access_token, req)
+    return await auth_service.get_user_by_token(access_token)
 
 
 async def get_social_auth_service(
