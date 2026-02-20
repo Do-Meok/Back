@@ -30,4 +30,12 @@ class User(Base):
     expiry_deviation_logs = relationship("ExpiryDeviationLog", back_populates="user")
     missing_ingredients_logs = relationship("MissingIngredientLog", back_populates="user")
 
-    __table_args__ = (Index("ix_user_nickname_lower", func.lower(nickname), unique=True),)
+    __table_args__ = (
+        # 닉네임 대소문자 무시 (Unique)
+        Index("ix_user_nickname_lower", func.lower(nickname), unique=True),
+        # 활성 유저에 대해서만 소셜 로그인/리커버리 정보 인덱싱 (Partial Index)
+        Index("ix_active_user_social", "provider", "social_id", postgresql_where=(deleted_at.is_(None))),
+        Index("ix_active_user_recovery", "name", "birth", "phone_hash", postgresql_where=(deleted_at.is_(None))),
+        # 생성일 기준 정렬을 위한 일반 인덱스
+        Index("ix_user_created_at", created_at.desc()),
+    )

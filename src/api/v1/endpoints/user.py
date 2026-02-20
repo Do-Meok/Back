@@ -11,10 +11,9 @@ from domains.user.exceptions import (
     PasswordUnchangedException,
     PasswordMismatchException,
 )
-from domains.user.schemas import (
+from domains.user.schemas.response import SignUpResponse, InfoResponse, FindEmailResponse
+from domains.user.schemas.request import (
     SignUpRequest,
-    SignUpResponse,
-    InfoResponse,
     FindEmailRequest,
     ChangePasswordRequest,
     ResetPasswordRequest,
@@ -39,8 +38,7 @@ router = APIRouter()
     ),
 )
 async def user_sign_up(request: SignUpRequest, user_service: UserService = Depends(get_user_service)):
-    user = await user_service.sign_up(request)
-    return SignUpResponse(email=user.email)
+    return await user_service.sign_up(request)
 
 
 @router.get(
@@ -61,6 +59,8 @@ async def user_info(
     "/find-email",
     status_code=200,
     summary="아이디 찾기 API",
+    response_model=FindEmailResponse,
+    responses=create_error_response(UserNotFoundException),
 )
 async def find_email(
     request: FindEmailRequest,
@@ -74,6 +74,7 @@ async def find_email(
     status_code=200,
     summary="비밀번호 변경 API (로그인 상태)",
     responses=create_error_response(
+        UserNotFoundException,
         IncorrectPasswordException,
         PasswordUnchangedException,
         PasswordMismatchException,
@@ -92,6 +93,7 @@ async def change_pw(
     "/reset-pw",
     status_code=200,
     summary="비밀번호 재설정 API (비밀번호 찾기)",
+    responses=create_error_response(UserNotFoundException, PasswordMismatchException, PasswordUnchangedException),
 )
 async def reset_pw(
     request: ResetPasswordRequest,
@@ -105,7 +107,7 @@ async def reset_pw(
     "/nickname",
     status_code=200,
     summary="닉네임 변경 API",
-    responses=create_error_response(DuplicateNicknameException),
+    responses=create_error_response(UserNotFoundException, DuplicateNicknameException),
 )
 async def change_nickname(
     request: ChangeNicknameRequest,
@@ -113,5 +115,4 @@ async def change_nickname(
     user_service: UserService = Depends(get_user_service),
 ):
     await user_service.change_nickname(request, current_user.id)
-
     return {"message": "닉네임이 변경되었습니다.", "nickname": request.nickname}

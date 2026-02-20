@@ -38,3 +38,6 @@ asyncio_default_test_loop_scope = "session"
 
 [tool.ruff]
 line-length = 120
+
+[tool.ruff.lint.extend-per-file-ignores]
+"migrations/env.py" = ["E402"]
