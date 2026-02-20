@@ -8,7 +8,7 @@ from redis.asyncio import Redis
 from core.config import settings
 from domains.assistant.clients import ocr_client
 from domains.assistant.llm_handler import LLMHandler
-from domains.assistant.schemas import DetailRecipeRequest, DetailRecipeResponse
+from domains.assistant.schemas import DetailRecipeRequest, DetailRecipeResponse, RecommendationResponse
 from domains.assistant.exceptions import InvalidAIRequestException
 from domains.ingredient.repository import IngredientRepository
 from domains.user.models import User
@@ -75,12 +75,24 @@ class AssistantService:
         response.image_url = await self._fetch_unsplash_image(query)
         return response
 
-    async def recommend_menus(self):
-        # ... (기존 코드와 동일) ...
-        await self._check_limit("recipe", LIMIT_RECIPE_DAILY)
+    async def recommend_menus(self, force_refresh: bool = False):
+        redis_key = f"recommendation:{self.user.id}"
+
+        if not force_refresh:
+            cached_data = await self.redis.get(redis_key)
+            if cached_data:
+                print(f"[DEBUG] 🟢 Redis 캐시에서 추천 메뉴 반환 (User: {self.user.id})")
+                return RecommendationResponse.model_validate_json(cached_data)
+
+        reason = "강제 새로고침" if force_refresh else "캐시 없음"
+        print(f"[DEBUG] 🔴 AI 모델 실제 호출! (User: {self.user.id}, 사유: {reason})")
+
         ingredients_objects = await self.ingredient_repo.get_ingredients(user_id=self.user.id)
         if not ingredients_objects:
             raise InvalidAIRequestException("냉장고에 재료가 하나도 없어요! 재료를 먼저 등록해주세요.")
+
+        await self._check_limit("recipe", LIMIT_RECIPE_DAILY)
+
         ingredient_names = [i.ingredient_name for i in ingredients_objects]
 
         response = await self.llm_handler.recommend_menus(ingredient_names)
@@ -93,6 +105,14 @@ class AssistantService:
 
         for recipe, url in zip(response.recipes, image_urls):
             recipe.image_url = url
+
+        # 5. Redis에 결과 저장 (유효기간 1일=86400초)
+        await self.redis.set(
+            name=redis_key,
+            value=response.model_dump_json(),
+            ex=60 * 60 * 24,  # 1일 유지
+        )
+
         return response
 
     # [수정] 이미지 첨부 로직 추가

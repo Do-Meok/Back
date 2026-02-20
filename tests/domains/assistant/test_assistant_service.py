@@ -1,10 +1,8 @@
 import pytest
 from unittest.mock import AsyncMock, MagicMock, patch
-from datetime import datetime
 
 from fastapi import UploadFile
 
-# 실제 프로젝트 경로에 맞게 import 경로를 확인해주세요.
 from domains.assistant.service import AssistantService, LIMIT_RECIPE_DAILY
 from domains.assistant.exceptions import InvalidAIRequestException
 from domains.assistant.schemas import (
@@ -27,7 +25,8 @@ class TestAssistantService:
         handler = AsyncMock()
         redis = AsyncMock()
 
-        # Redis incr 기본값 (한도 통과: 1번째 요청)
+        # Redis 기본값 설정 (캐시 없음, 한도 통과)
+        redis.get.return_value = None
         redis.incr.return_value = 1
 
         return user, repo, handler, redis
@@ -35,71 +34,57 @@ class TestAssistantService:
     # ----------------------------------------------------------------
     # 1. 메뉴 추천 (Recommend Menus) 테스트
     # ----------------------------------------------------------------
-    async def test_recommend_menus_success(self, mock_deps):
-        """[성공] 메뉴 추천: 한도 내 요청 + 재료 있음 + 이미지 URL 매핑 확인"""
+    async def test_recommend_menus_cache_hit(self, mock_deps):
+        """[성공] 메뉴 추천: 캐시가 있을 때 AI를 호출하지 않고 캐시 반환"""
         user, repo, handler, redis = mock_deps
         service = AssistantService(user, handler, repo, redis)
 
-        # Given 1: 재료 설정
-        mock_ingredients = [MagicMock(ingredient_name="양파"), MagicMock(ingredient_name="계란")]
-        repo.get_ingredients.return_value = mock_ingredients
-
-        # Given 2: LLM 응답 설정
+        # Given: Redis에 이미 캐시된 추천 레시피가 존재함
         mock_recipe = RecommendationItem(
-            food="계란말이",
-            food_en="Egg Roll",
-            use_ingredients=["계란", "양파"],
-            difficulty=1,
-            image_url=None,  # 초기엔 없음
+            food="캐시요리", food_en="Cache Food", use_ingredients=[], difficulty=1, image_url="url"
         )
-        llm_response = RecommendationResponse(recipes=[mock_recipe])
-        handler.recommend_menus.return_value = llm_response
+        cached_response = RecommendationResponse(recipes=[mock_recipe])
+        redis.get.return_value = cached_response.model_dump_json()
 
-        # Given 3: 이미지 검색 메서드 Mocking (실제 네트워크 차단)
-        with patch.object(service, "_fetch_unsplash_image", return_value="https://fake-url.com/egg.jpg") as mock_fetch:
-            # When
-            result = await service.recommend_menus()
+        # When: force_refresh=False (기본값)으로 호출
+        result = await service.recommend_menus()
 
-            # Then
-            # Redis 한도 체크 확인
-            today_str = datetime.now().strftime("%Y-%m-%d")
-            expected_key = f"limit:recipe:{user.id}:{today_str}"
-            redis.incr.assert_called_with(expected_key)
-
-            # LLM 호출 확인
-            handler.recommend_menus.assert_called_once_with(["양파", "계란"])
-
-            # 이미지 검색 호출 확인 ("Egg Roll"로 검색했는지)
-            mock_fetch.assert_called()
-            mock_fetch.assert_any_call("Egg Roll")
-
-            # 결과 검증 (객체 반환 및 URL 주입 확인)
-            assert isinstance(result, RecommendationResponse)
-            assert result.recipes[0].food == "계란말이"
-            assert result.recipes[0].image_url == "https://fake-url.com/egg.jpg"
-
-    async def test_recommend_menus_limit_exceeded(self, mock_deps):
-        """[실패] 일일 한도 초과 시 에러 발생"""
-        user, repo, handler, redis = mock_deps
-        service = AssistantService(user, handler, repo, redis)
-
-        # Given: 한도 초과 설정
-        redis.incr.return_value = LIMIT_RECIPE_DAILY + 1
-
-        # When & Then
-        with pytest.raises(InvalidAIRequestException) as exc:
-            await service.recommend_menus()
-
-        assert "한도" in str(exc.value.detail)
-        redis.decr.assert_called_once()
+        # Then: 캐시 값과 일치해야 하며, DB/LLM/한도체크는 1번도 호출되면 안 됨!
+        assert result.recipes[0].food == "캐시요리"
+        repo.get_ingredients.assert_not_called()
+        redis.incr.assert_not_called()
         handler.recommend_menus.assert_not_called()
 
-    async def test_recommend_menus_no_ingredients(self, mock_deps):
-        """[실패] 냉장고에 재료가 없을 때 에러 발생"""
+    async def test_recommend_menus_force_refresh(self, mock_deps):
+        """[성공] 메뉴 추천: 강제 새로고침 시 캐시를 무시하고 AI 호출 및 결과 저장"""
         user, repo, handler, redis = mock_deps
         service = AssistantService(user, handler, repo, redis)
 
-        # Given: 재료 없음
+        # Given: 재료 있음 & LLM 응답 설정
+        repo.get_ingredients.return_value = [MagicMock(ingredient_name="양파")]
+        mock_recipe = RecommendationItem(
+            food="새로운요리", food_en="New Food", use_ingredients=[], difficulty=1, image_url=None
+        )
+        handler.recommend_menus.return_value = RecommendationResponse(recipes=[mock_recipe])
+
+        # When: force_refresh=True 로 호출
+        with patch.object(service, "_fetch_unsplash_image", return_value="img.jpg"):
+            result = await service.recommend_menus(force_refresh=True)
+
+        # Then: redis.get(캐시 확인)을 아예 호출 안 하거나, 넘기고 진행되어야 함.
+        # AI 호출 및 Redis Set(저장)이 정상적으로 이루어졌는지 확인
+        handler.recommend_menus.assert_called_once()
+        redis.incr.assert_called_once()
+        redis.set.assert_called_once()  # 결과 캐싱
+        assert result.recipes[0].food == "새로운요리"
+
+    async def test_recommend_menus_no_ingredients(self, mock_deps):
+        """[실패] 냉장고에 재료가 없을 때 에러 발생 (한도 차감 안 됨)"""
+        user, repo, handler, redis = mock_deps
+        service = AssistantService(user, handler, repo, redis)
+
+        # Given: 캐시 없음 & DB에 재료 없음
+        redis.get.return_value = None
         repo.get_ingredients.return_value = []
 
         # When & Then
@@ -107,6 +92,27 @@ class TestAssistantService:
             await service.recommend_menus()
 
         assert "재료가 하나도 없어요" in str(exc.value.detail)
+        # 핵심 검증: 재료가 없으면 일일 한도를 깎으면 안 됨!
+        redis.incr.assert_not_called()
+        handler.recommend_menus.assert_not_called()
+
+    async def test_recommend_menus_limit_exceeded(self, mock_deps):
+        """[실패] 일일 한도 초과 시 에러 발생"""
+        user, repo, handler, redis = mock_deps
+        service = AssistantService(user, handler, repo, redis)
+
+        # Given: 재료는 있지만 한도를 초과한 상태
+        repo.get_ingredients.return_value = [MagicMock(ingredient_name="양파")]
+        redis.get.return_value = None
+        redis.incr.return_value = LIMIT_RECIPE_DAILY + 1
+
+        # When & Then
+        with pytest.raises(InvalidAIRequestException) as exc:
+            await service.recommend_menus()
+
+        assert "한도" in str(exc.value.detail)
+        redis.decr.assert_called_once()  # 깎인 한도 복구 확인
+        handler.recommend_menus.assert_not_called()
 
     # ----------------------------------------------------------------
     # 2. 상세 레시피 생성 (Detail Recipe) 테스트
@@ -116,10 +122,8 @@ class TestAssistantService:
         user, repo, handler, redis = mock_deps
         service = AssistantService(user, handler, repo, redis)
 
-        # Given
         request = DetailRecipeRequest(food="라면", use_ingredients=["계란"], difficulty=1)
 
-        # LLM 응답 Mock
         mock_response = DetailRecipeResponse(
             food="라면",
             food_en="Ramen",
@@ -130,14 +134,11 @@ class TestAssistantService:
         )
         handler.generate_detail.return_value = mock_response
 
-        # Image Fetch Mock
         with patch.object(service, "_fetch_unsplash_image", return_value="https://fake.com/ramen.jpg") as mock_fetch:
-            # When
             result = await service.generate_recipe_detail(request)
 
-            # Then
             assert result.food == "라면"
-            assert result.image_url == "https://fake.com/ramen.jpg"  # 이미지 주입 확인
+            assert result.image_url == "https://fake.com/ramen.jpg"
 
             handler.generate_detail.assert_called_once()
             mock_fetch.assert_called_once_with("Ramen")
@@ -151,19 +152,15 @@ class TestAssistantService:
         user, repo, handler, redis = mock_deps
         service = AssistantService(user, handler, repo, redis)
 
-        # Given
         food_name = "김치찌개"
-
         mock_response = DetailRecipeResponse(
             food="김치찌개", food_en="Kimchi Stew", use_ingredients=[], steps=[], tip="", image_url=None
         )
         handler.search_recipe.return_value = mock_response
 
         with patch.object(service, "_fetch_unsplash_image", return_value="https://fake.com/kimchi.jpg") as mock_fetch:
-            # When
             result = await service.search_recipe(food_name)
 
-            # Then
             assert result.image_url == "https://fake.com/kimchi.jpg"
             handler.search_recipe.assert_called_once_with(food_name)
             mock_fetch.assert_called_once_with("Kimchi Stew")
@@ -177,23 +174,16 @@ class TestAssistantService:
         user, repo, handler, redis = mock_deps
         service = AssistantService(user, handler, repo, redis)
 
-        # Given
         chat = "배고파"
-
-        # LLM 응답 Mock (food_en이 None인 경우)
         mock_response = DetailRecipeResponse(
             food="간장계란밥", food_en=None, use_ingredients=[], steps=[], tip="", image_url=None
         )
         handler.quick_recipe.return_value = mock_response
 
         with patch.object(service, "_fetch_unsplash_image", return_value="https://fake.com/rice.jpg") as mock_fetch:
-            # When
             result = await service.get_quick_recipe(chat)
 
-            # Then
             assert result.image_url == "https://fake.com/rice.jpg"
-
-            # food_en이 없으므로 "한글명 + food" 조합으로 검색했는지 확인
             mock_fetch.assert_called_once_with("간장계란밥 food")
             redis.incr.assert_called()
 
@@ -205,27 +195,20 @@ class TestAssistantService:
         user, repo, handler, redis = mock_deps
         service = AssistantService(user, handler, repo, redis)
 
-        # Given 1: Mock UploadFile
         mock_file = AsyncMock(spec=UploadFile)
         mock_file.filename = "receipt.jpg"
         mock_file.content_type = "image/jpeg"
         mock_file.read.return_value = b"valid_image_bytes"
 
-        # Given 2: OCR 및 LLM Mocking
         with patch("domains.assistant.service.ocr_client") as mock_ocr:
             mock_ocr.get_ocr_text = AsyncMock(return_value="콩나물 500원")
             handler.parse_receipt_ingredients.return_value = {"ingredients": ["콩나물"]}
 
-            # When
             result = await service.process_receipt_image(mock_file)
 
-            # Then
             mock_file.read.assert_called_once()
-
-            # OCR 한도 키 확인
             args, _ = redis.incr.call_args
             assert "limit:ocr" in args[0]
-
             mock_ocr.get_ocr_text.assert_called_once_with(b"valid_image_bytes", "jpg")
             handler.parse_receipt_ingredients.assert_called_once_with("콩나물 500원")
             assert result == {"ingredients": ["콩나물"]}
@@ -269,20 +252,15 @@ class TestAssistantService:
         user, repo, handler, redis = mock_deps
         service = AssistantService(user, handler, repo, redis)
 
-        # httpx.AsyncClient Mocking
         with patch("httpx.AsyncClient") as mock_client_cls:
             mock_client = mock_client_cls.return_value.__aenter__.return_value
-
-            # Mock Response 설정
             mock_response = MagicMock()
             mock_response.status_code = 200
             mock_response.json.return_value = {"results": [{"urls": {"regular": "https://api-result.com/img.jpg"}}]}
             mock_client.get.return_value = mock_response
 
-            # When
             url = await service._fetch_unsplash_image("Kimchi")
 
-            # Then
             assert url == "https://api-result.com/img.jpg"
             mock_client.get.assert_called_once()
             call_kwargs = mock_client.get.call_args.kwargs

@@ -1,4 +1,4 @@
-from sqlalchemy import select
+from sqlalchemy import select, func
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.ext.asyncio.session import AsyncSession
 
@@ -34,7 +34,7 @@ class UserRepository:
         return await self._get_one(User.email == email)
 
     async def get_user_by_nickname(self, nickname: str) -> User | None:
-        return await self._get_one(User.nickname == nickname)
+        return await self._get_one(func.lower(User.nickname) == nickname.lower())
 
     async def get_user_by_phone_num(self, phone_hash: str) -> User | None:
         return await self._get_one(User.phone_hash == phone_hash)

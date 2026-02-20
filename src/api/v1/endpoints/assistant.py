@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, UploadFile, File
+from fastapi import APIRouter, Depends, UploadFile, File, Query
 from core.di import get_assistant_service
 from domains.assistant.service import AssistantService
 from domains.assistant.schemas import (
@@ -44,9 +44,10 @@ COMMON_AI_EXCEPTIONS = [
     ),
 )
 async def get_recommendations(
+    force_refresh: bool = Query(False, description="True로 설정 시 기존 캐시를 무시하고 AI를 새로 호출합니다."),
     service: AssistantService = Depends(get_assistant_service),
 ):
-    return await service.recommend_menus()
+    return await service.recommend_menus(force_refresh=force_refresh)
 
 
 @router.post(

@@ -73,7 +73,13 @@ class UserService:
         if not user:
             raise UserNotFoundException()
 
-        return InfoResponse(email=user.email, nickname=user.nickname)
+        decrypted_phone = None
+        if user.phone:
+            decrypted_phone = security.decrypt_phone(user.phone)  # security 모듈의 복호화 함수 사용
+
+        return InfoResponse(
+            email=user.email, nickname=user.nickname, name=user.name, birth=user.birth, phone_num=decrypted_phone
+        )
 
     async def find_email(self, request: FindEmailRequest) -> FindEmailResponse:
         phone_hash = security.make_phone_hash(request.phone_num)
