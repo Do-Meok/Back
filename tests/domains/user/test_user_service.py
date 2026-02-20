@@ -1,8 +1,9 @@
 import pytest
-from unittest.mock import AsyncMock, patch
+from unittest.mock import AsyncMock, patch, MagicMock
 
+from domains.user.schemas.response import SignUpResponse
 from domains.user.service import UserService
-from domains.user.schemas import SignUpRequest, FindEmailRequest, ChangePasswordRequest, ChangeNicknameRequest
+from domains.user.schemas.request import SignUpRequest, FindEmailRequest, ChangePasswordRequest, ChangeNicknameRequest
 from domains.user.exceptions import DuplicateEmailException, PasswordMismatchException
 from domains.user.models import User
 
@@ -34,7 +35,13 @@ async def test_sign_up_success(user_service, mock_user_repo):
     # 중복 검사 통과 설정 (None 반환)
     mock_user_repo.get_user_by_email.return_value = None
     mock_user_repo.get_user_by_nickname.return_value = None
-    mock_user_repo.save_user.return_value = "saved_user_object"
+
+    # 2. save_user가 .email 속성을 가진 객체를 반환하도록 설정 (중요!)
+    # 문자열 "saved_user_object" 대신 Mock 객체나 User 인스턴스 사용
+    test_email = "new@test.com"
+    mock_saved_user = MagicMock(spec=User)
+    mock_saved_user.email = test_email
+    mock_user_repo.save_user.return_value = mock_saved_user
 
     request = SignUpRequest(
         email="new@test.com",
@@ -47,7 +54,12 @@ async def test_sign_up_success(user_service, mock_user_repo):
 
     with patch("domains.user.service.security.hash_password", return_value="hashed_pwd"):
         result = await user_service.sign_up(request)
-        assert result == "saved_user_object"
+        # 3. 검증: 결과는 SignUpResponse 타입이어야 함
+        assert isinstance(result, SignUpResponse)
+        assert result.email == test_email
+        assert result.message == "회원가입이 완료되었습니다."
+
+        # 레포지토리 호출 확인
         mock_user_repo.save_user.assert_called_once()
 
 
