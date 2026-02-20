@@ -48,6 +48,9 @@ class ChangeNicknameRequest(BaseModel):
 class InfoResponse(BaseModel):
     email: EmailStr
     nickname: str
+    name: str | None = None
+    birth: date | None = None
+    phone_num: str | None = None
 
 
 class FindEmailResponse(BaseModel):
