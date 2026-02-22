@@ -2,7 +2,7 @@ import pytest
 from unittest.mock import AsyncMock, patch
 
 from domains.auth.service import AuthService
-from domains.auth.schemas import LogInRequest, RefreshTokenRequest, LogOutRequest
+from domains.auth.schemas.request import LogInRequest, RefreshTokenRequest, LogOutRequest
 from domains.auth.exceptions import InvalidCredentialsException
 from domains.user.models import User
 
@@ -41,7 +41,7 @@ async def test_log_in_success(auth_service, mock_user_repo, mock_redis, mock_use
     with patch("domains.auth.service.security.verify_password", return_value=True):
         with patch("domains.auth.service.security.create_jwt", return_value="mock_access_token"):
             with patch("domains.auth.service.security.create_refresh_token", return_value="mock_refresh_token"):
-                response = await auth_service.log_in(request, req=AsyncMock())
+                response = await auth_service.log_in(request)
 
                 assert response.access_token == "mock_access_token"
                 assert response.refresh_token == "mock_refresh_token"
@@ -56,7 +56,7 @@ async def test_log_in_fail_invalid_credentials(auth_service, mock_user_repo):
 
     with patch("domains.auth.service.security.verify_password", return_value=False):
         with pytest.raises(InvalidCredentialsException):
-            await auth_service.log_in(request, req=AsyncMock())
+            await auth_service.log_in(request)
 
 
 @pytest.mark.asyncio
