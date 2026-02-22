@@ -12,8 +12,3 @@ class RefreshTokenRequest(BaseModel):
 
 class LogOutRequest(BaseModel):
     refresh_token: str
-
-
-class LogInResponse(BaseModel):
-    access_token: str
-    refresh_token: str
