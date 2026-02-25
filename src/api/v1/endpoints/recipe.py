@@ -33,3 +33,15 @@ async def get_recipes(
     service: RecipeService = Depends(get_recipe_service),
 ):
     return await service.get_recipes()
+
+
+@router.delete(
+    "/{recipe_id}",
+    status_code=204,
+    summary="레시피 삭제 API",
+)
+async def delete_recipes(
+    recipe_id: int,
+    service: RecipeService = Depends(get_recipe_service),
+):
+    return await service.delete_recipe(recipe_id)

@@ -16,7 +16,9 @@ class Refrigerator(Base):
     created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
 
     user = relationship("User", back_populates="refrigerator")
-    compartments = relationship("Compartment", back_populates="refrigerator")
+    compartments = relationship(
+        "Compartment", back_populates="refrigerator", cascade="all, delete-orphan", passive_deletes=True
+    )
 
 
 class Compartment(Base):
@@ -29,4 +31,6 @@ class Compartment(Base):
     created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
 
     refrigerator = relationship("Refrigerator", back_populates="compartments")
-    ingredients = relationship("Ingredient", back_populates="compartment")
+    ingredients = relationship(
+        "Ingredient", back_populates="compartment", cascade="all, delete-orphan", passive_deletes=True
+    )

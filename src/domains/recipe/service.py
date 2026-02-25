@@ -1,6 +1,6 @@
 from pydantic import ValidationError
 
-from domains.recipe.exception import RecipeDataCorruptionException
+from domains.recipe.exception import RecipeDataCorruptionException, RecipeNotFoundException
 from domains.recipe.repository import RecipeRepository
 from domains.recipe.schemas import SaveRecipeRequest, SavedRecipeResponse
 from domains.user.models import User
@@ -36,3 +36,14 @@ class RecipeService:
             result.append(dto)
 
         return result
+
+    async def delete_recipe(self, recipe_id: int):
+        recipe = await self.recipe_repo.get_recipe_by_id(recipe_id)
+
+        if not recipe:
+            raise RecipeNotFoundException()
+
+        if recipe.user_id != self.user.id:
+            raise RecipeNotFoundException(detail="삭제 권한이 없습니다.")
+
+        await self.recipe_repo.delete_recipe(recipe)

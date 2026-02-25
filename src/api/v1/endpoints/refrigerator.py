@@ -27,19 +27,15 @@ async def add_refrigerator(
 
 
 @router.get(
-    "/{refrigerator_id}",
-    summary="냉장고 조회 API",
-    response_model=GetRefrigeratorResponse,
+    "",
+    summary="냉장고 전체 조회 API",
+    response_model=list[GetRefrigeratorResponse],
 )
-async def get_refrigerator(
-    refrigerator_id: int,
+async def get_refrigerators(
     service: RefrigeratorService = Depends(get_refrigerator_service),
 ):
-    """
-    냉장고의 id를 입력하면 pos_x와 pos_y를 기반으로 냉장고의 이미지를 사각형으로 나타내고,
-    compartments를 통해 냉장고 칸 시각화함
-    """
-    return await service.get_refrigerator(refrigerator_id)
+    """현재 로그인한 사용자의 모든 냉장고 목록을 반환합니다."""
+    return await service.get_refrigerators()
 
 
 @router.get(
@@ -55,3 +51,32 @@ async def get_ingredients_by_compartment(
     냉장고의 칸 id를 입력하면, 어떤 식재료가 있는지 알려줌
     """
     return await service.get_ingredients_in_compartment(compartment_id)
+
+
+@router.get(
+    "/{refrigerator_id}",
+    summary="냉장고 세부 조회 API",
+    response_model=GetRefrigeratorResponse,
+)
+async def get_refrigerator(
+    refrigerator_id: int,
+    service: RefrigeratorService = Depends(get_refrigerator_service),
+):
+    """
+    냉장고의 id를 입력하면 pos_x와 pos_y를 기반으로 냉장고의 이미지를 사각형으로 나타내고,
+    compartments를 통해 냉장고 칸 시각화함
+    """
+    return await service.get_refrigerator(refrigerator_id)
+
+
+@router.delete(
+    "/{refrigerator_id}",
+    status_code=204,
+    summary="냉장고 삭제 API",
+)
+async def delete_refrigerator(
+    refrigerator_id: int,
+    service: RefrigeratorService = Depends(get_refrigerator_service),
+):
+    """냉장고 ID를 입력받아 삭제 (본인의 냉장고만 삭제 가능)"""
+    await service.delete_refrigerator(refrigerator_id)

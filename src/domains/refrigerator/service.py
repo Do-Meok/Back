@@ -32,6 +32,11 @@ class RefrigeratorService:
 
         return AddRefrigeratorResponse.model_validate(saved_refrigerator)
 
+    async def get_refrigerators(self) -> list[GetRefrigeratorResponse]:
+        """사용자의 모든 냉장고 조회"""
+        refrigerators = await self.refrigerator_repo.get_refrigerators(self.user.id)
+        return [GetRefrigeratorResponse.model_validate(r) for r in refrigerators]
+
     async def get_refrigerator(self, refrigerator_id: int) -> GetRefrigeratorResponse:
         refrigerator = await self.refrigerator_repo.get_refrigerator(refrigerator_id)
 
@@ -42,3 +47,15 @@ class RefrigeratorService:
             raise RefrigeratorNotFoundException(detail="접근 권한이 없는 냉장고입니다.")
 
         return refrigerator
+
+    async def delete_refrigerator(self, refrigerator_id: int) -> None:
+        """냉장고 삭제 (권한 확인 포함)"""
+        refrigerator = await self.refrigerator_repo.get_refrigerator(refrigerator_id)
+
+        if not refrigerator:
+            raise RefrigeratorNotFoundException(detail="삭제할 냉장고를 찾을 수 없습니다.")
+
+        if refrigerator.user_id != self.user.id:
+            raise RefrigeratorNotFoundException(detail="삭제 권한이 없습니다.")
+
+        await self.refrigerator_repo.delete_refrigerator(refrigerator)

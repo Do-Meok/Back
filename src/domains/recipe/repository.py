@@ -30,3 +30,16 @@ class RecipeRepository:
         except SQLAlchemyError as e:
             await self.session.rollback()
             raise DatabaseException(detail=f"레시피 조회 실패: {str(e)}")
+
+    async def get_recipe_by_id(self, recipe_id: int):
+        stmt = select(Recipe).where(Recipe.id == recipe_id)
+        result = await self.session.execute(stmt)
+        return result.scalar_one_or_none()
+
+    async def delete_recipe(self, recipe: Recipe) -> None:
+        try:
+            await self.session.delete(recipe)
+            await self.session.commit()
+        except SQLAlchemyError as e:
+            await self.session.rollback()
+            raise DatabaseException(detail=f"레시피 삭제 중 오류 발생: {str(e)}")
