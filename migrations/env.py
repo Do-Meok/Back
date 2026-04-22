@@ -88,7 +88,7 @@ else:
     # asyncio.run을 사용하여 비동기 함수 실행
     try:
         asyncio.run(run_migrations_online())
-    except (RuntimeError, DeprecationWarning):
+    except RuntimeError, DeprecationWarning:
         # 이미 루프가 돌아가고 있는 환경(일부 IDE 등) 대응
         loop = asyncio.get_event_loop()
         loop.run_until_complete(run_migrations_online())
