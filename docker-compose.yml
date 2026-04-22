@@ -3,8 +3,10 @@ services:
     image: augustzer0/do-meok:latest
     container_name: domeok-back
     depends_on:
-      - redis
-      - postgresql
+      postgresql:
+        condition: service_healthy
+      redis:
+          condition: service_healthy
     networks:
       - domeok-network   # DB, Redis 네트워크
       - npm-network  # Nginx (Reverse Proxy)
@@ -29,18 +31,27 @@ services:
       - domeok-network # 내부망에만 존재
     ports:
       - "5432:5432"
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U ${DB_USER} -d domeok" ]
+      interval: 5s
+      timeout: 5s
+      retries: 5
 
   redis:
-    image: redis:latest
+    image: redis:7-alpine
     container_name: domeok-redis
     restart: always
     environment:
-      - REDIS_HOST=redis_container
       - REDIS_PORT=6379
     volumes:
       - redis_data:/data
     networks:
       - domeok-network
+    healthcheck:
+      test: [ "CMD", "redis-cli", "ping" ]
+      interval: 5s
+      timeout: 3s
+      retries: 5
 
 networks:
   domeok-network:

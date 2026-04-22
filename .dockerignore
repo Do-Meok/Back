@@ -1,1 +1,6 @@
 .venv
+.git
+__pycache__
+.env
+tests/
+README.md
