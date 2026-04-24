@@ -1,19 +1,25 @@
-from sqlalchemy import Column, BigInteger, ForeignKey, String, DateTime
+from __future__ import annotations
+
+import uuid
+from typing import TYPE_CHECKING, Any
+from datetime import datetime
+
+from sqlalchemy import BigInteger, ForeignKey, String, DateTime
 from sqlalchemy.dialects.postgresql import JSONB
-from sqlalchemy.orm import relationship
-from sqlalchemy.types import Uuid
+from sqlalchemy.orm import Mapped, mapped_column, relationship
 from sqlalchemy.sql import func
 
 from core.database import Base
 
+if TYPE_CHECKING:
+    from domains.user.models import User
 
 class Recipe(Base):
     __tablename__ = "recipes"
+    id: Mapped[int] = mapped_column(BigInteger, primary_key=True, index=True)
+    user_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("users.id", ondelete="CASCADE"), index=True)
+    food_name: Mapped[str] = mapped_column(String(45))
+    recipe: Mapped[dict[str, Any]] = mapped_column(JSONB)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
 
-    id = Column(BigInteger, primary_key=True, index=True)
-    user_id = Column(Uuid(as_uuid=True), ForeignKey("users.id", ondelete="CASCADE"), nullable=False)
-    food_name = Column(String(45), nullable=False)
-    recipe = Column(JSONB, nullable=False)
-    created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
-
-    user = relationship("User", back_populates="recipes")
+    user: Mapped[User] = relationship(back_populates="recipes")
