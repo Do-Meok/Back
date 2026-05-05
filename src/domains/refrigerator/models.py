@@ -28,8 +28,11 @@ class Refrigerator(Base):
     user: Mapped[User] = relationship(back_populates="refrigerator")
 
     compartments: Mapped[list[Compartment]] = relationship(
-        back_populates="refrigerator", cascade="all, delete-orphan", passive_deletes=True,
+        back_populates="refrigerator",
+        cascade="all, delete-orphan",
+        passive_deletes=True,
     )
+
 
 class Compartment(Base):
     __tablename__ = "compartment"

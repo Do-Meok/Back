@@ -13,6 +13,7 @@ from core.database import Base
 if TYPE_CHECKING:
     from domains.user.models import User
 
+
 class Shopping(Base):
     __tablename__ = "shopping_list"
 
