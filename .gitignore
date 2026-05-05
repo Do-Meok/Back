@@ -10,3 +10,6 @@ __pycache__/
 .env.*
 docker-compose.dev.yml
 Dockerfile.dev
+
+# logs
+/logs

@@ -34,7 +34,11 @@ class Ingredient(Base):
 
     # 릴레이션
     user: Mapped[User] = relationship(back_populates="ingredients")
+<<<<<<< refactor/etc
+    compartment: Mapped[Compartment | None] = relationship("Compartment", back_populates="ingredients")
+=======
     compartment: Mapped[Compartment] = relationship("Compartment", back_populates="ingredients")
+>>>>>>> main
 
 
     __table_args__ = (
