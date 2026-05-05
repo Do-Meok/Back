@@ -14,6 +14,7 @@ from core.database import Base
 if TYPE_CHECKING:
     from domains.user.models import User
 
+
 class Recipe(Base):
     __tablename__ = "recipes"
     id: Mapped[int] = mapped_column(BigInteger, primary_key=True, index=True)

@@ -4,6 +4,7 @@ from loguru import logger
 
 _is_configured = False
 
+
 def setup_logger() -> None:
     global _is_configured
     if _is_configured:
