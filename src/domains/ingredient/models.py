@@ -34,7 +34,7 @@ class Ingredient(Base):
 
     # 릴레이션
     user: Mapped[User] = relationship(back_populates="ingredients")
-    compartment: Mapped[Compartment] = relationship("Compartment", back_populates="ingredients")
+    compartment: Mapped[Compartment | None] = relationship("Compartment", back_populates="ingredients")
 
 
     __table_args__ = (

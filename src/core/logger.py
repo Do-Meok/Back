@@ -1,9 +1,16 @@
+from pathlib import Path
 import sys
-
 from loguru import logger
 
-def setup_logger():
-    # 기본 핸들러 제거 (중복 방지)
+_is_configured = False
+
+def setup_logger() -> None:
+    global _is_configured
+    if _is_configured:
+        return
+
+    Path("logs").mkdir(exist_ok=True)
+
     logger.remove()
 
     # 콘솔 출력용
@@ -24,3 +31,4 @@ def setup_logger():
         compression="zip",  # 압축해서 보관 (용량 절약)
         encoding="utf-8",
     )
+    _is_configured = True

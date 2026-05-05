@@ -1,6 +1,8 @@
 import time
 
+from contextlib import asynccontextmanager
 from fastapi import FastAPI, Request
+from core.logger import setup_logger
 from fastapi.exceptions import RequestValidationError
 from starlette.exceptions import HTTPException as StarletteHTTPException
 
@@ -12,11 +14,13 @@ from core.exception.handlers import (
     http_exception_handler,
     validation_exception_handler,
 )
-from core.logger import setup_logger
 
-app = FastAPI()
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    setup_logger()
+    yield
 
-setup_logger()
+app = FastAPI(lifespan=lifespan)
 
 app.add_exception_handler(BaseCustomException, custom_exception_handler)
 app.add_exception_handler(Exception, system_exception_handler)

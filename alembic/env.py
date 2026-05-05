@@ -31,8 +31,9 @@ config.set_main_option("sqlalchemy.url", settings.POSTGRES_DATABASE_URL)
 if config.config_file_name is not None:
     fileConfig(config.config_file_name)
 
-for loader, module_name, is_pkg in pkgutil.walk_packages(domains.__path__, domains.__name__ + "."):
-    importlib.import_module(module_name)
+for _, module_name, is_pkg in pkgutil.walk_packages(domains.__path__, domains.__name__ + "."):
+    if not is_pkg and module_name.endswith(".models"):
+        importlib.import_module(module_name)
 
 # add your model's MetaData object here
 # for 'autogenerate' support

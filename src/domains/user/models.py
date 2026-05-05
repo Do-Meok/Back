@@ -28,7 +28,7 @@ class User(Base):
     # 개인정보 영역
     name: Mapped[str | None] = mapped_column(String(20))
     birth: Mapped[date | None] = mapped_column(Date)
-    phone_encrypt: Mapped[str | None] = mapped_column(String(128))
+    phone: Mapped[str | None] = mapped_column("phone_encrypt", String(128))
     phone_hash: Mapped[str | None] = mapped_column(String(128), unique=True)
 
     # 소셜 로그인 영역
