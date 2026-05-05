@@ -7,7 +7,9 @@ class ErrorCode(str, Enum):
     # ----------------------------------------
     NOT_FOUND = "NOT_FOUND"  # 데이터 없음 (범용)
     INVALID_INPUT_VALUE = "INVALID_INPUT_VALUE"  # 유효하지 않은 입력 (범용)
+    VALIDATION_ERROR = "VALIDATION_ERROR"  # 요청 본문/쿼리 파라미터 검증 실패
     UNAUTHORIZED = "UNAUTHORIZED"  # 인증 필요 (로그인 안함)
+    HTTP_ERROR = "HTTP_ERROR"  # 프레임워크 기본 HTTP 예외
     INTERNAL_SERVER_ERROR = "INTERNAL_SERVER_ERROR"  # 서버 내부 에러
 
     # ----------------------------------------

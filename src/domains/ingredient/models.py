@@ -14,6 +14,7 @@ if TYPE_CHECKING:
     from domains.user.models import User
     from domains.refrigerator.models import Compartment
 
+
 class Ingredient(Base):
     __tablename__ = "ingredients"
 
@@ -39,7 +40,6 @@ class Ingredient(Base):
 =======
     compartment: Mapped[Compartment] = relationship("Compartment", back_populates="ingredients")
 >>>>>>> main
-
 
     __table_args__ = (
         # user_id와 compartment_id를 묶어서 인덱스 생성

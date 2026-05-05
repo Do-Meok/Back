@@ -15,10 +15,12 @@ from core.exception.handlers import (
     validation_exception_handler,
 )
 
+
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     setup_logger()
     yield
+
 
 app = FastAPI(lifespan=lifespan)
 
@@ -28,6 +30,7 @@ app.add_exception_handler(StarletteHTTPException, http_exception_handler)
 app.add_exception_handler(RequestValidationError, validation_exception_handler)
 
 app.include_router(api_router, prefix="/api/v1")
+
 
 @app.middleware("http")
 async def add_process_time_header(request: Request, call_next):
@@ -45,6 +48,7 @@ async def add_process_time_header(request: Request, call_next):
 @app.get("/health", status_code=200)
 def health_check():
     return {"status": "ok"}
+
 
 @app.get("/a", status_code=200)
 async def error_aa():
