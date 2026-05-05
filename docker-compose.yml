@@ -12,6 +12,7 @@ services:
       - npm-network  # Nginx (Reverse Proxy)
     environment:
       - TZ=Asia/Seoul
+      - DB_HOST=domeok-db
     labels:
       - "share.log=true"
 

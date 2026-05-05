@@ -1,4 +1,4 @@
-from core.exception.errors import ErrorCode
+from core.exception.codes import ErrorCode
 from core.exception.exceptions import BaseCustomException
 
 
