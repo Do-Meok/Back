@@ -1,15 +1,20 @@
 # Python
 __pycache__/
+*.py[oc]
 *.py[cod]
 *$py.class
-.venv/
-.idea/
+build/
+dist/
+wheels/
+*.egg-info
+
+.venv
+.idea
+.coverage
 
 # Environments
 .env
 .env.*
-docker-compose.dev.yml
-Dockerfile.dev
 
 # logs
 /logs

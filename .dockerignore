@@ -1,6 +1,8 @@
-.venv
-.git
-__pycache__
 .env
-README.md
-/logs
+.git
+.venv
+.pytest_cache
+.ruff_cache
+.coverage
+logs/
+.idea/
