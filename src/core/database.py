@@ -1,22 +1,20 @@
-import redis.asyncio as redis
+from collections.abc import AsyncGenerator  # get_db() 함수가 비동기 제너레이터 형태로 값을 반환한다는 것을 명시하기 위함(타입 힌팅)
+
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
 from sqlalchemy.orm import DeclarativeBase
 
 from core.config import settings
 
-POSTGRES_DATABASE_URL = settings.POSTGRES_DATABASE_URL
-
 engine = create_async_engine(
-    POSTGRES_DATABASE_URL,
-    echo=True,  # 개발 중에는 쿼리 로그 보기
+    settings.database_url,
+    echo=True,
+    pool_pre_ping=True,
 )
 
 async_session_factory = async_sessionmaker(
-    bind=engine,
+    engine,
     class_=AsyncSession,
     expire_on_commit=False,
-    autoflush=False,
-    autocommit=False,
 )
 
 
@@ -24,17 +22,11 @@ class Base(DeclarativeBase):
     pass
 
 
-async def get_db():
+async def get_db() -> AsyncGenerator[AsyncSession]:
     async with async_session_factory() as session:
-        yield session
-
-
-redis_pool = redis.ConnectionPool.from_url(settings.REDIS_URL, decode_responses=True, encoding="utf-8")
-
-
-async def get_redis():
-    client = redis.Redis(connection_pool=redis_pool)
-    try:
-        yield client
-    finally:
-        await client.close()
+        try:
+            yield session
+            await session.commit()
+        except Exception:
+            await session.rollback()
+            raise
