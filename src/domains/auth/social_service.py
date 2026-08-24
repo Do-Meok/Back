@@ -7,7 +7,7 @@ from core import security
 from core.config import settings
 from domains.auth.exceptions import InvalidCredentialsException, OAuthStateMismatchException
 from domains.auth.schemas.response import LogInResponse
-from domains.user.models import User
+from domains.user.model import User
 from domains.user.repository import UserRepository
 
 

@@ -7,7 +7,7 @@ from domains.ingredient.exceptions import (
     NotFoundException,
     ValueNotFoundException,
 )
-from domains.ingredient.models import (
+from domains.ingredient.model import (
     ExpiryDeviationLog,
     Ingredient,
     MissingIngredientLog,
@@ -23,7 +23,7 @@ from domains.ingredient.schemas import (
     StorageType,
     UpdateIngredientRequest,
 )
-from domains.user.models import User
+from domains.user.model import User
 
 
 class IngredientService:

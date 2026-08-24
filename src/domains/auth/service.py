@@ -7,14 +7,14 @@ from core import security
 from domains.auth.exceptions import InvalidCredentialsException, TokenExpiredException, TokenForbiddenException
 from domains.auth.schemas.request import LogInRequest, LogOutRequest, RefreshTokenRequest
 from domains.auth.schemas.response import LogInResponse
-from domains.user.models import User
+from domains.user.model import User
 from domains.user.repository import UserRepository
 
 
 class AuthService:
     """사용자 인증관련 서비스"""
 
-    def __init__(self, user_repo: UserRepository, redis: Redis):
+    def __init__(self, user_repo: UserRepository, refresh_store: RefreshTokenStore) -> None:
         self.user_repo = user_repo
         self.redis = redis
         self.RT_PREFIX = "RT:"  # Refresh Token Prefix

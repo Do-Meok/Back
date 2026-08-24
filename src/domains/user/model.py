@@ -12,8 +12,8 @@ from core.database import Base
 
 # 순환 참조 에러 해결
 if TYPE_CHECKING:
-    from domains.ingredient.models import Ingredient
-    from domains.recipe.models import Recipe
+    from domains.ingredient.model import Ingredient
+    from domains.recipe.model import Recipe
 
 
 class User(Base):

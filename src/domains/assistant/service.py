@@ -11,7 +11,7 @@ from domains.assistant.exceptions import InvalidAIRequestException
 from domains.assistant.llm_handler import LLMHandler
 from domains.assistant.schemas import DetailRecipeRequest, DetailRecipeResponse, RecommendationResponse
 from domains.ingredient.repository import IngredientRepository
-from domains.user.models import User
+from domains.user.model import User
 
 LIMIT_RECIPE_DAILY = 10  # 하루 레시피 10회
 LIMIT_OCR_DAILY = 2  # 하루 영수증 2회

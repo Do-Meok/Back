@@ -1,38 +1,29 @@
+import uuid
+
 from sqlalchemy import func, select
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.ext.asyncio.session import AsyncSession
 
-from core.exception.exceptions import DatabaseException, UnexpectedException
-from domains.user.models import User
+from core.exception.exceptions import DatabaseException
+from domains.user.model import User
 
 
 class UserRepository:
     def __init__(self, session: AsyncSession):
         self.session = session
 
-    async def _commit_or_rollback(self, user: User, error_msg: str) -> User:
-        """세션 변경사항을 반영(commit)하거나 실패 시 롤백합니다."""
-        try:
-            self.session.add(user)
-            await self.session.commit()
-            await self.session.refresh(user)
-            return user
-        except SQLAlchemyError as e:
-            await self.session.rollback()
-            raise DatabaseException(detail=f"{error_msg}: {e!s}")
-
-    async def _get_one(self, *where_conditions) -> User | None:
+    async def _get_one(self, *args) -> User | None:
         """조건에 맞는 엔티티 조회"""
         try:
-            stmt = select(User).where(*where_conditions)
+            stmt = select(User).where(*args)
             result = await self.session.execute(stmt)
             return result.scalar_one_or_none()
         except SQLAlchemyError as e:
-            raise DatabaseException(detail=f"DB 조회 오류: {e!s}")
-        except Exception as e:
-            raise UnexpectedException(detail=f"예기치 못한 에러: {e!s}")
+            raise DatabaseException(
+                detail="사용자 조회 중 DB 오류가 발생했습니다."
+            ) from e
 
-    async def get_user_by_id(self, user_id: str) -> User | None:
+    async def get_user_by_id(self, user_id: uuid.UUID) -> User | None:
         """고유ID 정보로 조회"""
         return await self._get_one(User.id == user_id)
 
@@ -49,10 +40,14 @@ class UserRepository:
         return await self._get_one(User.phone_hash == phone_hash)
 
     async def save_user(self, user: User) -> User:
-        return await self._commit_or_rollback(user, "유저 저장 실패")
-
-    async def update_user(self, user: User) -> None:
-        await self._commit_or_rollback(user, "데이터 업데이트 실패")
+        try:
+            self.session.add(user)
+            await self.session.flush()
+            return user
+        except SQLAlchemyError as e:
+            raise DatabaseException(
+                detail="사용자 저장 중 DB 오류가 발생했습니다."
+            ) from e
 
     async def find_user_by_recovery_info(self, name: str, birth: str, phone_hash: str) -> User | None:
         """

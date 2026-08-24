@@ -8,10 +8,11 @@ from domains.user.exceptions import (
     PasswordUnchangedException,
     UserNotFoundException,
 )
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, status
 
-from api.v1.deps import get_current_user, get_user_service
+from api.v1.deps import get_current_user, get_user_service, get_auth_service
 from core.exception.openapi import create_error_response
+from domains.auth.service import AuthService
 from domains.user.schemas.request import (
     ChangeNicknameRequest,
     ChangePasswordRequest,
@@ -19,7 +20,7 @@ from domains.user.schemas.request import (
     ResetPasswordRequest,
     SignUpRequest,
 )
-from domains.user.schemas.response import FindEmailResponse, InfoResponse, SignUpResponse
+from domains.user.schemas.response import FindEmailResponse, UserInfoResponse, SignUpResponse
 from domains.user.service import UserService
 
 router = APIRouter()
@@ -27,7 +28,7 @@ router = APIRouter()
 
 @router.post(
     "/sign-up",
-    status_code=201,
+    status_code=status.HTTP_201_CREATED,
     summary="회원가입 API",
     response_model=SignUpResponse,
     responses=create_error_response(
@@ -37,15 +38,25 @@ router = APIRouter()
         InvalidCheckedPasswordException,
     ),
 )
-async def user_sign_up(request: SignUpRequest, user_service: UserService = Depends(get_user_service)):
-    return await user_service.sign_up(request)
+async def user_sign_up(
+        request: SignUpRequest,
+        user_service: UserService = Depends(get_user_service),
+        auth_service: AuthService = Depends(get_auth_service),
+) -> SignUpResponse:
+    user = await user_service.sign_up(request)
+    tokens = await auth_service.issue_tokens(user)
+    return SignUpResponse(
+        info=UserInfoResponse.from_user(user),
+        access_token=tokens.access_token,
+        refresh_token=tokens.refresh_token,
+    )
 
 
 @router.get(
     "/info",
     status_code=200,
     summary="유저 정보 호출 API",
-    response_model=InfoResponse,
+    response_model=UserInfoResponse,
     responses=create_error_response(UserNotFoundException),
 )
 async def user_info(

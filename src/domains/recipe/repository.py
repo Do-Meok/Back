@@ -5,7 +5,7 @@ from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from core.exception.exceptions import DatabaseException
-from domains.recipe.models import Recipe
+from domains.recipe.model import Recipe
 
 
 class RecipeRepository:

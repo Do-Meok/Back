@@ -3,7 +3,7 @@ from uuid import UUID
 from core import security
 from core.exception.codes import ErrorCode
 from core.exception.exceptions import BadRequestException, ConflictException, UserNotFoundException
-from domains.user.models import User
+from domains.user.model import User
 from domains.user.repository import UserRepository
 from domains.user.schemas.request import (
     ChangeNicknameRequest,
@@ -12,14 +12,14 @@ from domains.user.schemas.request import (
     ResetPasswordRequest,
     SignUpRequest,
 )
-from domains.user.schemas.response import FindEmailResponse, InfoResponse
+from domains.user.schemas.response import FindEmailResponse, UserInfoResponse
 
 
 class UserService:
     def __init__(self, user_repo: UserRepository):
         self.user_repo = user_repo
 
-    async def sign_up(self, request: SignUpRequest):
+    async def sign_up(self, request: SignUpRequest) -> User:
         # 1. 중복 및 유효성 검증
         if await self.user_repo.get_user_by_email(str(request.email)):
             raise ConflictException(
@@ -46,9 +46,9 @@ class UserService:
             nickname=request.nickname,
         )
 
-        return await self.user_repo.add_user(user)
+        return await self.user_repo.save_user(user)
 
-    async def get_user_info(self, user_id: UUID) -> InfoResponse:
+    async def get_user_info(self, user_id: UUID) -> UserInfoResponse:
         """
         특정 유저의 프로필 정보를 조회
         암호화된 전화번호는 복호화하여 반환함
@@ -60,7 +60,8 @@ class UserService:
 
         decrypted_phone = security.decrypt_phone(user.phone) if user.phone else None
 
-        return InfoResponse(**user.__dict__, phone_num=decrypted_phone)
+        return UserInfoResponse.from_user(user, phone_num=decrypted_phone)
+'''
 
     async def find_email(self, request: FindEmailRequest) -> FindEmailResponse:
         """본인 인증 정보를 바탕으로 가입된 이메일을 찾음"""
@@ -95,7 +96,7 @@ class UserService:
 
         # 새 비밀번호 해시화해서 저장
         user.password = security.hash_password(request.new_password)
-        await self.user_repo.update_user(user)
+        await self.user_repo.save_user(user)
 
     async def reset_password(self, request: ResetPasswordRequest) -> None:
         """비밀번호 분실 시 인증 정보를 확인하여 비밀번호를 재설정"""
@@ -116,7 +117,7 @@ class UserService:
 
         # 변경할 비밀번호 해시화해서 저
         user.password = security.hash_password(request.new_password)
-        await self.user_repo.update_user(user)
+        await self.user_repo.save_user(user)
 
     async def change_nickname(self, request: ChangeNicknameRequest, user_id: str) -> None:
         """사용자의 닉네임을 변경, 중복 닉네임 로직 포함"""
@@ -132,4 +133,5 @@ class UserService:
             raise DuplicateNicknameException(detail="이미 사용 중인 닉네임입니다.")
 
         user.nickname = request.nickname
-        await self.user_repo.update_user(user)
+        await self.user_repo.save_user(user)
+'''

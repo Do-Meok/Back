@@ -5,7 +5,7 @@ from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from core.exception.exceptions import DatabaseException
-from domains.ingredient.models import (
+from domains.ingredient.model import (
     ExpiryDeviationLog,
     Ingredient,
     IngredientExpiry,

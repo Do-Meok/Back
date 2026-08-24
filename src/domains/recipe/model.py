@@ -12,7 +12,7 @@ from sqlalchemy.types import JSON
 from core.database import Base
 
 if TYPE_CHECKING:
-    from domains.user.models import User
+    from domains.user.model import User
 
 
 class Recipe(Base):
