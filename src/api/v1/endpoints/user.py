@@ -1,6 +1,3 @@
-from fastapi import APIRouter, Depends
-
-from core.di import get_current_user, get_user_service
 from domains.user.exceptions import (
     DuplicateEmailException,
     DuplicateNicknameException,
@@ -11,6 +8,10 @@ from domains.user.exceptions import (
     PasswordUnchangedException,
     UserNotFoundException,
 )
+from fastapi import APIRouter, Depends
+
+from api.v1.deps import get_current_user, get_user_service
+from core.exception.openapi import create_error_response
 from domains.user.schemas.request import (
     ChangeNicknameRequest,
     ChangePasswordRequest,
@@ -20,7 +21,6 @@ from domains.user.schemas.request import (
 )
 from domains.user.schemas.response import FindEmailResponse, InfoResponse, SignUpResponse
 from domains.user.service import UserService
-from core.exception.openapi import create_error_response
 
 router = APIRouter()
 

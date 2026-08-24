@@ -1,22 +1,21 @@
-import hmac
 import hashlib
+import hmac
 import secrets
 import uuid
-import jwt
-
 from base64 import urlsafe_b64encode
-from datetime import datetime, timezone, timedelta
+from datetime import UTC, datetime, timedelta
 
+import jwt
+from cryptography.fernet import Fernet
 from fastapi import Depends
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from pwdlib import PasswordHash
 from pwdlib.hashers.argon2 import Argon2Hasher
-from cryptography.fernet import Fernet
 
 from core.config import settings
 from core.exception.exceptions import (
-    TokenExpiredException,
     InvalidTokenException,
+    TokenExpiredException,
     UnAuthorizedException,
 )
 
@@ -35,6 +34,7 @@ password_hasher = PasswordHash((Argon2Hasher(),))
 security_scheme = HTTPBearer(auto_error=False)
 cipher_suite = Fernet(FERNET_KEY.encode("utf-8"))
 
+
 # --- 비밀번호 관련 ---
 def hash_password(plain_password: str) -> str:
     return password_hasher.hash(plain_password)
@@ -42,6 +42,7 @@ def hash_password(plain_password: str) -> str:
 
 def verify_password(plain_password: str, hashed_password: str) -> bool:
     return password_hasher.verify(plain_password, hashed_password)
+
 
 # --- 전화번호 암호화 (양방향) ---
 def encrypt_phone(plain_phone: str) -> str:
@@ -64,7 +65,7 @@ def make_phone_hash(phone: str) -> str:
 
 # --- JWT 토큰 관련 ---
 def create_jwt(user_id: uuid.UUID) -> str:
-    now = datetime.now(timezone.utc)
+    now = datetime.now(UTC)
     payload = {
         "sub": str(user_id),
         "iat": int(now.timestamp()),
@@ -92,8 +93,10 @@ def decode_jwt(access_token: str) -> str:
 def create_refresh_token() -> str:
     return secrets.token_hex(32)
 
+
 def hash_refresh_token(raw_token: str) -> str:
     return hashlib.sha256(raw_token.encode("utf-8")).hexdigest()
+
 
 def get_access_token(
     auth_header: HTTPAuthorizationCredentials | None = Depends(security_scheme),
@@ -101,4 +104,3 @@ def get_access_token(
     if auth_header is None:
         raise UnAuthorizedException()
     return auth_header.credentials
-

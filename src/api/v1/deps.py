@@ -1,3 +1,5 @@
+from domains.shopping.repository import ShoppingRepository
+from domains.shopping.service import ShoppingService
 from fastapi import Depends
 from redis.asyncio import Redis
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -12,8 +14,6 @@ from domains.ingredient.repository import IngredientRepository
 from domains.ingredient.service import IngredientService
 from domains.recipe.repository import RecipeRepository
 from domains.recipe.service import RecipeService
-from domains.shopping.repository import ShoppingRepository
-from domains.shopping.service import ShoppingService
 from domains.user.models import User
 from domains.user.repository import UserRepository
 from domains.user.service import UserService

@@ -1,4 +1,6 @@
-from collections.abc import AsyncGenerator  # get_db() 함수가 비동기 제너레이터 형태로 값을 반환한다는 것을 명시하기 위함(타입 힌팅)
+from collections.abc import (
+    AsyncGenerator,  # get_db() 함수가 비동기 제너레이터 형태로 값을 반환한다는 것을 명시하기 위함(타입 힌팅)
+)
 
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
 from sqlalchemy.orm import DeclarativeBase

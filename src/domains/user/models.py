@@ -1,27 +1,25 @@
-from __future__ import annotations
+from __future__ import annotations  # 순환 참조 에러 해결
 
-import uuid
 from datetime import date, datetime
 from typing import TYPE_CHECKING
 
+import uuid6  # 추후 인덱싱 고려했을 때, uuid와 다르게 uuid6 라이브러리를 사용했을 경우, 생성된 시간 정보가 앞에 들어감. 물론 여기서 uuid6를 배정하진 않음
 from sqlalchemy import Date, DateTime, Index, String, func, text
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from core.database import Base
 
+# 순환 참조 에러 해결
 if TYPE_CHECKING:
-    from domains.refrigerator.models import Refrigerator
-
     from domains.ingredient.models import Ingredient
     from domains.recipe.models import Recipe
-    from domains.shopping.models import Shopping
 
 
 class User(Base):
     __tablename__ = "users"
 
-    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid7)
+    id: Mapped[uuid6.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid6.uuid7)
     email: Mapped[str | None] = mapped_column(String(128), unique=True)
     password: Mapped[str | None] = mapped_column(String(128))
     nickname: Mapped[str] = mapped_column(String(20))
@@ -36,18 +34,12 @@ class User(Base):
     provider: Mapped[str] = mapped_column(String(10), default="local")
     social_id: Mapped[str | None] = mapped_column(String(128), unique=True)
 
-    # 삭제시기 및 생성시기
-    deleted_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    # 생성시기
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
 
     # 릴레이션
     ingredients: Mapped[list[Ingredient]] = relationship(back_populates="user")
     recipes: Mapped[list[Recipe]] = relationship(back_populates="user")
-    shopping_list: Mapped[list[Shopping]] = relationship(back_populates="user")
-    refrigerator: Mapped[list[Refrigerator]] = relationship(back_populates="user")
-
-    expiry_deviation_logs = relationship("ExpiryDeviationLog", back_populates="user")
-    missing_ingredients_logs = relationship("MissingIngredientLog", back_populates="user")
 
     __table_args__ = (
         # 닉네임 대소문자 중복 닉네임 방지

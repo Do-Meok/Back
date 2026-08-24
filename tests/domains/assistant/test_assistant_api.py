@@ -2,7 +2,7 @@ from unittest.mock import AsyncMock
 
 import pytest
 
-from core.di import get_assistant_service
+from api.v1.deps import get_assistant_service
 from domains.assistant.exceptions import InvalidAIRequestException
 from domains.assistant.schemas import ReceiptIngredientResponse, RecommendationItem, RecommendationResponse
 from main import app

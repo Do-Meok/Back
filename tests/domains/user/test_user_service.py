@@ -1,8 +1,8 @@
 from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
-
 from domains.user.exceptions import DuplicateEmailException, PasswordMismatchException
+
 from domains.user.models import User
 from domains.user.schemas.request import ChangeNicknameRequest, ChangePasswordRequest, FindEmailRequest, SignUpRequest
 from domains.user.schemas.response import SignUpResponse

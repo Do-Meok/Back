@@ -10,7 +10,7 @@ from sqlalchemy.pool import NullPool
 from testcontainers.postgres import PostgresContainer
 
 from core.database import Base, get_db, get_redis  # [중요] get_redis 임포트
-from core.di import get_current_user
+from api.v1.deps import get_current_user
 from domains.user.models import User
 from main import app
 

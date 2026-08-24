@@ -14,9 +14,7 @@ class BaseCustomException(Exception):
 # ----------------------------------------
 class UnexpectedException(BaseCustomException):
     def __init__(self, detail: str = "서버 내부 오류"):
-        super().__init__(
-            status_code=500, code=ErrorCode.INTERNAL_SERVER_ERROR, detail=detail
-        )
+        super().__init__(status_code=500, code=ErrorCode.INTERNAL_SERVER_ERROR, detail=detail)
 
 
 class DatabaseException(BaseCustomException):
@@ -66,9 +64,7 @@ class ExternalServiceException(BaseCustomException):
         self,
         detail: str = "외부 서비스 연동 중 오류가 발생하였습니다.",
     ):
-        super().__init__(
-            status_code=502, code=ErrorCode.EXTERNAL_SERVICE_ERROR, detail=detail
-        )
+        super().__init__(status_code=502, code=ErrorCode.EXTERNAL_SERVICE_ERROR, detail=detail)
 
 
 # ----------------------------------------

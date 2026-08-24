@@ -1,6 +1,7 @@
 from fastapi import APIRouter, Depends, File, Query, UploadFile
 
-from core.di import get_assistant_service
+from api.v1.deps import get_assistant_service
+from core.exception.openapi import create_error_response
 from domains.assistant.exceptions import (
     AIConnectionException,
     AIJsonDecodeException,
@@ -20,7 +21,6 @@ from domains.assistant.schemas import (
     SearchRecipeRequest,
 )
 from domains.assistant.service import AssistantService
-from core.exception.openapi import create_error_response
 
 router = APIRouter()
 

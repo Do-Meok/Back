@@ -3,7 +3,7 @@ from unittest.mock import AsyncMock
 import pytest
 
 from core import security
-from core.di import get_social_auth_service
+from api.v1.deps import get_social_auth_service
 from main import app
 
 PASSWORD = "password123!"

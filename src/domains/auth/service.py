@@ -1,12 +1,12 @@
+from domains.user.exceptions import (
+    UserNotFoundException,
+)
 from redis.asyncio import Redis
 
 from core import security
 from domains.auth.exceptions import InvalidCredentialsException, TokenExpiredException, TokenForbiddenException
 from domains.auth.schemas.request import LogInRequest, LogOutRequest, RefreshTokenRequest
 from domains.auth.schemas.response import LogInResponse
-from domains.user.exceptions import (
-    UserNotFoundException,
-)
 from domains.user.models import User
 from domains.user.repository import UserRepository
 

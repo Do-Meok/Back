@@ -1,9 +1,8 @@
 from uuid import UUID
 
 from core import security
-from core.exception.exceptions import ConflictException, BadRequestException, UserNotFoundException
 from core.exception.codes import ErrorCode
-
+from core.exception.exceptions import BadRequestException, ConflictException, UserNotFoundException
 from domains.user.models import User
 from domains.user.repository import UserRepository
 from domains.user.schemas.request import (
@@ -13,7 +12,7 @@ from domains.user.schemas.request import (
     ResetPasswordRequest,
     SignUpRequest,
 )
-from domains.user.schemas.response import FindEmailResponse, InfoResponse, SignUpResponse
+from domains.user.schemas.response import FindEmailResponse, InfoResponse
 
 
 class UserService:
@@ -62,8 +61,6 @@ class UserService:
         decrypted_phone = security.decrypt_phone(user.phone) if user.phone else None
 
         return InfoResponse(**user.__dict__, phone_num=decrypted_phone)
-
-
 
     async def find_email(self, request: FindEmailRequest) -> FindEmailResponse:
         """본인 인증 정보를 바탕으로 가입된 이메일을 찾음"""

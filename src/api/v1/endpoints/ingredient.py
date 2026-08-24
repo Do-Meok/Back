@@ -1,6 +1,7 @@
 from fastapi import APIRouter, Depends
 
-from core.di import get_ingredient_service
+from api.v1.deps import get_ingredient_service
+from core.exception.openapi import create_error_response
 from domains.ingredient.exceptions import (
     IngredientNotFoundException,
 )
@@ -11,7 +12,6 @@ from domains.ingredient.schemas import (
     StorageType,
 )
 from domains.ingredient.service import IngredientService
-from core.exception.openapi import create_error_response
 
 router = APIRouter()
 

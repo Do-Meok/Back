@@ -1,10 +1,10 @@
 from fastapi import APIRouter, Depends
 
-from core.di import get_recipe_service
+from api.v1.deps import get_recipe_service
+from core.exception.openapi import create_error_response
 from domains.recipe.exception import RecipeDataCorruptionException
 from domains.recipe.schemas import SavedRecipeResponse, SaveRecipeRequest
 from domains.recipe.service import RecipeService
-from core.exception.openapi import create_error_response
 
 router = APIRouter()
 

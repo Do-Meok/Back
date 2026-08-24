@@ -1,9 +1,9 @@
-from fastapi import APIRouter, Depends
-
-from core.di import get_shopping_service
 from domains.shopping.exception import ItemNotFoundException
 from domains.shopping.schemas import AddItemRequest, AddItemResponse, GetItemResponse
 from domains.shopping.service import ShoppingService
+from fastapi import APIRouter, Depends
+
+from api.v1.deps import get_shopping_service
 from core.exception.openapi import create_error_response
 
 router = APIRouter()

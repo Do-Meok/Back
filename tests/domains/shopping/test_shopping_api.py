@@ -3,7 +3,7 @@ from unittest.mock import AsyncMock
 import pytest
 from fastapi.testclient import TestClient
 
-from core.di import get_shopping_service
+from api.v1.deps import get_shopping_service
 from domains.shopping.exception import ItemNotFoundException
 from domains.shopping.schemas import AddItemResponse, GetItemResponse
 from main import app  # FastAPI 앱 인스턴스 (main.py에 있다고 가정)
