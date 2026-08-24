@@ -11,7 +11,7 @@ from domains.ingredient.schemas import (
     StorageType,
 )
 from domains.ingredient.service import IngredientService
-from util.docs import create_error_response
+from core.exception.openapi import create_error_response
 
 router = APIRouter()
 

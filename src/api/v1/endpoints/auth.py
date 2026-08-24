@@ -11,7 +11,7 @@ from domains.auth.schemas.request import LogInRequest, LogOutRequest, RefreshTok
 from domains.auth.schemas.response import KaKaoAuthUrlResponse, LogInResponse
 from domains.auth.service import AuthService
 from domains.auth.social_service import SocialAuthService
-from util.docs import create_error_response
+from core.exception.openapi import create_error_response
 
 router = APIRouter()
 

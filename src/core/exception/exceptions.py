@@ -1,34 +1,103 @@
-# src/core/exceptions.py
-from typing import Any
-
-from pydantic import BaseModel, Field
+from core.exception.codes import ErrorCode
 
 
 class BaseCustomException(Exception):
-    def __init__(self, status_code: int, code: str, detail: str):
+    def __init__(self, status_code: int, code: str | ErrorCode, detail: str):
         self.status_code = status_code
         self.code = code
         self.detail = detail
         super().__init__(detail)
 
 
-class DatabaseException(BaseCustomException):
-    def __init__(self, detail: str = "데이터베이스 에러"):
-        super().__init__(status_code=500, code="DB_ERROR", detail=detail)
-
-
+# ----------------------------------------
+# 1. 공통
+# ----------------------------------------
 class UnexpectedException(BaseCustomException):
     def __init__(self, detail: str = "서버 내부 오류"):
-        super().__init__(status_code=500, code="SERVER_ERROR", detail=detail)
+        super().__init__(
+            status_code=500, code=ErrorCode.INTERNAL_SERVER_ERROR, detail=detail
+        )
 
 
-class GlobalErrorResponse(BaseModel):
-    status_code: int = Field(..., examples=[400])
-    code: str = Field(..., examples=["ERROR_CODE_STRING"])
-    detail: str = Field(..., examples=["에러에 대한 상세 메시지입니다."])
-    errors: list[Any] | None = Field(None, description="유효성 검사 에러 시 상세 내용")
+class DatabaseException(BaseCustomException):
+    def __init__(self, detail: str = "데이터베이스 에러"):
+        super().__init__(status_code=500, code=ErrorCode.DB_ERROR, detail=detail)
 
 
-class HaveNotPermissionException(BaseCustomException):
-    def __init__(self, detail="접근 권한이 없습니다."):
-        super().__init__(status_code=404, detail=detail, code="HAVE_NOT_PERMISSION")
+class BadRequestException(BaseCustomException):
+    def __init__(
+        self,
+        code: str | ErrorCode = ErrorCode.BAD_REQUEST,
+        detail: str = "잘못된 요청입니다.",
+    ):
+        super().__init__(status_code=400, code=code, detail=detail)
+
+
+class UnAuthorizedException(BaseCustomException):
+    def __init__(
+        self,
+        code: str | ErrorCode = ErrorCode.UNAUTHORIZED,
+        detail: str = "인증이 필요합니다",
+    ):
+        super().__init__(status_code=401, code=code, detail=detail)
+
+
+class ForbiddenException(BaseCustomException):
+    def __init__(self, detail: str = "해당 작업에 대한 권한이 없습니다."):
+        super().__init__(status_code=403, code=ErrorCode.FORBIDDEN, detail=detail)
+
+
+class NotFoundException(BaseCustomException):
+    def __init__(
+        self,
+        code: str | ErrorCode = ErrorCode.NOT_FOUND,
+        detail: str = "요청하신 리소스를 찾을 수 없습니다.",
+    ):
+        super().__init__(status_code=404, code=code, detail=detail)
+
+
+class ConflictException(BaseCustomException):
+    def __init__(self, code: str | ErrorCode.CONFLICT, detail: str):
+        super().__init__(status_code=409, code=code, detail=detail)
+
+
+class ExternalServiceException(BaseCustomException):
+    def __init__(
+        self,
+        detail: str = "외부 서비스 연동 중 오류가 발생하였습니다.",
+    ):
+        super().__init__(
+            status_code=502, code=ErrorCode.EXTERNAL_SERVICE_ERROR, detail=detail
+        )
+
+
+# ----------------------------------------
+# 2. 토큰 관련
+# ----------------------------------------
+class TokenExpiredException(UnAuthorizedException):
+    def __init__(
+        self,
+        detail: str = "토큰이 만료되었습니다. 다시 로그인하거나 토큰을 갱신해주세요",
+    ):
+        super().__init__(code=ErrorCode.TOKEN_EXPIRED, detail=detail)
+
+
+class InvalidTokenException(UnAuthorizedException):
+    def __init__(self, detail: str = "토큰이 변조되었거나 유효하지 않습니다."):
+        super().__init__(code=ErrorCode.INVALID_TOKEN, detail=detail)
+
+
+# ----------------------------------------
+# 3. 회원 관련
+# ----------------------------------------
+class UserNotFoundException(NotFoundException):
+    def __init__(self, detail: str = "사용자를 찾을 수 없습니다."):
+        super().__init__(code=ErrorCode.USER_NOT_FOUND, detail=detail)
+
+
+# ----------------------------------------
+# 4. 식재료 관련
+# ----------------------------------------
+class IngredientNotFoundException(NotFoundException):
+    def __init__(self, detail: str = "식재료를 찾을 수 없습니다."):
+        super().__init__(code=ErrorCode.INGREDIENT_NOT_FOUND, detail=detail)

@@ -20,7 +20,7 @@ from domains.user.schemas.request import (
 )
 from domains.user.schemas.response import FindEmailResponse, InfoResponse, SignUpResponse
 from domains.user.service import UserService
-from util.docs import create_error_response
+from core.exception.openapi import create_error_response
 
 router = APIRouter()
 

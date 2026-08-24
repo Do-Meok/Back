@@ -1,10 +1,10 @@
-# src/util/docs.py
-
-from core.exception.exceptions import BaseCustomException, GlobalErrorResponse
+from typing import Type
+from core.exception.exceptions import BaseCustomException
+from core.exception.schemas import GlobalErrorResponse
 
 
 # Exception 클래스들을 받아서 Swagger responses 명세를 자동으로 생성해주는 함수
-def create_error_response(*exception_classes: type[BaseCustomException]):
+def create_error_response(*exception_classes: Type[BaseCustomException]):
     responses = {}
 
     for exc_class in exception_classes:
@@ -22,7 +22,9 @@ def create_error_response(*exception_classes: type[BaseCustomException]):
 
         # 3. examples에 해당 예외 추가
         # 예: examples["DuplicateEmailException"] = { ... }
-        responses[status_code]["content"]["application/json"]["examples"][exc_class.__name__] = {
+        responses[status_code]["content"]["application/json"]["examples"][
+            exc_class.__name__
+        ] = {
             "summary": exc.detail,  # Swagger UI 드롭다운에 표시될 이름
             "value": {
                 "status_code": status_code,

@@ -49,7 +49,9 @@ async def validation_exception_handler(request: Request, exc: RequestValidationE
 
 async def system_exception_handler(request: Request, exc: Exception):
     """그 외 정의되지 않은 모든 서버 내부 에러(500) 처리"""
-    logger.exception(f"예상치 못한 서버 에러 발생! URL: {request.method} {request.url.path}")
+    logger.exception(
+        f"예상치 못한 서버 에러 발생! URL: {request.method} {request.url.path}"
+    )
 
     return JSONResponse(
         status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,

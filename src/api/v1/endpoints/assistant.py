@@ -20,7 +20,7 @@ from domains.assistant.schemas import (
     SearchRecipeRequest,
 )
 from domains.assistant.service import AssistantService
-from util.docs import create_error_response
+from core.exception.openapi import create_error_response
 
 router = APIRouter()
 
