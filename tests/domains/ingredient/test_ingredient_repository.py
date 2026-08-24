@@ -1,15 +1,16 @@
-import pytest
 from datetime import date, timedelta
+
+import pytest
+from domains.refrigerator.models import Compartment, Refrigerator
 from sqlalchemy import select
 
 from domains.ingredient.models import (
+    ExpiryDeviationLog,
     Ingredient,
     IngredientExpiry,
     MissingIngredientLog,
-    ExpiryDeviationLog,
 )
 from domains.ingredient.repository import IngredientRepository
-from domains.refrigerator.models import Refrigerator, Compartment
 
 TODAY = date.today()
 

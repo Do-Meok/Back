@@ -1,18 +1,18 @@
-import secrets
-import hmac
 import hashlib
-
+import hmac
+import secrets
 from base64 import urlsafe_b64encode
-from datetime import datetime, timedelta, timezone
-from fastapi import Depends
-from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
-from passlib.context import CryptContext
+from datetime import UTC, datetime, timedelta
+
 from cryptography.fernet import Fernet
-from jose import jwt, JWTError
+from fastapi import Depends
+from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
+from jose import JWTError, jwt
+from passlib.context import CryptContext
 
 from core.config import settings
-from domains.user.exceptions import UnauthorizedException
 from domains.auth.exceptions import TokenExpiredException
+from domains.user.exceptions import UnauthorizedException
 
 JWT_ALGORITHM = "HS256"
 JWT_SECRET_KEY = settings.JWT_SECRET_KEY.get_secret_value()
@@ -55,7 +55,7 @@ def make_phone_hash(phone: str) -> str:
 
 # --- JWT 토큰 관련 ---
 def create_jwt(user_id: str) -> str:
-    now = datetime.now(timezone.utc)
+    now = datetime.now(UTC)
     payload = {
         "sub": str(user_id),
         "iat": now,

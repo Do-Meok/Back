@@ -2,7 +2,7 @@ from pydantic import ValidationError
 
 from domains.recipe.exception import RecipeDataCorruptionException, RecipeNotFoundException
 from domains.recipe.repository import RecipeRepository
-from domains.recipe.schemas import SaveRecipeRequest, SavedRecipeResponse
+from domains.recipe.schemas import SavedRecipeResponse, SaveRecipeRequest
 from domains.user.models import User
 
 

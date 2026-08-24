@@ -1,4 +1,4 @@
-from sqlalchemy import select, func
+from sqlalchemy import func, select
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.ext.asyncio.session import AsyncSession
 
@@ -19,7 +19,7 @@ class UserRepository:
             return user
         except SQLAlchemyError as e:
             await self.session.rollback()
-            raise DatabaseException(detail=f"{error_msg}: {str(e)}")
+            raise DatabaseException(detail=f"{error_msg}: {e!s}")
 
     async def _get_one(self, *where_conditions) -> User | None:
         """조건에 맞는 엔티티 조회"""
@@ -28,9 +28,9 @@ class UserRepository:
             result = await self.session.execute(stmt)
             return result.scalar_one_or_none()
         except SQLAlchemyError as e:
-            raise DatabaseException(detail=f"DB 조회 오류: {str(e)}")
+            raise DatabaseException(detail=f"DB 조회 오류: {e!s}")
         except Exception as e:
-            raise UnexpectedException(detail=f"예기치 못한 에러: {str(e)}")
+            raise UnexpectedException(detail=f"예기치 못한 에러: {e!s}")
 
     async def get_user_by_id(self, user_id: str) -> User | None:
         """고유ID 정보로 조회"""

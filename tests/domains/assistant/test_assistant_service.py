@@ -1,17 +1,17 @@
-import pytest
 from unittest.mock import AsyncMock, MagicMock, patch
 
+import pytest
 from fastapi import UploadFile
 
-from domains.assistant.service import AssistantService, LIMIT_RECIPE_DAILY
 from domains.assistant.exceptions import InvalidAIRequestException
 from domains.assistant.schemas import (
-    RecommendationResponse,
-    RecommendationItem,
     DetailRecipeRequest,
     DetailRecipeResponse,
     IngredientDetail,
+    RecommendationItem,
+    RecommendationResponse,
 )
+from domains.assistant.service import LIMIT_RECIPE_DAILY, AssistantService
 from domains.user.models import User
 
 

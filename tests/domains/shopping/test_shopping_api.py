@@ -1,10 +1,12 @@
-import pytest
 from unittest.mock import AsyncMock
+
+import pytest
 from fastapi.testclient import TestClient
-from main import app  # FastAPI 앱 인스턴스 (main.py에 있다고 가정)
+
 from core.di import get_shopping_service
-from domains.shopping.schemas import AddItemResponse, GetItemResponse
 from domains.shopping.exception import ItemNotFoundException
+from domains.shopping.schemas import AddItemResponse, GetItemResponse
+from main import app  # FastAPI 앱 인스턴스 (main.py에 있다고 가정)
 
 
 # 가짜 서비스를 만드는 픽스처

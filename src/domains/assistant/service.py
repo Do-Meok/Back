@@ -1,15 +1,15 @@
 import asyncio
-import httpx
+from datetime import datetime, time, timedelta
 
+import httpx
 from fastapi import UploadFile
-from datetime import datetime, timedelta, time
 from redis.asyncio import Redis
 
 from core.config import settings
 from domains.assistant.clients import ocr_client
+from domains.assistant.exceptions import InvalidAIRequestException
 from domains.assistant.llm_handler import LLMHandler
 from domains.assistant.schemas import DetailRecipeRequest, DetailRecipeResponse, RecommendationResponse
-from domains.assistant.exceptions import InvalidAIRequestException
 from domains.ingredient.repository import IngredientRepository
 from domains.user.models import User
 

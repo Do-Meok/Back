@@ -1,17 +1,18 @@
-import pytest
-import pytest_asyncio
 import uuid
 from unittest.mock import AsyncMock
-from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession
-from sqlalchemy.pool import NullPool
-from sqlalchemy import text
-from testcontainers.postgres import PostgresContainer
-from httpx import AsyncClient, ASGITransport
 
-from main import app
-from core.database import get_db, Base, get_redis  # [중요] get_redis 임포트
+import pytest
+import pytest_asyncio
+from httpx import ASGITransport, AsyncClient
+from sqlalchemy import text
+from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine
+from sqlalchemy.pool import NullPool
+from testcontainers.postgres import PostgresContainer
+
+from core.database import Base, get_db, get_redis  # [중요] get_redis 임포트
 from core.di import get_current_user
 from domains.user.models import User
+from main import app
 
 
 # --- 1. Postgres (RDBMS는 실제 동작 검증을 위해 컨테이너 유지 추천) ---

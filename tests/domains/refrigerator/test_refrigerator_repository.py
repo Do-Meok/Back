@@ -1,6 +1,6 @@
 import pytest
+from domains.refrigerator.models import Compartment, Refrigerator
 from domains.refrigerator.repository import RefrigeratorRepository
-from domains.refrigerator.models import Refrigerator, Compartment
 
 
 @pytest.mark.asyncio

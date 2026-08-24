@@ -2,7 +2,7 @@ from fastapi import APIRouter, Depends
 
 from core.di import get_recipe_service
 from domains.recipe.exception import RecipeDataCorruptionException
-from domains.recipe.schemas import SaveRecipeRequest, SavedRecipeResponse
+from domains.recipe.schemas import SavedRecipeResponse, SaveRecipeRequest
 from domains.recipe.service import RecipeService
 from util.docs import create_error_response
 

@@ -1,13 +1,14 @@
-import pytest
 from unittest.mock import AsyncMock, patch
 
-from domains.assistant.llm_handler import LLMHandler
-from domains.assistant.schemas import RecommendationResponse, ReceiptIngredientResponse, DetailRecipeResponse
+import pytest
+
 from domains.assistant.exceptions import (
     AIJsonDecodeException,
-    AISchemaMismatchException,
     AIRefusalException,
+    AISchemaMismatchException,
 )
+from domains.assistant.llm_handler import LLMHandler
+from domains.assistant.schemas import DetailRecipeResponse, ReceiptIngredientResponse, RecommendationResponse
 
 
 @pytest.mark.asyncio

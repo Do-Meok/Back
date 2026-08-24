@@ -1,17 +1,17 @@
+from datetime import UTC, date, datetime
+
+from sqlalchemy import exists, select, update
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select, update, exists
-from datetime import datetime, timezone, date
 
 from core.exception.exceptions import DatabaseException
 from domains.ingredient.models import (
+    ExpiryDeviationLog,
     Ingredient,
     IngredientExpiry,
     MissingIngredientLog,
-    ExpiryDeviationLog,
     NonIngredient,
 )
-from domains.refrigerator.models import Compartment, Refrigerator
 
 
 class IngredientRepository:
@@ -29,7 +29,7 @@ class IngredientRepository:
             return {row.ingredient_name: row for row in result.scalars().all()}
 
         except SQLAlchemyError as e:
-            raise DatabaseException(detail=f"유통기한 데이터 조회 실패: {str(e)}")
+            raise DatabaseException(detail=f"유통기한 데이터 조회 실패: {e!s}")
 
     async def add_missing_logs(self, logs: list[MissingIngredientLog]):
         try:
@@ -38,7 +38,7 @@ class IngredientRepository:
                 await self.session.commit()
         except SQLAlchemyError as e:
             await self.session.rollback()
-            raise DatabaseException(detail=f"누락 로그 저장 실패: {str(e)}")
+            raise DatabaseException(detail=f"누락 로그 저장 실패: {e!s}")
 
     async def add_deviation_log(self, log: ExpiryDeviationLog):
         try:
@@ -46,7 +46,7 @@ class IngredientRepository:
             await self.session.commit()
         except SQLAlchemyError as e:
             await self.session.rollback()
-            raise DatabaseException(detail=f"편차 로그 저장 실패: {str(e)}")
+            raise DatabaseException(detail=f"편차 로그 저장 실패: {e!s}")
 
     async def add_ingredients(self, ingredients: list[Ingredient]) -> list[Ingredient]:
         try:
@@ -55,7 +55,7 @@ class IngredientRepository:
             return ingredients
         except SQLAlchemyError as e:
             await self.session.rollback()
-            raise DatabaseException(detail=f"식재료 일괄 저장 중 오류 발생: {str(e)}")
+            raise DatabaseException(detail=f"식재료 일괄 저장 중 오류 발생: {e!s}")
 
     async def get_existing_non_ingredients(self, ingredient_names: list[str]) -> list[str]:
         try:
@@ -63,7 +63,7 @@ class IngredientRepository:
             result = await self.session.execute(stmt)
             return result.scalars().all()
         except SQLAlchemyError as e:
-            raise DatabaseException(detail=f"제외 식재료 확인 중 오류 발생: {str(e)}")
+            raise DatabaseException(detail=f"제외 식재료 확인 중 오류 발생: {e!s}")
 
     async def set_ingredient(self, ingredient_id: int, user_id: str, expiration_date: date, storage_type: str):
         try:
@@ -79,7 +79,7 @@ class IngredientRepository:
             return None
         except SQLAlchemyError as e:
             await self.session.rollback()
-            raise DatabaseException(detail=f"식재료 수정 중 오류 발생: {str(e)}")
+            raise DatabaseException(detail=f"식재료 수정 중 오류 발생: {e!s}")
 
     async def get_ingredients(
         self,
@@ -103,7 +103,7 @@ class IngredientRepository:
             result = await self.session.execute(stmt)
             return result.scalars().all()
         except SQLAlchemyError as e:
-            raise DatabaseException(detail=f"식재료 목록 조회 실패: {str(e)}")
+            raise DatabaseException(detail=f"식재료 목록 조회 실패: {e!s}")
 
     async def get_ingredient(self, ingredient_id: int, user_id: str) -> Ingredient | None:
         stmt = select(Ingredient).where(
@@ -123,7 +123,7 @@ class IngredientRepository:
                     Ingredient.user_id == user_id,
                     Ingredient.deleted_at.is_(None),
                 )
-                .values(deleted_at=datetime.now(timezone.utc))
+                .values(deleted_at=datetime.now(UTC))
                 .execution_options(synchronize_session=False)
             )
             result = await self.session.execute(stmt)
@@ -131,7 +131,7 @@ class IngredientRepository:
             return result.rowcount > 0
         except SQLAlchemyError as e:
             await self.session.rollback()
-            raise DatabaseException(detail=f"식재료 삭제 중 오류 발생: {str(e)}")
+            raise DatabaseException(detail=f"식재료 삭제 중 오류 발생: {e!s}")
 
     async def update_ingredient(
         self,
@@ -157,7 +157,7 @@ class IngredientRepository:
             return None
         except SQLAlchemyError as e:
             await self.session.rollback()
-            raise DatabaseException(detail=f"식재료 수정 중 오류 발생: {str(e)}")
+            raise DatabaseException(detail=f"식재료 수정 중 오류 발생: {e!s}")
 
     async def get_ingredients_by_compartment(self, compartment_id: int, user_id: str) -> list[Ingredient]:
         try:
@@ -174,7 +174,7 @@ class IngredientRepository:
             return result.scalars().all()
         except SQLAlchemyError as e:
             await self.session.rollback()
-            raise DatabaseException(detail=f"식재료 조회 중 오류 발생: {str(e)}")
+            raise DatabaseException(detail=f"식재료 조회 중 오류 발생: {e!s}")
 
     async def is_my_compartment(self, compartment_id: int, user_id: str) -> bool:
         stmt = select(

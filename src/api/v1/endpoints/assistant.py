@@ -1,24 +1,25 @@
-from fastapi import APIRouter, Depends, UploadFile, File, Query
+from fastapi import APIRouter, Depends, File, Query, UploadFile
+
 from core.di import get_assistant_service
-from domains.assistant.service import AssistantService
+from domains.assistant.exceptions import (
+    AIConnectionException,
+    AIJsonDecodeException,
+    AINullResponseException,
+    AIRefusalException,
+    AISchemaMismatchException,
+    AIServiceException,
+    AITimeoutException,
+    InvalidAIRequestException,
+)
 from domains.assistant.schemas import (
-    RecommendationResponse,
-    DetailRecipeResponse,
     DetailRecipeRequest,
-    SearchRecipeRequest,
+    DetailRecipeResponse,
     QuickRecipeRequest,
     ReceiptIngredientResponse,
+    RecommendationResponse,
+    SearchRecipeRequest,
 )
-from domains.assistant.exceptions import (
-    AIServiceException,
-    AIConnectionException,
-    AITimeoutException,
-    AINullResponseException,
-    AIJsonDecodeException,
-    AISchemaMismatchException,
-    InvalidAIRequestException,
-    AIRefusalException,
-)
+from domains.assistant.service import AssistantService
 from util.docs import create_error_response
 
 router = APIRouter()

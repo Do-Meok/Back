@@ -1,18 +1,16 @@
-from fastapi import Depends, APIRouter
+from fastapi import APIRouter, Depends
 
 from core.di import get_auth_service, get_current_user, get_social_auth_service
-
-from domains.auth.schemas.response import LogInResponse, KaKaoAuthUrlResponse
-from domains.auth.schemas.request import LogInRequest, RefreshTokenRequest, LogOutRequest
-from domains.auth.service import AuthService
-from domains.auth.social_service import SocialAuthService
-
 from domains.auth.exceptions import (
     InvalidCredentialsException,
+    OAuthStateMismatchException,
     TokenExpiredException,
     TokenForbiddenException,
-    OAuthStateMismatchException,
 )
+from domains.auth.schemas.request import LogInRequest, LogOutRequest, RefreshTokenRequest
+from domains.auth.schemas.response import KaKaoAuthUrlResponse, LogInResponse
+from domains.auth.service import AuthService
+from domains.auth.social_service import SocialAuthService
 from util.docs import create_error_response
 
 router = APIRouter()

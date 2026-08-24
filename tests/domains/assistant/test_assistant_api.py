@@ -1,10 +1,11 @@
-import pytest
 from unittest.mock import AsyncMock
 
-from domains.assistant.exceptions import InvalidAIRequestException
-from main import app
+import pytest
+
 from core.di import get_assistant_service
-from domains.assistant.schemas import RecommendationResponse, RecommendationItem, ReceiptIngredientResponse
+from domains.assistant.exceptions import InvalidAIRequestException
+from domains.assistant.schemas import ReceiptIngredientResponse, RecommendationItem, RecommendationResponse
+from main import app
 
 
 # --- Fixtures ---

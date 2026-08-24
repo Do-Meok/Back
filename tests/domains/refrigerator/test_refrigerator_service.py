@@ -1,8 +1,10 @@
-import pytest
 from unittest.mock import AsyncMock, MagicMock
-from domains.refrigerator.service import RefrigeratorService
-from domains.refrigerator.schemas import AddRefrigeratorRequest
+
+import pytest
 from domains.refrigerator.exception import RefrigeratorNotFoundException
+from domains.refrigerator.schemas import AddRefrigeratorRequest
+from domains.refrigerator.service import RefrigeratorService
+
 from domains.user.models import User
 
 

@@ -1,5 +1,6 @@
-import pytest
 from datetime import date
+
+import pytest
 
 from core.exception.exceptions import DatabaseException
 from domains.user.models import User

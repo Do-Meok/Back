@@ -4,15 +4,16 @@ import uuid
 from datetime import date, datetime
 from typing import TYPE_CHECKING
 
-from sqlalchemy import BigInteger, String, Date, ForeignKey, DateTime, Integer, Index
+from sqlalchemy import BigInteger, Date, DateTime, ForeignKey, Index, Integer, String
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from sqlalchemy.sql import func
 
 from core.database import Base
 
 if TYPE_CHECKING:
-    from domains.user.models import User
     from domains.refrigerator.models import Compartment
+
+    from domains.user.models import User
 
 
 class Ingredient(Base):

@@ -1,10 +1,11 @@
-import pytest
-from unittest.mock import AsyncMock, MagicMock
 from datetime import datetime
+from unittest.mock import AsyncMock, MagicMock
 
-from domains.recipe.service import RecipeService
-from domains.recipe.schemas import SaveRecipeRequest, SavedRecipeResponse
+import pytest
+
 from domains.recipe.exception import RecipeDataCorruptionException
+from domains.recipe.schemas import SavedRecipeResponse, SaveRecipeRequest
+from domains.recipe.service import RecipeService
 from domains.user.models import User
 
 

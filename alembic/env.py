@@ -4,21 +4,18 @@ import sys
 
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "src")))
 
-import pkgutil
 import importlib
-import domains
-
+import pkgutil
 from logging.config import fileConfig
 
 from sqlalchemy import pool
 from sqlalchemy.engine import Connection
 from sqlalchemy.ext.asyncio import async_engine_from_config
 
+import domains
 from alembic import context
-
 from core.config import settings
 from core.database import Base
-
 
 # this is the Alembic Config object, which provides
 # access to the values within the .ini file in use.

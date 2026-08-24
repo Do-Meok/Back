@@ -1,5 +1,5 @@
 import pytest
-from domains.refrigerator.models import Refrigerator, Compartment
+from domains.refrigerator.models import Compartment, Refrigerator
 
 # 라우터 prefix가 /api/v1/refrigerator 라고 가정합니다.
 BASE_URL = "/api/v1/refrigerator"

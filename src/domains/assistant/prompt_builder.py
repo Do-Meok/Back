@@ -1,11 +1,11 @@
 import json
-from typing import List, Dict, Any
+from typing import Any
 
 
 class PromptBuilder:
     # 1. [메뉴 추천] 재료 목록 -> 메뉴 6개 추천
     @staticmethod
-    def build_suggestion_prompt(user_ingredients: List[str]) -> str:
+    def build_suggestion_prompt(user_ingredients: list[str]) -> str:
         return f"""
         당신은 전문 요리사 AI입니다. 사용자가 보유한 재료를 최대한 활용하여 만들 수 있는 요리 4가지를 추천하세요.
 
@@ -43,7 +43,7 @@ class PromptBuilder:
         """
 
     @staticmethod
-    def build_recipe_prompt(food: str, ingredients: List[Dict[str, Any]]) -> str:
+    def build_recipe_prompt(food: str, ingredients: list[dict[str, Any]]) -> str:
         return f"""
             당신은 전문 요리사 AI입니다. 사용자가 요청한 음식의 상세 조리법을 JSON으로만 제공합니다.
 

@@ -1,6 +1,6 @@
 from datetime import date
 
-from pydantic import BaseModel, Field, ConfigDict, EmailStr
+from pydantic import BaseModel, ConfigDict, EmailStr, Field
 
 
 class SignUpResponse(BaseModel):

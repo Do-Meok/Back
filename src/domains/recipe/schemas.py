@@ -1,5 +1,6 @@
-from pydantic import ConfigDict
 from datetime import datetime
+
+from pydantic import ConfigDict
 
 from domains.assistant.schemas import DetailRecipeResponse
 

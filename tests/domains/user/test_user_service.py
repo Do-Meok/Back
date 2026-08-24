@@ -1,11 +1,12 @@
-import pytest
-from unittest.mock import AsyncMock, patch, MagicMock
+from unittest.mock import AsyncMock, MagicMock, patch
 
-from domains.user.schemas.response import SignUpResponse
-from domains.user.service import UserService
-from domains.user.schemas.request import SignUpRequest, FindEmailRequest, ChangePasswordRequest, ChangeNicknameRequest
+import pytest
+
 from domains.user.exceptions import DuplicateEmailException, PasswordMismatchException
 from domains.user.models import User
+from domains.user.schemas.request import ChangeNicknameRequest, ChangePasswordRequest, FindEmailRequest, SignUpRequest
+from domains.user.schemas.response import SignUpResponse
+from domains.user.service import UserService
 
 
 # --- Fixtures ---

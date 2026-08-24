@@ -1,4 +1,4 @@
-from sqlalchemy import select, delete
+from sqlalchemy import delete, select
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -19,7 +19,7 @@ class ShoppingRepository:
 
         except SQLAlchemyError as e:
             await self.session.rollback()
-            raise DatabaseException(detail=f"장보기 일괄 저장 중 오류 발생: {str(e)}")
+            raise DatabaseException(detail=f"장보기 일괄 저장 중 오류 발생: {e!s}")
 
     async def get_items(self, user_id: str) -> list[Shopping]:
         try:
@@ -28,7 +28,7 @@ class ShoppingRepository:
             return result.scalars().all()
 
         except SQLAlchemyError as e:
-            raise DatabaseException(detail=f"장보기 목록 조회 실패: {str(e)}")
+            raise DatabaseException(detail=f"장보기 목록 조회 실패: {e!s}")
 
     async def toggle_status(self, shopping_id: int, user_id: str) -> Shopping | None:
         try:
@@ -45,7 +45,7 @@ class ShoppingRepository:
 
         except SQLAlchemyError as e:
             await self.session.rollback()
-            raise DatabaseException(detail=f"상태 변경 중 오류 발생: {str(e)}")
+            raise DatabaseException(detail=f"상태 변경 중 오류 발생: {e!s}")
 
     async def delete_item(self, shopping_id: int, user_id: str):
         try:
@@ -57,4 +57,4 @@ class ShoppingRepository:
             return result.rowcount > 0
 
         except SQLAlchemyError as e:
-            raise DatabaseException(detail=f"장보기 삭제 실패: {str(e)}")
+            raise DatabaseException(detail=f"장보기 삭제 실패: {e!s}")

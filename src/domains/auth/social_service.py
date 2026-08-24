@@ -5,8 +5,8 @@ from redis.asyncio import Redis
 
 from core import security
 from core.config import settings
-from domains.auth.schemas.response import LogInResponse
 from domains.auth.exceptions import InvalidCredentialsException, OAuthStateMismatchException
+from domains.auth.schemas.response import LogInResponse
 from domains.user.models import User
 from domains.user.repository import UserRepository
 

@@ -1,4 +1,5 @@
 import pytest
+
 from domains.recipe.repository import RecipeRepository
 
 

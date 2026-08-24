@@ -1,8 +1,10 @@
-import pytest
 from unittest.mock import AsyncMock, MagicMock
+
+import pytest
 from sqlalchemy.ext.asyncio import AsyncSession
-from domains.shopping.repository import ShoppingRepository
+
 from domains.shopping.models import Shopping
+from domains.shopping.repository import ShoppingRepository
 
 
 @pytest.fixture

@@ -4,17 +4,18 @@ import uuid
 from datetime import date, datetime
 from typing import TYPE_CHECKING
 
-from sqlalchemy import String, Date, DateTime, func, Index, text
-from sqlalchemy.orm import Mapped, mapped_column, relationship
+from sqlalchemy import Date, DateTime, Index, String, func, text
 from sqlalchemy.dialects.postgresql import UUID
+from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from core.database import Base
 
 if TYPE_CHECKING:
+    from domains.refrigerator.models import Refrigerator
+
     from domains.ingredient.models import Ingredient
     from domains.recipe.models import Recipe
     from domains.shopping.models import Shopping
-    from domains.refrigerator.models import Refrigerator
 
 
 class User(Base):

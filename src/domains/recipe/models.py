@@ -1,10 +1,10 @@
 from __future__ import annotations
 
 import uuid
-from typing import TYPE_CHECKING, Any
 from datetime import datetime
+from typing import TYPE_CHECKING, Any
 
-from sqlalchemy import BigInteger, ForeignKey, String, DateTime
+from sqlalchemy import BigInteger, DateTime, ForeignKey, String
 from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from sqlalchemy.sql import func

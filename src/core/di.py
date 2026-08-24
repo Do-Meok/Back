@@ -1,25 +1,22 @@
 from fastapi import Depends
-from sqlalchemy.ext.asyncio import AsyncSession
 from redis.asyncio import Redis
+from sqlalchemy.ext.asyncio import AsyncSession
 
-from core.security import get_access_token
 from core.database import get_db, get_redis
+from core.security import get_access_token
 from domains.assistant.llm_handler import LLMHandler
 from domains.assistant.service import AssistantService
 from domains.auth.service import AuthService
-
+from domains.auth.social_service import SocialAuthService
 from domains.ingredient.repository import IngredientRepository
 from domains.ingredient.service import IngredientService
 from domains.recipe.repository import RecipeRepository
 from domains.recipe.service import RecipeService
-from domains.refrigerator.repository import RefrigeratorRepository
-from domains.refrigerator.service import RefrigeratorService
 from domains.shopping.repository import ShoppingRepository
 from domains.shopping.service import ShoppingService
+from domains.user.models import User
 from domains.user.repository import UserRepository
 from domains.user.service import UserService
-from domains.auth.social_service import SocialAuthService
-from domains.user.models import User
 
 
 # --- 유저 관련 DI ---

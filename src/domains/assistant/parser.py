@@ -1,6 +1,7 @@
 import json
 import re
-from typing import Dict, Any, Union
+from typing import Any
+
 from domains.assistant.exceptions import (
     AIJsonDecodeException,
     AINullResponseException,
@@ -10,7 +11,7 @@ from domains.assistant.exceptions import (
 
 class LLMParser:
     @staticmethod
-    def parse(response_text: str) -> Union[Dict[str, Any], list[Any]]:
+    def parse(response_text: str) -> dict[str, Any] | list[Any]:
         if not response_text or not response_text.strip():
             raise AINullResponseException()
 
@@ -29,4 +30,4 @@ class LLMParser:
             return parsed_data
 
         except json.JSONDecodeError as e:
-            raise AIJsonDecodeException(detail=f"AI 응답 파싱 실패: {str(e)}")
+            raise AIJsonDecodeException(detail=f"AI 응답 파싱 실패: {e!s}")

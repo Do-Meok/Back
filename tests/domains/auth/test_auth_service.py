@@ -1,9 +1,10 @@
-import pytest
 from unittest.mock import AsyncMock, patch
 
-from domains.auth.service import AuthService
-from domains.auth.schemas.request import LogInRequest, RefreshTokenRequest, LogOutRequest
+import pytest
+
 from domains.auth.exceptions import InvalidCredentialsException
+from domains.auth.schemas.request import LogInRequest, LogOutRequest, RefreshTokenRequest
+from domains.auth.service import AuthService
 from domains.user.models import User
 
 

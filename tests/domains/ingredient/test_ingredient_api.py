@@ -1,14 +1,15 @@
-import pytest
 from datetime import date, timedelta
+
+import pytest
+from domains.refrigerator.models import Compartment, Refrigerator
 from sqlalchemy import select
 
 from domains.ingredient.models import (
+    ExpiryDeviationLog,
     Ingredient,
     IngredientExpiry,
-    ExpiryDeviationLog,
     MissingIngredientLog,
 )
-from domains.refrigerator.models import Refrigerator, Compartment
 
 TODAY = date.today()
 NEXT_WEEK = TODAY + timedelta(days=7)

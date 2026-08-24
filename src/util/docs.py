@@ -1,10 +1,10 @@
 # src/util/docs.py
-from typing import Type
+
 from core.exception.exceptions import BaseCustomException, GlobalErrorResponse
 
 
 # Exception 클래스들을 받아서 Swagger responses 명세를 자동으로 생성해주는 함수
-def create_error_response(*exception_classes: Type[BaseCustomException]):
+def create_error_response(*exception_classes: type[BaseCustomException]):
     responses = {}
 
     for exc_class in exception_classes:

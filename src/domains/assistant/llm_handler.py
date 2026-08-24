@@ -1,11 +1,12 @@
-from typing import Type, TypeVar, List, Dict
+from typing import TypeVar
+
 from pydantic import BaseModel, ValidationError
 
 from domains.assistant.clients import llm_client
 from domains.assistant.exceptions import AISchemaMismatchException
 from domains.assistant.parser import LLMParser
 from domains.assistant.prompt_builder import PromptBuilder
-from domains.assistant.schemas import RecommendationResponse, DetailRecipeResponse, ReceiptIngredientResponse
+from domains.assistant.schemas import DetailRecipeResponse, ReceiptIngredientResponse, RecommendationResponse
 
 T = TypeVar("T", bound=BaseModel)
 
@@ -14,7 +15,7 @@ class LLMHandler:
     def __init__(self):
         self.client = llm_client
 
-    async def _process(self, prompt: str, response_model: Type[T]) -> T:
+    async def _process(self, prompt: str, response_model: type[T]) -> T:
         raw_text = await self.client.get_response(prompt)
         parsed_dict = LLMParser.parse(raw_text)
 
@@ -25,11 +26,11 @@ class LLMHandler:
             print(f"Schema Error: {e}")
             raise AISchemaMismatchException("AI 응답 형식이 올바르지 않습니다.")
 
-    async def recommend_menus(self, ingredients: List[str]) -> RecommendationResponse:
+    async def recommend_menus(self, ingredients: list[str]) -> RecommendationResponse:
         prompt = PromptBuilder.build_suggestion_prompt(ingredients)
         return await self._process(prompt, RecommendationResponse)
 
-    async def generate_detail(self, food: str, ingredients: List[Dict]) -> DetailRecipeResponse:
+    async def generate_detail(self, food: str, ingredients: list[dict]) -> DetailRecipeResponse:
         prompt = PromptBuilder.build_recipe_prompt(food, ingredients)
         return await self._process(prompt, DetailRecipeResponse)
 

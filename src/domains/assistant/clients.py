@@ -1,13 +1,14 @@
-import httpx
-import uuid
 import base64
 import time
+import uuid
+
+import httpx
 
 from core.config import settings
 from domains.assistant.exceptions import (
+    AIConnectionException,
     AIServiceException,
     AITimeoutException,
-    AIConnectionException,
 )
 
 
@@ -58,10 +59,10 @@ class LLMClient:
             raise AIServiceException(f"OpenAI 에러 ({e.response.status_code}): {e.response.text}")
 
         except httpx.RequestError as e:
-            raise AIConnectionException(f"네트워크 연결 오류: {str(e)}")
+            raise AIConnectionException(f"네트워크 연결 오류: {e!s}")
 
         except Exception as e:
-            raise AIServiceException(f"AI Client 알 수 없는 오류: {str(e)}")
+            raise AIServiceException(f"AI Client 알 수 없는 오류: {e!s}")
 
 
 llm_client = LLMClient()
@@ -103,10 +104,10 @@ class OCRClient:
             raise AIServiceException(f"Naver OCR 에러 ({e.response.status_code}): {e.response.text}")
 
         except httpx.RequestError as e:
-            raise AIConnectionException(f"네트워크 연결 오류: {str(e)}")
+            raise AIConnectionException(f"네트워크 연결 오류: {e!s}")
 
         except Exception as e:
-            raise AIServiceException(f"OCR Client 알 수 없는 오류: {str(e)}")
+            raise AIServiceException(f"OCR Client 알 수 없는 오류: {e!s}")
 
     def _make_payload(self, image_content: bytes, ext: str) -> dict:
         image_data = base64.b64encode(image_content).decode("utf-8")

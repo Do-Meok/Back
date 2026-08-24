@@ -4,7 +4,7 @@
 
 **Backend**
 
-Language: Python 3.10 (uv)
+Language: Python 3.14 (uv)
 
 Framework: FastAPI
 
@@ -22,3 +22,6 @@ Nginx(Reverse Proxy)
 
 ---
 
+**API**
+
+assistant

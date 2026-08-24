@@ -1,11 +1,11 @@
 from __future__ import annotations
 
 import uuid
-from typing import TYPE_CHECKING
 from datetime import datetime
+from typing import TYPE_CHECKING
 
-from sqlalchemy import BigInteger, ForeignKey, String, Boolean, DateTime
-from sqlalchemy.orm import relationship, Mapped, mapped_column
+from sqlalchemy import BigInteger, Boolean, DateTime, ForeignKey, String
+from sqlalchemy.orm import Mapped, mapped_column, relationship
 from sqlalchemy.sql import func
 
 from core.database import Base
