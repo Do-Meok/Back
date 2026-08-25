@@ -46,7 +46,7 @@ async def refresh_token(
     description="리프레시 토큰을 무효화하여 로그아웃함",
 )
 async def user_log_out(
-    request: LogOutRequest,
+    request: RefreshTokenRequest,
     auth_service: AuthService = Depends(get_auth_service),
 ) -> dict[str, str]:
     await auth_service.log_out(request.refresh_token)

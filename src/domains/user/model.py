@@ -13,8 +13,6 @@ from core.database import Base
 # 순환 참조 에러 해결
 if TYPE_CHECKING:
     from domains.ingredient.model import Ingredient
-    from domains.recipe.model import Recipe
-
 
 class User(Base):
     __tablename__ = "users"
@@ -39,13 +37,10 @@ class User(Base):
 
     # 릴레이션
     ingredients: Mapped[list[Ingredient]] = relationship(back_populates="user")
-    recipes: Mapped[list[Recipe]] = relationship(back_populates="user")
 
     __table_args__ = (
         # 닉네임 대소문자 중복 닉네임 방지
         Index("ix_user_nickname_lower", func.lower(nickname), unique=True),
         # 생성일 기준 정렬을 위한 일반 인덱스 설정
         Index("ix_user_created_at", created_at.desc()),
-        # 회원 정보 찾기 관련 인덱싱
-        Index("ix_active_user_recovery", "name", "birth", "phone_hash", postgresql_where=text("deleted_at IS NULL")),
     )

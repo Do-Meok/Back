@@ -24,7 +24,6 @@ class Settings(BaseSettings):
     HMAC_SECRET: SecretStr
 
     OPENAI_API_KEY: SecretStr
-
     NAVER_OCR_SECRET_KEY: SecretStr
     NAVER_OCR_API_URL: str
 
@@ -32,8 +31,6 @@ class Settings(BaseSettings):
     KAKAO_REDIRECT_URI: str
     KAKAO_CLIENT_SECRET: SecretStr
 
-    UNSPLASH_ACCESS_KEY: str
-    UNSPLASH_SECRET_KEY: SecretStr
 
     @property
     def database_url(self) -> str:
@@ -43,6 +40,7 @@ class Settings(BaseSettings):
     def rag_url(self) -> str:
         return f"postgresql+asyncpg://{self.DB_USER}:{self.DB_PASSWORD.get_secret_value()}@{self.DB_HOST}:{self.DB_PORT}/domeok_rag"
 
+    @property
     def rag_sync_url(self) -> str:
         return (
             f"postgresql+psycopg://{self.DB_USER}:{self.DB_PASSWORD.get_secret_value()}"
@@ -55,4 +53,4 @@ def get_settings() -> Settings:
     return Settings()
 
 
-settings = Settings()  # 유효성 체크
+settings = Settings()

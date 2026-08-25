@@ -5,14 +5,10 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from core.database import get_db
 from core.redis import get_redis
 from core.security import get_access_token, REFRESH_TOKEN_EXPIRE_SECONDS
-from domains.assistant.llm_handler import LLMHandler
-from domains.assistant.service import AssistantService
 from domains.auth.refresh_store import RefreshTokenStore
 from domains.auth.service import AuthService
 from domains.ingredient.repository import IngredientRepository
 from domains.ingredient.service import IngredientService
-from domains.recipe.repository import RecipeRepository
-from domains.recipe.service import RecipeService
 from domains.user.model import User
 from domains.user.repository import UserRepository
 from domains.user.service import UserService
@@ -65,31 +61,3 @@ def get_ingredient_service(
     ingredient_repo: IngredientRepository = Depends(get_ingredient_repo),
 ) -> IngredientService:
     return IngredientService(user=user, ingredient_repo=ingredient_repo)
-
-
-# --- Assistant 관련 ---
-async def get_llm_handler() -> LLMHandler:
-    return LLMHandler()
-
-
-async def get_assistant_service(
-    user: User = Depends(get_current_user),
-    ingredient_repo: IngredientRepository = Depends(get_ingredient_repo),
-    llm_handler: LLMHandler = Depends(get_llm_handler),
-    redis: Redis = Depends(get_redis),
-) -> AssistantService:
-    return AssistantService(user=user, ingredient_repo=ingredient_repo, llm_handler=llm_handler, redis=redis)
-
-
-# --- 레시피 관련 DI ---
-def get_recipe_repo(
-    session: AsyncSession = Depends(get_db),
-) -> RecipeRepository:
-    return RecipeRepository(session)
-
-
-def get_recipe_service(
-    recipe_repo: RecipeRepository = Depends(get_recipe_repo),
-    user: User = Depends(get_current_user),
-) -> RecipeService:
-    return RecipeService(user=user, recipe_repo=recipe_repo)
