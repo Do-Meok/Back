@@ -1,76 +1,68 @@
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, status
 
 from api.v1.deps import get_ingredient_service
+from core.exception.exceptions import IngredientNotFoundException, UnAuthorizedException
 from core.exception.openapi import create_error_response
-from domains.ingredient.exceptions import (
-    IngredientNotFoundException,
-)
+
 from domains.ingredient.schemas import (
     AddIngredientRequest,
     AddIngredientResponse,
     GetIngredientResponse,
-    StorageType,
 )
 from domains.ingredient.service import IngredientService
 
-router = APIRouter()
+router = APIRouter(prefix="/ingredients", tags=["ingredients"])
 
 
 @router.post(
     "",
-    status_code=201,
-    summary="식재료 추가 API",
+    status_code=status.HTTP_201_CREATED,
+    summary="식재료 추가",
     response_model=list[AddIngredientResponse],
+    responses=create_error_response(UnAuthorizedException),
 )
-async def add_ingredient(
+async def add_ingredients(
     request: AddIngredientRequest,
     service: IngredientService = Depends(get_ingredient_service),
-):
-    return await service.add_ingredient(request)
+) -> list[AddIngredientResponse]:
+    return await service.add_ingredients(request)
 
 
 @router.get(
     "",
     summary="식재료 조회 API",
-    status_code=200,
+    status_code=status.HTTP_200_OK,
     response_model=list[GetIngredientResponse],
+    responses=create_error_response(UnAuthorizedException),
 )
-async def get_ingredients(
-    is_unclassified: bool | None = None,
-    storage: StorageType | None = None,
+async def get_list_ingredients(
     service: IngredientService = Depends(get_ingredient_service),
-):
-    """
-    # is_unclassified -> true: 보관 데이터 입력 안된애들 출력
-    # storage -> 보관 장소에 따른 데이터 출력(is_unclassified=false와 같이 나와야함)
-    ---
-    # 3가지 조회를 1개의 API에 묶음
-    ## 1) 보관 데이터가 없는 식재료 -> is_unclassified=true
-    ## 2) 보관 데이터가 있는 식재료(냉장, 냉동, 실온) -> is_unclassified=false & storage=StorageType
-    ## 3) 보관 데이터가 있든 없든 모든 식재료 -> default(아무값도 없이)
-    """
-    return await service.get_ingredients(storage=storage, is_unclassified=is_unclassified)
-
-
-@router.get(
-    "/detail",
-    summary="식재료 단일 조회 API",
-    status_code=200,
-    response_model=GetIngredientResponse,
-    responses=create_error_response(IngredientNotFoundException),
-)
-async def get_ingredient(ingredient_id: int, service: IngredientService = Depends(get_ingredient_service)):
-    return await service.get_ingredient(ingredient_id)
+) -> list[GetIngredientResponse]:
+    return await service.get_ingredients()
 
 
 @router.delete(
-    "",
-    summary="식재료 삭제 API",
-    status_code=204,
-    responses=create_error_response(IngredientNotFoundException),
+    "/{ingredient_id}",
+    summary="식재료 삭제",
+    status_code=status.HTTP_204_NO_CONTENT,
+    responses=create_error_response(UnAuthorizedException, IngredientNotFoundException),
 )
 async def delete_ingredient(
     ingredient_id: int,
     ingredient_service: IngredientService = Depends(get_ingredient_service),
-):
+) -> None:
     await ingredient_service.delete_ingredient(ingredient_id)
+
+@router.get(
+    "/all-delete",
+    summary="식재료 일괄 삭제",
+    status_code=status.HTTP_204_NO_CONTENT,
+    responses=create_error_response(
+        UnAuthorizedException,
+        IngredientNotFoundException,
+    )
+)
+async def delete_all_ingredient(
+    service: IngredientService = Depends(get_ingredient_service),
+) -> None:
+    await service.delete_all_ingredients()

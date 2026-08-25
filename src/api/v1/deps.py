@@ -61,8 +61,8 @@ def get_ingredient_repo(
 
 
 def get_ingredient_service(
-    ingredient_repo: IngredientRepository = Depends(get_ingredient_repo),
     user: User = Depends(get_current_user),
+    ingredient_repo: IngredientRepository = Depends(get_ingredient_repo),
 ) -> IngredientService:
     return IngredientService(user=user, ingredient_repo=ingredient_repo)
 

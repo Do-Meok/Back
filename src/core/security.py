@@ -63,7 +63,7 @@ def make_phone_hash(phone: str) -> str:
     return urlsafe_b64encode(mac).decode("UTF-8")
 
 
-# --- JWT 토큰 관련 ---
+# --- 토큰 관련 ---
 def create_jwt(user_id: uuid.UUID) -> str:
     now = datetime.now(UTC)
     payload = {
@@ -89,7 +89,6 @@ def decode_jwt(access_token: str) -> str:
         raise InvalidTokenException() from e
 
 
-# --- 토큰 ---
 def create_refresh_token() -> str:
     return secrets.token_hex(32)
 

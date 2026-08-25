@@ -6,7 +6,7 @@ from domains.user.schemas import SignUpRequest, SignUpResponse, UserInfoResponse
 from domains.user.service import UserService
 from domains.user.model import User
 
-router = APIRouter()
+router = APIRouter(prefix="/users", tags=["users"])
 
 
 @router.post(

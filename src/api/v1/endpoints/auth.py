@@ -7,7 +7,7 @@ from core.exception.openapi import create_error_response
 from domains.auth.schemas import LogInRequest, RefreshTokenRequest, LogInResponse
 from domains.auth.service import AuthService
 
-router = APIRouter()
+router = APIRouter(prefix="/auth", tags=["auth"])
 
 
 @router.post(
