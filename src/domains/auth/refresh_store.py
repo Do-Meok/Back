@@ -27,9 +27,12 @@ class RefreshTokenStore:
     async def pop_user_id(self, raw_token: str) -> UUID | None:
         key = self._key(raw_token)
         try:
+            # 1. 기존 Refresh 토큰 검증
             user_id = await self._redis.get(key)
             if user_id is None:
                 return None
+
+            # 2. 사용된 기존 토큰 즉시 폐기 (RTR)
             await self._redis.delete(key)
             return UUID(user_id)
         except Exception as exc:

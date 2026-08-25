@@ -14,15 +14,19 @@ from core.exception.handlers import (
     validation_exception_handler,
 )
 from core.logger import setup_logger
+from core.redis import close_redis, init_redis
 
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    setup_logger()
+    await init_redis()
     yield
+    await close_redis()
 
 
 app = FastAPI(lifespan=lifespan)
+
+setup_logger()
 
 app.add_exception_handler(BaseCustomException, custom_exception_handler)
 app.add_exception_handler(Exception, system_exception_handler)

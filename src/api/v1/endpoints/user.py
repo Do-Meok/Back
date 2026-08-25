@@ -1,27 +1,10 @@
-from domains.user.exceptions import (
-    DuplicateEmailException,
-    DuplicateNicknameException,
-    DuplicatePhoneNumException,
-    IncorrectPasswordException,
-    InvalidCheckedPasswordException,
-    PasswordMismatchException,
-    PasswordUnchangedException,
-    UserNotFoundException,
-)
 from fastapi import APIRouter, Depends, status
 
 from api.v1.deps import get_current_user, get_user_service, get_auth_service
-from core.exception.openapi import create_error_response
 from domains.auth.service import AuthService
-from domains.user.schemas.request import (
-    ChangeNicknameRequest,
-    ChangePasswordRequest,
-    FindEmailRequest,
-    ResetPasswordRequest,
-    SignUpRequest,
-)
-from domains.user.schemas.response import FindEmailResponse, UserInfoResponse, SignUpResponse
+from domains.user.schemas import SignUpRequest, SignUpResponse, UserInfoResponse
 from domains.user.service import UserService
+from domains.user.model import User
 
 router = APIRouter()
 
@@ -30,13 +13,7 @@ router = APIRouter()
     "/sign-up",
     status_code=status.HTTP_201_CREATED,
     summary="회원가입 API",
-    response_model=SignUpResponse,
-    responses=create_error_response(
-        DuplicateEmailException,
-        DuplicateNicknameException,
-        DuplicatePhoneNumException,
-        InvalidCheckedPasswordException,
-    ),
+    response_model=SignUpResponse
 )
 async def user_sign_up(
         request: SignUpRequest,
@@ -54,18 +31,16 @@ async def user_sign_up(
 
 @router.get(
     "/info",
-    status_code=200,
-    summary="유저 정보 호출 API",
+    status_code=status.HTTP_200_OK,
+    summary="유저 정보 반환 API",
     response_model=UserInfoResponse,
-    responses=create_error_response(UserNotFoundException),
+    description="현재 로그인한 사용자의 프로필 정보를 반환",
 )
-async def user_info(
-    current_user=Depends(get_current_user),
-    user_service: UserService = Depends(get_user_service),
-):
-    return await user_service.get_user_info(current_user.id)
+async def user_info(user: User = Depends(get_current_user)) -> UserInfoResponse:
+    return UserInfoResponse.from_user(user)
 
 
+"""
 @router.post(
     "/find-email",
     status_code=200,
@@ -127,3 +102,4 @@ async def change_nickname(
 ):
     await user_service.change_nickname(request, current_user.id)
     return {"message": "닉네임이 변경되었습니다.", "nickname": request.nickname}
+"""

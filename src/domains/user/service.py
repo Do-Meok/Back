@@ -3,21 +3,20 @@ from uuid import UUID
 from core import security
 from core.exception.codes import ErrorCode
 from core.exception.exceptions import BadRequestException, ConflictException, UserNotFoundException
+from domains.auth.refresh_store import RefreshTokenStore
 from domains.user.model import User
 from domains.user.repository import UserRepository
-from domains.user.schemas.request import (
-    ChangeNicknameRequest,
-    ChangePasswordRequest,
-    FindEmailRequest,
-    ResetPasswordRequest,
-    SignUpRequest,
-)
-from domains.user.schemas.response import FindEmailResponse, UserInfoResponse
+from domains.user.schemas import SignUpRequest, UserInfoResponse
 
 
 class UserService:
-    def __init__(self, user_repo: UserRepository):
+    def __init__(
+            self,
+            user_repo: UserRepository,
+            refresh_store: RefreshTokenStore | None = None,
+    ):
         self.user_repo = user_repo
+        self.refresh_store = refresh_store
 
     async def sign_up(self, request: SignUpRequest) -> User:
         # 1. 중복 및 유효성 검증

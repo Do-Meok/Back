@@ -1,15 +1,14 @@
-from domains.shopping.repository import ShoppingRepository
-from domains.shopping.service import ShoppingService
 from fastapi import Depends
 from redis.asyncio import Redis
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from core.database import get_db, get_redis
-from core.security import get_access_token
+from core.database import get_db
+from core.redis import get_redis
+from core.security import get_access_token, REFRESH_TOKEN_EXPIRE_SECONDS
 from domains.assistant.llm_handler import LLMHandler
 from domains.assistant.service import AssistantService
+from domains.auth.refresh_store import RefreshTokenStore
 from domains.auth.service import AuthService
-from domains.auth.social_service import SocialAuthService
 from domains.ingredient.repository import IngredientRepository
 from domains.ingredient.service import IngredientService
 from domains.recipe.repository import RecipeRepository
@@ -23,9 +22,14 @@ from domains.user.service import UserService
 def get_user_repo(session: AsyncSession = Depends(get_db)) -> UserRepository:
     return UserRepository(session)
 
+def get_refresh_store() -> RefreshTokenStore:
+    return RefreshTokenStore(get_redis(), ttl_seconds=REFRESH_TOKEN_EXPIRE_SECONDS)
 
-def get_user_service(user_repo: UserRepository = Depends(get_user_repo)) -> UserService:
-    return UserService(user_repo=user_repo)
+def get_user_service(
+    user_repo: UserRepository = Depends(get_user_repo),
+    refresh_store: RefreshTokenStore = Depends(get_refresh_store),
+) -> UserService:
+    return UserService(user_repo=user_repo, refresh_store=refresh_store)
 
 
 def get_auth_service(
@@ -40,14 +44,14 @@ async def get_current_user(
 ) -> User:
     return await auth_service.get_user_by_token(access_token)
 
-
+"""
 async def get_social_auth_service(
     session: AsyncSession = Depends(get_db),
     redis: Redis = Depends(get_redis),
 ) -> SocialAuthService:
     user_repo = UserRepository(session)
     return SocialAuthService(user_repo, redis)
-
+"""
 
 # --- 재료 관련 DI ---
 def get_ingredient_repo(
@@ -89,31 +93,3 @@ def get_recipe_service(
     user: User = Depends(get_current_user),
 ) -> RecipeService:
     return RecipeService(user=user, recipe_repo=recipe_repo)
-
-
-# --- 장보기 관련 DI ---
-def get_shopping_repo(
-    session: AsyncSession = Depends(get_db),
-) -> ShoppingRepository:
-    return ShoppingRepository(session)
-
-
-def get_shopping_service(
-    shopping_repo: ShoppingRepository = Depends(get_shopping_repo),
-    user: User = Depends(get_current_user),
-) -> ShoppingService:
-    return ShoppingService(user=user, shopping_repo=shopping_repo)
-
-
-# --- 냉장고 관련 DI ---
-def get_refrigerator_repo(
-    session: AsyncSession = Depends(get_db),
-) -> RefrigeratorRepository:
-    return RefrigeratorRepository(session)
-
-
-def get_refrigerator_service(
-    refrigerator_repo: RefrigeratorRepository = Depends(get_refrigerator_repo),
-    user: User = Depends(get_current_user),
-) -> RefrigeratorService:
-    return RefrigeratorService(user=user, refrigerator_repo=refrigerator_repo)

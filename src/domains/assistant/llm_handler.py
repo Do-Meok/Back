@@ -2,8 +2,8 @@ from typing import TypeVar
 
 from pydantic import BaseModel, ValidationError
 
+from core.exception.exceptions import UnexpectedException
 from domains.assistant.clients import llm_client
-from domains.assistant.exceptions import AISchemaMismatchException
 from domains.assistant.parser import LLMParser
 from domains.assistant.prompt_builder import PromptBuilder
 from domains.assistant.schemas import DetailRecipeResponse, ReceiptIngredientResponse, RecommendationResponse
@@ -24,7 +24,7 @@ class LLMHandler:
 
         except ValidationError as e:
             print(f"Schema Error: {e}")
-            raise AISchemaMismatchException("AI 응답 형식이 올바르지 않습니다.")
+            raise UnexpectedException("AI 응답 형식이 올바르지 않습니다.")
 
     async def recommend_menus(self, ingredients: list[str]) -> RecommendationResponse:
         prompt = PromptBuilder.build_suggestion_prompt(ingredients)

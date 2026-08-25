@@ -49,13 +49,6 @@ class UserRepository:
                 detail="사용자 저장 중 DB 오류가 발생했습니다."
             ) from e
 
-    async def find_user_by_recovery_info(self, name: str, birth: str, phone_hash: str) -> User | None:
-        """
-        이름, 생년월일, 전화번호 해시를 조합하여 유저를 조회 (이메일 찾기 등)
-        """
-        stmt = select(User).where(User.name == name, User.birth == birth, User.phone_hash == phone_hash)
-        result = await self.session.execute(stmt)
-        return result.scalar_one_or_none()
 
     async def get_user_by_social_id(self, provider: str, social_id: str) -> User | None:
         return await self._get_one(User.provider == provider, User.social_id == social_id)
