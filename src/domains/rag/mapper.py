@@ -20,9 +20,23 @@ def parse_page_content(page_content: str) -> str:
     for line in page_content.splitlines():
         if line.startswith("parsed_ingredients:"):
             return line.removeprefix("parsed_ingredients:").strip()
-        return page_content.strip()
+    return page_content.strip()
 
-def map_document_to_recipe(doc: Document, score: float) -> RecipeRecommendation | None:
+def split_ingredients(parsed_ingredients: str) -> list[str]:
+    '''
+    파싱된 식재료 문자열을 비교 가능한 식재료 이름 목록으로 변환
+    '''
+    return [
+        ingredient.strip()
+        for ingredient in parsed_ingredients.split(",")
+        if ingredient.strip()
+    ]
+
+def map_document_to_recipe(
+    doc: Document,
+    score: float,
+    owned_ingredient_names: list[str] | None = None,
+) -> RecipeRecommendation | None:
     parsed_ingredients = parse_page_content(doc.page_content)
     meta = doc.metadata or {}
 
@@ -30,10 +44,27 @@ def map_document_to_recipe(doc: Document, score: float) -> RecipeRecommendation 
     if not recipe_name:
         return None
 
+    recipe_ingredients = split_ingredients(parsed_ingredients)
+    owned_set = {
+        ingredient.strip()
+        for ingredient in (owned_ingredient_names or [])
+        if ingredient.strip()
+    }
+    owned = [
+        ingredient
+        for ingredient in recipe_ingredients
+        if ingredient in owned_set
+    ]
+    missing = [
+        ingredient
+        for ingredient in recipe_ingredients
+        if ingredient not in owned_set
+    ]
 
     return RecipeRecommendation(
         recipe_name=recipe_name,
-        parsed_ingredients=parsed_ingredients,
+        owned_ingredients=owned,
+        missing_ingredients=missing,
         board_name=str(meta.get("board_name", "") or ""),
         author_name=str(meta.get("author_name", "") or ""),
         recipe_difficulty=str(meta.get("recipe_difficulty", "") or ""),

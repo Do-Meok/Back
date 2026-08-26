@@ -3,7 +3,14 @@ from pydantic import BaseModel, Field
 
 class RecipeRecommendation(BaseModel):
     recipe_name: str = Field(description="레시피 명칭")
-    parsed_ingredients: str = Field(description="필요한 식재료")
+    owned_ingredients: list[str] = Field(
+        default_factory=list,
+        description="보유중인 식재료",
+    )
+    missing_ingredients: list[str] = Field(
+        default_factory=list,
+        description="보유중이지 않은 식재료",
+    )
     board_name: str = Field(default="", description="게시판 이름")
     author_name: str = Field(default="", description="작성자 이름")
     recipe_difficulty: str = Field(default="", description="난이도")

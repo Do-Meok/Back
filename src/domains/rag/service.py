@@ -35,7 +35,7 @@ class RagService:
 
         recipes = []
         for doc, score in docs_with_scores:
-            mapped = map_document_to_recipe(doc, score)
+            mapped = map_document_to_recipe(doc, score, owned_ingredient_names=names)
             if mapped is not None:
                 recipes.append(mapped)
 

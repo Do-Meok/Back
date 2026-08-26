@@ -17,6 +17,8 @@ router = APIRouter(prefix="/recipes", tags=["recipes"])
     "/recommendations",
     status_code=status.HTTP_200_OK,
     response_model=RecipeRecommendationResponse,
+    summary="레시피 추천",
+    description="보유 재료 기반 레시피 추천(RAG 검색)",
     responses=create_error_response(
         UnAuthorizedException,
         ExternalServiceException,
