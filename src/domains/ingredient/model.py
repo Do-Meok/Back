@@ -1,10 +1,10 @@
 from __future__ import annotations
 
-from datetime import datetime
+from datetime import date
 from typing import TYPE_CHECKING
 
 import uuid6
-from sqlalchemy import BigInteger, DateTime, ForeignKey, String, func
+from sqlalchemy import BigInteger, Date, ForeignKey, String, func
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
@@ -22,7 +22,6 @@ class Ingredient(Base):
         UUID(as_uuid=True), ForeignKey("users.id", ondelete="CASCADE"), index=True
     )
     ingredient_name: Mapped[str] = mapped_column(String(45))
-    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
-
+    created_at: Mapped[date] = mapped_column(Date, server_default=func.current_date())
     # 릴레이션
     user: Mapped[User] = relationship(back_populates="ingredients")

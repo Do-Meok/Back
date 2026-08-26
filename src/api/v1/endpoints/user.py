@@ -1,6 +1,6 @@
 from fastapi import APIRouter, Depends, status
 
-from api.v1.deps import get_current_user, get_user_service, get_auth_service
+from api.deps import get_current_user, get_user_service, get_auth_service
 from domains.auth.service import AuthService
 from domains.user.schemas import SignUpRequest, SignUpResponse, UserInfoResponse
 from domains.user.service import UserService

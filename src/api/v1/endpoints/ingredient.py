@@ -1,6 +1,6 @@
 from fastapi import APIRouter, Depends, status
 
-from api.v1.deps import get_ingredient_service
+from api.deps import get_ingredient_service
 from core.exception.exceptions import IngredientNotFoundException, UnAuthorizedException
 from core.exception.openapi import create_error_response
 

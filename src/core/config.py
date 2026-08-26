@@ -38,10 +38,6 @@ class Settings(BaseSettings):
 
     @property
     def rag_url(self) -> str:
-        return f"postgresql+asyncpg://{self.DB_USER}:{self.DB_PASSWORD.get_secret_value()}@{self.DB_HOST}:{self.DB_PORT}/domeok_rag"
-
-    @property
-    def rag_sync_url(self) -> str:
         return (
             f"postgresql+psycopg://{self.DB_USER}:{self.DB_PASSWORD.get_secret_value()}"
             f"@{self.DB_HOST}:{self.DB_PORT}/domeok_rag"

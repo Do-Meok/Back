@@ -12,7 +12,6 @@ class UserInfoResponse(BaseModel):
 
     name: str | None = Field(None, description="사용자 실명")
     birth: date | None = Field(None, description="생년월일")
-    phone_num: str | None = Field(None, description="복호화된 전화번호")
 
     model_config = ConfigDict(from_attributes=True)
 
@@ -23,7 +22,6 @@ class UserInfoResponse(BaseModel):
             nickname=user.nickname,
             name=user.name,
             birth=user.birth,
-            phone_num=phone_num
         )
 
 class SignUpRequest(BaseModel):

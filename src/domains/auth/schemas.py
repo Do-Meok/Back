@@ -7,7 +7,7 @@ from domains.user.schemas import UserInfoResponse
 # Request
 class LogInRequest(BaseModel):
     email: EmailStr
-    password: constr(min_length=8, max_length=20)
+    password: str = Field(..., description="비밀번호", min_length=8, max_length=20)
 
 
 class RefreshTokenRequest(BaseModel):

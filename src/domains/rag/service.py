@@ -1,3 +1,7 @@
+import asyncio
+
+from domains.rag.mapper import build_ingredient_query, map_document_to_recipe
+from domains.rag.schemas import RecipeRecommendationResponse
 from domains.user.model import User
 from domains.ingredient.repository import IngredientRepository
 
@@ -5,16 +9,37 @@ from domains.rag.retriever import RecipeRetriever
 
 # 상수 설정
 TOP_K = 5
-SEARCH_CANDIDATE_K = 40 # 벡터 검색 후보
-CANDIDATE_POOL_K = 15   # 필터 후 상위 풀에서 랜덤 추출
+
 
 class RagService:
     def __init__(
-            self,
-            user: User,
-            ingredient_repo: IngredientRepository,
-            retriever: RecipeRetriever
+        self,
+        user: User,
+        ingredient_repo: IngredientRepository,
+        retriever: RecipeRetriever,
     ):
         self.user = user
         self.ingredient_repo = ingredient_repo
         self.retriever = retriever
+
+    async def recommend_recipes(self) -> RecipeRecommendationResponse:
+        ingredients = await self.ingredient_repo.get_ingredients(self.user.id)
+        names = [item.ingredient_name for item in ingredients]
+        if not names:
+            return RecipeRecommendationResponse(ingredients_used=[], recipes=[])
+
+        query = build_ingredient_query(names)
+        docs_with_scores = await asyncio.to_thread(
+            self.retriever.search, query, k=TOP_K
+        )
+
+        recipes = []
+        for doc, score in docs_with_scores:
+            mapped = map_document_to_recipe(doc, score)
+            if mapped is not None:
+                recipes.append(mapped)
+
+        return RecipeRecommendationResponse(
+            ingredients_used=names,
+            recipes=recipes,
+        )

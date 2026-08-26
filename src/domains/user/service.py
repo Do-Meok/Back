@@ -36,13 +36,32 @@ class UserService:
                 code=ErrorCode.PASSWORD_MISMATCH,
                 detail="비밀번호와 비밀번호 확인이 일치하지 않습니다.",
             )
+        # 2. 데이터 보안 처리(전화번호 -> 암호화 + 해시화, 비밀번호 -> 해시화)
+        phone_hash = None
+        encrypted_phone = None
+
+        if request.phone_num:
+            phone_hash = security.make_phone_hash(request.phone_num)
+
+            if await self.user_repo.get_user_by_phone_num(phone_hash):
+                raise ConflictException(
+                    code=ErrorCode.PHONE_NUM_CONFLICT,
+                    detail="이미 사용 중인 전화번호 입니다."
+                )
+
+            encrypted_phone = security.encrypt_phone(request.phone_num)
 
         hashed_password = security.hash_password(request.password)
 
+        # 3. 유저 생성 및 저장
         user = User(
             email=str(request.email),
             password=hashed_password,
             nickname=request.nickname,
+            name=request.name,
+            birth=request.birth,
+            phone=encrypted_phone,
+            phone_hash=phone_hash,
         )
 
         return await self.user_repo.save_user(user)

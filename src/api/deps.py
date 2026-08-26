@@ -9,6 +9,8 @@ from domains.auth.refresh_store import RefreshTokenStore
 from domains.auth.service import AuthService
 from domains.ingredient.repository import IngredientRepository
 from domains.ingredient.service import IngredientService
+from domains.rag.retriever import RecipeRetriever, get_recipe_retriever
+from domains.rag.service import RagService
 from domains.user.model import User
 from domains.user.repository import UserRepository
 from domains.user.service import UserService
@@ -29,9 +31,10 @@ def get_user_service(
 
 
 def get_auth_service(
-    user_repo: UserRepository = Depends(get_user_repo), redis: Redis = Depends(get_redis)
+        user_repo: UserRepository = Depends(get_user_repo),
+        refresh_store: RefreshTokenStore = Depends(get_refresh_store),
 ) -> AuthService:
-    return AuthService(user_repo=user_repo, redis=redis)
+    return AuthService(user_repo=user_repo, refresh_store=refresh_store)
 
 
 async def get_current_user(
@@ -61,3 +64,18 @@ def get_ingredient_service(
     ingredient_repo: IngredientRepository = Depends(get_ingredient_repo),
 ) -> IngredientService:
     return IngredientService(user=user, ingredient_repo=ingredient_repo)
+
+
+def get_rag_retriever() -> RecipeRetriever:
+    return get_recipe_retriever()
+
+def get_rag_service(
+    user: User = Depends(get_current_user),
+    ingredient_repo: IngredientRepository = Depends(get_ingredient_repo),
+    retriever: RecipeRetriever = Depends(get_rag_retriever),
+) -> RagService:
+    return RagService(
+        user=user,
+        ingredient_repo=ingredient_repo,
+        retriever=retriever,
+    )

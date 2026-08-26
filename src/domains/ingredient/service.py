@@ -38,5 +38,5 @@ class IngredientService:
         deleted = await self.ingredient_repo.delete_all_ingredients(self.user.id)
         if not deleted:
             raise IngredientNotFoundException(
-                "삭제할 식재료가 존재하지 않거나 이미 비어있는 냉장고 입니다."
+                "삭제할 식재료가 존재하지 않거나 이미 비어있습니다."
             )
