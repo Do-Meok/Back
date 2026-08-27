@@ -21,7 +21,7 @@ class User(Base):
     id: Mapped[uuid6.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid6.uuid7)
     email: Mapped[str | None] = mapped_column(String(128), unique=True)
     password: Mapped[str | None] = mapped_column(String(128))
-    nickname: Mapped[str] = mapped_column(String(20))
+    nickname: Mapped[str] = mapped_column(String(20), unique=True)
 
     # 개인정보 영역
     name: Mapped[str | None] = mapped_column(String(20))

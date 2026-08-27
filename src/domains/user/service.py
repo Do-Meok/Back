@@ -2,11 +2,12 @@ from uuid import UUID
 
 from core import security
 from core.exception.codes import ErrorCode
-from core.exception.exceptions import BadRequestException, ConflictException, UserNotFoundException
+from core.exception.exceptions import BadRequestException, ConflictException, UserNotFoundException, \
+    UnAuthorizedException
 from domains.auth.refresh_store import RefreshTokenStore
 from domains.user.model import User
 from domains.user.repository import UserRepository
-from domains.user.schemas import SignUpRequest, UserInfoResponse
+from domains.user.schemas import SignUpRequest, UserInfoResponse, UpdateUserRequest, UpdatePasswordRequest
 
 
 class UserService:
@@ -79,6 +80,52 @@ class UserService:
         decrypted_phone = security.decrypt_phone(user.phone) if user.phone else None
 
         return UserInfoResponse.from_user(user, phone_num=decrypted_phone)
+
+    async def update_user(self, user: User, request: UpdateUserRequest) -> UserInfoResponse:
+        if request.nickname is not None:
+            # 본인의 현재 닉네임과 동일한 경우 불가
+            if user.nickname == request.nickname:
+                raise ConflictException(
+                    code=ErrorCode.NICKNAME_CONFLICT,
+                    detail="현재 사용 중인 닉네임과 동일합니다."
+                )
+            # 타인이 사용 중인 닉네임인지 검증
+            existing = await self.user_repo.get_user_by_nickname(request.nickname)
+            if existing and existing.id != user.id:
+                raise ConflictException(
+                    code=ErrorCode.NICKNAME_CONFLICT,
+                    detail="이미 사용 중인 닉네임 입니다.(대소문자 구별)",
+                )
+            user.nickname = request.nickname
+
+        await self.user_repo.save_user(user)
+        return UserInfoResponse.from_user(user)
+
+    async def update_password(
+        self, user: User, request: UpdatePasswordRequest
+    ) -> UserInfoResponse:
+        if user.password is not None:
+
+            if request.current_password == request.new_password:
+                raise BadRequestException(
+                    detail="현재 비밀번호와 변경할 비밀번호가 동일합니다."
+                )
+            if not request.current_password:
+                raise BadRequestException(
+                    code=ErrorCode.BAD_REQUEST,
+                    detail="현재 비밀번호가 필요합니다.",
+                )
+            if not security.verify_password(request.current_password, user.password):
+                raise UnAuthorizedException(
+                    detail="현재 비밀번호가 올바르지 않습니다."
+                )
+
+        user.password = security.hash_password(request.new_password)
+        await self.user_repo.save_user(user)
+        if self.refresh_store is not None:
+            await self.refresh_store.revoke_all_for_user(user.id)
+        return UserInfoResponse.from_user(user)
+
 '''
 
     async def find_email(self, request: FindEmailRequest) -> FindEmailResponse:
@@ -135,21 +182,5 @@ class UserService:
 
         # 변경할 비밀번호 해시화해서 저
         user.password = security.hash_password(request.new_password)
-        await self.user_repo.save_user(user)
-
-    async def change_nickname(self, request: ChangeNicknameRequest, user_id: str) -> None:
-        """사용자의 닉네임을 변경, 중복 닉네임 로직 포함"""
-
-        user = await self.user_repo.get_user_by_id(user_id)
-        if not user:
-            raise UserNotFoundException()
-
-        if user.nickname == request.nickname:
-            raise DuplicateNicknameException(detail="현재 닉네임과 동일합니다.")
-
-        if await self.user_repo.get_user_by_nickname(request.nickname):
-            raise DuplicateNicknameException(detail="이미 사용 중인 닉네임입니다.")
-
-        user.nickname = request.nickname
         await self.user_repo.save_user(user)
 '''

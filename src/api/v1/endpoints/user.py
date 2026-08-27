@@ -1,8 +1,11 @@
 from fastapi import APIRouter, Depends, status
 
 from api.deps import get_current_user, get_user_service, get_auth_service
+from core.exception.exceptions import ConflictException, UnAuthorizedException
+from core.exception.openapi import create_error_response
 from domains.auth.service import AuthService
-from domains.user.schemas import SignUpRequest, SignUpResponse, UserInfoResponse
+from domains.user.schemas import SignUpRequest, SignUpResponse, UserInfoResponse, UpdateUserRequest, \
+    UpdatePasswordRequest
 from domains.user.service import UserService
 from domains.user.model import User
 
@@ -30,7 +33,7 @@ async def user_sign_up(
 
 
 @router.get(
-    "/info",
+    "/me",
     status_code=status.HTTP_200_OK,
     summary="유저 정보 반환 API",
     response_model=UserInfoResponse,
@@ -39,6 +42,33 @@ async def user_sign_up(
 async def user_info(user: User = Depends(get_current_user)) -> UserInfoResponse:
     return UserInfoResponse.from_user(user)
 
+@router.patch(
+    "/me",
+    status_code=status.HTTP_200_OK,
+    summary="유저 정보 변경(닉네임)",
+    responses = create_error_response(ConflictException),
+)
+
+async def update_me(
+        request: UpdateUserRequest,
+        user: User = Depends(get_current_user),
+        user_service: UserService = Depends(get_user_service),
+) -> UserInfoResponse:
+    return await user_service.update_user(user, request)
+
+@router.patch(
+    "/me/password",
+    response_model=UserInfoResponse,
+    summary="비밀번호 변경",
+    description="현재 비밀번호 확인 후 새 비밀번호로 변경",
+    responses=create_error_response(UnAuthorizedException),
+)
+async def update_password(
+    request: UpdatePasswordRequest,
+    user: User = Depends(get_current_user),
+    user_service: UserService = Depends(get_user_service),
+) -> UserInfoResponse:
+    return await user_service.update_password(user, request)
 
 """
 @router.post(
@@ -55,26 +85,6 @@ async def find_email(
     return await user_service.find_email(request)
 
 
-@router.patch(
-    "/change-pw",
-    status_code=200,
-    summary="비밀번호 변경 API (로그인 상태)",
-    responses=create_error_response(
-        UserNotFoundException,
-        IncorrectPasswordException,
-        PasswordUnchangedException,
-        PasswordMismatchException,
-    ),
-)
-async def change_pw(
-    request: ChangePasswordRequest,
-    current_user=Depends(get_current_user),
-    user_service: UserService = Depends(get_user_service),
-):
-    await user_service.change_password(request, current_user.id)
-    return {"message": "비밀번호가 성공적으로 변경되었습니다."}
-
-
 @router.post(
     "/reset-pw",
     status_code=200,
@@ -88,18 +98,4 @@ async def reset_pw(
     await user_service.reset_password(request)
     return {"message": "비밀번호가 재설정되었습니다. 새 비밀번호로 로그인해주세요."}
 
-
-@router.patch(
-    "/nickname",
-    status_code=200,
-    summary="닉네임 변경 API",
-    responses=create_error_response(UserNotFoundException, DuplicateNicknameException),
-)
-async def change_nickname(
-    request: ChangeNicknameRequest,
-    current_user=Depends(get_current_user),
-    user_service: UserService = Depends(get_user_service),
-):
-    await user_service.change_nickname(request, current_user.id)
-    return {"message": "닉네임이 변경되었습니다.", "nickname": request.nickname}
 """

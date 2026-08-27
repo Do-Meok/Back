@@ -1,7 +1,7 @@
 from datetime import date
 from typing import Self
 
-from pydantic import BaseModel, EmailStr, Field, ConfigDict
+from pydantic import BaseModel, EmailStr, Field, ConfigDict, model_validator
 
 from domains.user.model import User
 
@@ -39,6 +39,21 @@ class SignUpResponse(BaseModel):
     access_token: str
     refresh_token: str
 
+class UpdateUserRequest(BaseModel):
+    nickname: str = Field(..., min_length=2, max_length=20, description="닉네임 변경 (2~20자)")
+
+class UpdatePasswordRequest(BaseModel):
+    current_password: str = Field(..., min_length=8, max_length=20)
+    new_password: str = Field(..., min_length=8, max_length=20)
+    checked_new_password: str = Field(..., min_length=8, max_length=20)
+
+    @model_validator(mode="after")
+    def verify_password_match(self):
+        if self.new_password != self.checked_new_password:
+            raise ValueError("비밀번호 확인이 일치하지 않습니다.")
+        return self
+
+
 """
 class FindEmailRequest(BaseModel):
     name: str = Field(..., min_length=2, max_length=20)
@@ -60,9 +75,6 @@ class ResetPasswordRequest(BaseModel):
     new_password: str = Field(..., min_length=8, max_length=20)
     checked_new_password: str = Field(..., min_length=8, max_length=20)
 
-
-class ChangeNicknameRequest(BaseModel):
-    nickname: str = Field(..., min_length=2, max_length=20)
 
 
 class FindEmailResponse(BaseModel):
