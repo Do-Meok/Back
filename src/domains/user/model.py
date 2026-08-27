@@ -9,6 +9,7 @@ from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from core.database import Base
+from domains.saved_recipe.model import SavedRecipe
 
 # 순환 참조 에러 해결
 if TYPE_CHECKING:
@@ -36,8 +37,16 @@ class User(Base):
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
 
     # 릴레이션
-    ingredients: Mapped[list[Ingredient]] = relationship(back_populates="user")
-
+    ingredients: Mapped[list[Ingredient]] = relationship(
+        "Ingredient",
+        back_populates="user",
+        cascade="all, delete-orphan"
+    )
+    saved_recipes: Mapped[list[SavedRecipe]] = relationship(
+        "SavedRecipe",
+        back_populates="user",
+        cascade="all, delete-orphan",
+    )
     __table_args__ = (
         # 닉네임 대소문자 중복 닉네임 방지
         Index("ix_user_nickname_lower", func.lower(nickname), unique=True),

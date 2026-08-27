@@ -14,6 +14,8 @@ from domains.rag.service import RagService
 from domains.recipe_detail.cache import RecipeDetailCache
 from domains.recipe_detail.crawler import RecipeCrawler
 from domains.recipe_detail.service import RecipeDetailService
+from domains.saved_recipe.repository import SavedRecipeRepository
+from domains.saved_recipe.service import SavedRecipeService
 from domains.user.model import User
 from domains.user.repository import UserRepository
 from domains.user.service import UserService
@@ -89,3 +91,20 @@ def get_recipe_detail_service(
 ) -> RecipeDetailService:
     cache = RecipeDetailCache(get_redis(), ttl_seconds=86400)
     return RecipeDetailService(crawler=_recipe_crawler, cache=cache)
+
+def get_saved_recipe_repo(
+    session: AsyncSession = Depends(get_db),
+) -> SavedRecipeRepository:
+    return SavedRecipeRepository(session)
+
+
+def get_saved_recipe_service(
+    user: User = Depends(get_current_user),
+    repo: SavedRecipeRepository = Depends(get_saved_recipe_repo),
+    recipe_detail_service: RecipeDetailService = Depends(get_recipe_detail_service),
+) -> SavedRecipeService:
+    return SavedRecipeService(
+        user=user,
+        repo=repo,
+        recipe_detail_service=recipe_detail_service,
+    )

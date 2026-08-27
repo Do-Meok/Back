@@ -23,5 +23,9 @@ class Ingredient(Base):
     )
     ingredient_name: Mapped[str] = mapped_column(String(45))
     created_at: Mapped[date] = mapped_column(Date, server_default=func.current_date())
+
     # 릴레이션
-    user: Mapped[User] = relationship(back_populates="ingredients")
+    user: Mapped[User] = relationship(
+        "User",
+        back_populates="ingredients"
+    )
