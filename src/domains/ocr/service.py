@@ -44,9 +44,7 @@ class OcrService:
         self._parse_receipt_text = parse_receipt_text_fn
         self._user_id = user_id
 
-    def _resolve_format(
-        self, content_type: str | None, filename: str | None
-    ) -> str:
+    def _resolve_format(self, content_type: str | None, filename: str | None) -> str:
         if content_type:
             mime = content_type.split(";", 1)[0].strip().lower()
             fmt = _MIME_TO_FORMAT.get(mime)

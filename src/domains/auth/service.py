@@ -1,14 +1,18 @@
 from dataclasses import dataclass
 from uuid import UUID
 
-
 from core import security
 from core.exception.codes import ErrorCode
-from core.exception.exceptions import InvalidTokenException, UnAuthorizedException, ConflictException
+from core.exception.exceptions import ConflictException, InvalidTokenException, UnAuthorizedException
 from domains.auth import kakao_client
 from domains.auth.refresh_store import RefreshTokenStore
-from domains.auth.schemas import LogInRequest, LogInResponse, KakaoAuthResponse, KakaoNeedsProfileResponse, \
-    KakaoCompleteRequest
+from domains.auth.schemas import (
+    KakaoAuthResponse,
+    KakaoCompleteRequest,
+    KakaoNeedsProfileResponse,
+    LogInRequest,
+    LogInResponse,
+)
 from domains.user.model import User
 from domains.user.repository import UserRepository
 from domains.user.schemas import UserInfoResponse
@@ -46,15 +50,12 @@ class AuthService:
             refresh_token=tokens.refresh_token,
         )
 
-    def _to_kakao_auth_response(
-        self, user: User, tokens: TokenPair
-    ) -> KakaoAuthResponse:
+    def _to_kakao_auth_response(self, user: User, tokens: TokenPair) -> KakaoAuthResponse:
         return KakaoAuthResponse(
             info=UserInfoResponse.model_validate(user),
             access_token=tokens.access_token,
             refresh_token=tokens.refresh_token,
         )
-
 
     async def log_in(self, request: LogInRequest) -> LogInResponse:
         """
@@ -71,9 +72,7 @@ class AuthService:
         tokens = await self.issue_tokens(user)
         return self._to_auth_response(user, tokens)
 
-    async def login_with_kakao(
-        self, access_token: str
-    ) -> KakaoAuthResponse | KakaoNeedsProfileResponse:
+    async def login_with_kakao(self, access_token: str) -> KakaoAuthResponse | KakaoNeedsProfileResponse:
         kakao_id = await kakao_client.fetch_kakao_user_id(access_token)
         user = await self.user_repo.get_user_by_social_id(kakao_id)
         if user:
@@ -82,9 +81,7 @@ class AuthService:
         signup_token = security.create_kakao_signup_token(kakao_id)
         return KakaoNeedsProfileResponse(signup_token=signup_token)
 
-    async def complete_kakao_signup(
-        self, request: KakaoCompleteRequest
-    ) -> KakaoAuthResponse:
+    async def complete_kakao_signup(self, request: KakaoCompleteRequest) -> KakaoAuthResponse:
         kakao_id = security.decode_kakao_signup_token(request.signup_token)
 
         existing = await self.user_repo.get_user_by_social_id(kakao_id)

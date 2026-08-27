@@ -1,6 +1,7 @@
 """
 OCR에서 추출된 데이터를 LLM에게 넘겨서 파싱해줌
 """
+
 import json
 
 import openai

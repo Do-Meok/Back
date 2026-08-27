@@ -3,8 +3,15 @@ from fastapi import APIRouter, Depends, status
 from api.deps import get_auth_service
 from core.exception.exceptions import InvalidTokenException, UnAuthorizedException
 from core.exception.openapi import create_error_response
-from domains.auth.schemas import LogInRequest, LogInResponse, RefreshTokenRequest, KakaoAuthResponse, \
-    KakaoNeedsProfileResponse, KakaoLoginRequest, KakaoCompleteRequest
+from domains.auth.schemas import (
+    KakaoAuthResponse,
+    KakaoCompleteRequest,
+    KakaoLoginRequest,
+    KakaoNeedsProfileResponse,
+    LogInRequest,
+    LogInResponse,
+    RefreshTokenRequest,
+)
 from domains.auth.service import AuthService
 
 router = APIRouter(prefix="/auth", tags=["auth"])
@@ -51,6 +58,7 @@ async def user_log_out(
 ) -> dict[str, str]:
     await auth_service.log_out(request.refresh_token)
     return {"message": "로그아웃 되었습니다."}
+
 
 @router.post(
     "/kakao",

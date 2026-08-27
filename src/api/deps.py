@@ -118,6 +118,7 @@ def get_saved_recipe_service(
         recipe_detail_service=recipe_detail_service,
     )
 
+
 def get_ocr_service(
     user: User = Depends(get_current_user),
 ) -> OcrService:

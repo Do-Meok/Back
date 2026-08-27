@@ -88,15 +88,14 @@ def decode_jwt(access_token: str) -> str:
     except jwt.PyJWTError as e:
         raise InvalidTokenException() from e
 
+
 def create_kakao_signup_token(kakao_id: str) -> str:
     now = datetime.now(timezone.utc)
     payload = {
         "sub": kakao_id,
         "purpose": KAKAO_SIGNUP_PURPOSE,
         "iat": int(now.timestamp()),
-        "exp": int(
-            (now + timedelta(minutes=KAKAO_SIGNUP_TOKEN_EXPIRE_MINUTES)).timestamp()
-        ),
+        "exp": int((now + timedelta(minutes=KAKAO_SIGNUP_TOKEN_EXPIRE_MINUTES)).timestamp()),
     }
     return jwt.encode(payload, JWT_SECRET_KEY, algorithm=JWT_ALGORITHM)
 
@@ -114,7 +113,6 @@ def decode_kakao_signup_token(token: str) -> str:
         raise TokenExpiredException(detail="가입 토큰이 만료되었습니다.") from e
     except jwt.PyJWTError as e:
         raise InvalidTokenException(detail="유효하지 않은 가입 토큰입니다.") from e
-
 
 
 def create_refresh_token() -> str:

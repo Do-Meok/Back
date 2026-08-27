@@ -52,8 +52,3 @@ async def add_process_time_header(request: Request, call_next):
 @app.get("/health", status_code=200)
 def health_check():
     return {"status": "ok"}
-
-
-@app.get("/a", status_code=200)
-async def error_aa():
-    raise Exception("Test Exception")
