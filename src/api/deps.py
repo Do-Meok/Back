@@ -1,6 +1,7 @@
 from fastapi import Depends
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from core.config import settings
 from core.database import get_db
 from core.redis import get_redis
 from core.security import REFRESH_TOKEN_EXPIRE_SECONDS, get_access_token
@@ -8,6 +9,7 @@ from domains.auth.refresh_store import RefreshTokenStore
 from domains.auth.service import AuthService
 from domains.ingredient.repository import IngredientRepository
 from domains.ingredient.service import IngredientService
+from domains.ocr.service import OcrService
 from domains.rag.retriever import RecipeRetriever, get_recipe_retriever
 from domains.rag.service import RagService
 from domains.recipe_detail.cache import RecipeDetailCache
@@ -114,4 +116,15 @@ def get_saved_recipe_service(
         user=user,
         repo=repo,
         recipe_detail_service=recipe_detail_service,
+    )
+
+def get_ocr_service(
+    user: User = Depends(get_current_user),
+) -> OcrService:
+    return OcrService(
+        api_url=settings.NAVER_OCR_API_URL,
+        secret_key=settings.NAVER_OCR_SECRET_KEY.get_secret_value(),
+        openai_api_key=settings.OPENAI_API_KEY.get_secret_value(),
+        llm_model=settings.OCR_LLM_MODEL,
+        user_id=user.id,
     )

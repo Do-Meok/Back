@@ -26,6 +26,7 @@ class Settings(BaseSettings):
     OPENAI_API_KEY: SecretStr
     NAVER_OCR_SECRET_KEY: SecretStr
     NAVER_OCR_API_URL: str
+    OCR_LLM_MODEL: str = "gpt-5-nano"
 
     KAKAO_REST_API_KEY: str
     KAKAO_REDIRECT_URI: str

@@ -35,3 +35,9 @@ class ErrorCode(StrEnum):
     # 4. 식재료 관련
     # ----------------------------------------
     INGREDIENT_NOT_FOUND = "INGREDIENT_NOT_FOUND"  # 식재료 없음
+
+    # ----------------------------------------
+    # 5. OCR 관련
+    # ----------------------------------------
+    OCR_FAILED = "OCR_FAILED"
+    OCR_LLM_FAILED = "OCR_LLM_FAILED"
