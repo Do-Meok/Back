@@ -4,7 +4,7 @@ from datetime import date, datetime
 from typing import TYPE_CHECKING
 
 import uuid6  # 추후 인덱싱 고려했을 때, uuid와 다르게 uuid6 라이브러리를 사용했을 경우, 생성된 시간 정보가 앞에 들어감. 물론 여기서 uuid6를 배정하진 않음
-from sqlalchemy import Date, DateTime, Index, String, func, text
+from sqlalchemy import Date, DateTime, Index, String, func
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
@@ -14,6 +14,7 @@ from domains.saved_recipe.model import SavedRecipe
 # 순환 참조 에러 해결
 if TYPE_CHECKING:
     from domains.ingredient.model import Ingredient
+
 
 class User(Base):
     __tablename__ = "users"
@@ -38,9 +39,7 @@ class User(Base):
 
     # 릴레이션
     ingredients: Mapped[list[Ingredient]] = relationship(
-        "Ingredient",
-        back_populates="user",
-        cascade="all, delete-orphan"
+        "Ingredient", back_populates="user", cascade="all, delete-orphan"
     )
     saved_recipes: Mapped[list[SavedRecipe]] = relationship(
         "SavedRecipe",

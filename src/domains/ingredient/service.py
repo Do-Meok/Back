@@ -2,17 +2,15 @@ from core.exception.exceptions import IngredientNotFoundException
 from domains.ingredient.model import Ingredient
 from domains.ingredient.repository import IngredientRepository
 from domains.ingredient.schemas import AddIngredientRequest, AddIngredientResponse, GetIngredientResponse
-
 from domains.user.model import User
+
 
 class IngredientService:
     def __init__(self, user: User, ingredient_repo: IngredientRepository):
         self.user = user
         self.ingredient_repo = ingredient_repo
 
-    async def add_ingredients(
-        self, request: AddIngredientRequest
-    ) -> list[AddIngredientResponse]:
+    async def add_ingredients(self, request: AddIngredientRequest) -> list[AddIngredientResponse]:
         ingredients = [
             Ingredient(
                 user_id=self.user.id,
@@ -28,15 +26,11 @@ class IngredientService:
         return [GetIngredientResponse.model_validate(item) for item in ingredients]
 
     async def delete_ingredient(self, ingredient_id: int) -> None:
-        deleted = await self.ingredient_repo.delete_ingredient(
-            ingredient_id, self.user.id
-        )
+        deleted = await self.ingredient_repo.delete_ingredient(ingredient_id, self.user.id)
         if not deleted:
             raise IngredientNotFoundException()
 
     async def delete_all_ingredients(self) -> None:
         deleted = await self.ingredient_repo.delete_all_ingredients(self.user.id)
         if not deleted:
-            raise IngredientNotFoundException(
-                "삭제할 식재료가 존재하지 않거나 이미 비어있습니다."
-            )
+            raise IngredientNotFoundException("삭제할 식재료가 존재하지 않거나 이미 비어있습니다.")

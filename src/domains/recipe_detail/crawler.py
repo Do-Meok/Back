@@ -1,13 +1,11 @@
 import asyncio
 import json
-import re
 
-from bs4 import BeautifulSoup
 import httpx
+from bs4 import BeautifulSoup
 
 from core.exception.exceptions import ExternalServiceException
 from domains.recipe_detail.matcher import SearchCandidate
-
 from domains.recipe_detail.schemas import (
     RecipeDetailResponse,
     RecipeIngredient,
@@ -15,12 +13,11 @@ from domains.recipe_detail.schemas import (
 )
 
 BASE_URL = "https://www.10000recipe.com"
-USER_AGENT = (
-    "domeok-bot/1.0 (+https://github.com/local; personal non-commercial use)"
-)
+USER_AGENT = "domeok-bot/1.0 (+https://github.com/local; personal non-commercial use)"
+
 
 class RecipeCrawler:
-    _semaphore = asyncio.Semaphore(3)   # 최대 동시 요청 수 -> 서버에 과도한 부하 주지 않도록 제어
+    _semaphore = asyncio.Semaphore(3)  # 최대 동시 요청 수 -> 서버에 과도한 부하 주지 않도록 제어
 
     # 비동기 HTTP GET 요청을 보내서 사이트 요청
     async def _get(
@@ -29,12 +26,14 @@ class RecipeCrawler:
         params: dict[str, str] | None = None,
     ) -> str:
         try:
-            async with self._semaphore:
-                async with httpx.AsyncClient(
+            async with (
+                self._semaphore,
+                httpx.AsyncClient(
                     timeout=10.0,
                     headers={"User-Agent": USER_AGENT},
-                ) as client:
-                    response = await client.get(url, params=params)
+                ) as client,
+            ):
+                response = await client.get(url, params=params)
             if response.status_code != httpx.codes.OK:
                 raise ExternalServiceException("레시피 사이트 요청에 실패했어요")
             return response.text
@@ -49,7 +48,7 @@ class RecipeCrawler:
             f"{BASE_URL}/recipe/list.html",
             params={
                 "q": query.strip(),
-                "order": "accuracy",    # 정확순 선택
+                "order": "accuracy",  # 정확순 선택
                 "lastcate": "order",
             },
         )
@@ -74,11 +73,10 @@ class RecipeCrawler:
             raise ExternalServiceException("레시피 상세 정보 파싱 실패") from exc
 
 
-
 def parse_search_html(html: str) -> list[SearchCandidate]:
-    '''
+    """
     검색 결과 HTML에세 레시피 목록 항목을 순회하여 레시피 ID, 제목, 작성자 정보를 추출함
-    '''
+    """
     soup = BeautifulSoup(html, "html.parser")
     results: list[SearchCandidate] = []
 
@@ -94,9 +92,7 @@ def parse_search_html(html: str) -> list[SearchCandidate]:
         recipe_id = href.rstrip("/").split("/")[-1]
         title = item.select_one(".common_sp_caption_tit")
         # 실제 마크업은 <a>닉네임</a> 이고, 구형/픽스처는 <b>닉네임</b> 일 수 있음
-        author_el = item.select_one(".common_sp_caption_rv_name a") or item.select_one(
-            ".common_sp_caption_rv_name"
-        )
+        author_el = item.select_one(".common_sp_caption_rv_name a") or item.select_one(".common_sp_caption_rv_name")
         results.append(
             SearchCandidate(
                 recipe_id=recipe_id,
@@ -107,16 +103,17 @@ def parse_search_html(html: str) -> list[SearchCandidate]:
 
     return results
 
+
 def _split_ingredient(raw: str) -> RecipeIngredient:
     # 식재료 분할 -> "감자 2개"와 같은 텍스트 재료 문자열을 이름 "감자"와 수량"2개"로 분리
-   parts = raw.strip().split()
-   if len(parts) >= 2:
-       return RecipeIngredient(name=parts[0], amount=" ".join(parts[1:]))
-   return RecipeIngredient(name=raw.strip(), amount="")
+    parts = raw.strip().split()
+    if len(parts) >= 2:
+        return RecipeIngredient(name=parts[0], amount=" ".join(parts[1:]))
+    return RecipeIngredient(name=raw.strip(), amount="")
 
 
 def _load_recipe_ld(soup: BeautifulSoup) -> dict[str, object] | None:
-    """ 검색엔진용 표준 레시피 데이터(@type: "Recipe")를 찾아 JSON으로 로드 """
+    """검색엔진용 표준 레시피 데이터(@type: "Recipe")를 찾아 JSON으로 로드"""
     for tag in soup.select('script[type="application/ld+json"]'):
         try:
             data = json.loads(tag.string or "")
@@ -133,17 +130,13 @@ def _load_recipe_ld(soup: BeautifulSoup) -> dict[str, object] | None:
 
         for item in candidates:
             recipe_type = item.get("@type") if isinstance(item, dict) else None
-            if recipe_type == "Recipe" or (
-                isinstance(recipe_type, list) and "Recipe" in recipe_type
-            ):
+            if recipe_type == "Recipe" or (isinstance(recipe_type, list) and "Recipe" in recipe_type):
                 return item
 
     return None
 
 
-def _parse_difficulty_and_time(
-    soup: BeautifulSoup, recipe: dict[str, object]
-) -> tuple[str | None, str | None]:
+def _parse_difficulty_and_time(soup: BeautifulSoup, recipe: dict[str, object]) -> tuple[str | None, str | None]:
     """
     JSON-LD 정보에서 난이도와 시간 정보를 가져오고 없으면 HTML 태그에서 수집
     """
@@ -155,18 +148,14 @@ def _parse_difficulty_and_time(
         difficulty = raw_difficulty.strip()
 
     if difficulty is None:
-        level_el = soup.select_one(
-            ".view_info .view_info_level, .view_summary_info .view_info_level"
-        )
+        level_el = soup.select_one(".view_info .view_info_level, .view_summary_info .view_info_level")
         if level_el is not None:
             text = level_el.get_text(strip=True)
             if text:
                 difficulty = text
 
     if time_value is None:
-        time_el = soup.select_one(
-            ".view_info .view_info_time, .view_summary_info .view_info_time"
-        )
+        time_el = soup.select_one(".view_info .view_info_time, .view_summary_info .view_info_time")
         if time_el is not None:
             text = time_el.get_text(strip=True)
             if text:
@@ -174,10 +163,11 @@ def _parse_difficulty_and_time(
 
     return difficulty, time_value
 
+
 def parse_detail_html(html: str, recipe_id: str) -> RecipeDetailResponse:
-    '''
+    """
     레시피 상세 정보 HTML을 파싱하여 정밀하게 추출함.
-    '''
+    """
     soup = BeautifulSoup(html, "html.parser")
     recipe = _load_recipe_ld(soup) or {}
 
@@ -197,11 +187,11 @@ def parse_detail_html(html: str, recipe_id: str) -> RecipeDetailResponse:
         main_image = None
 
     raw_ingredients = recipe.get("recipeIngredient")
-    ingredients = [
-        _split_ingredient(raw)
-        for raw in raw_ingredients
-        if isinstance(raw, str)
-    ] if isinstance(raw_ingredients, list) else []
+    ingredients = (
+        [_split_ingredient(raw) for raw in raw_ingredients if isinstance(raw, str)]
+        if isinstance(raw_ingredients, list)
+        else []
+    )
 
     raw_steps = recipe.get("recipeInstructions")
     steps: list[RecipeStep] = []
@@ -211,9 +201,7 @@ def parse_detail_html(html: str, recipe_id: str) -> RecipeDetailResponse:
                 steps.append(
                     RecipeStep(
                         order=order,
-                        description=step.get("text")
-                        if isinstance(step.get("text"), str)
-                        else "",
+                        description=step.get("text") if isinstance(step.get("text"), str) else "",
                     )
                 )
             elif isinstance(step, str):

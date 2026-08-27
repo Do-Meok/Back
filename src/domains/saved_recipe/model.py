@@ -14,12 +14,11 @@ from core.database import Base
 if TYPE_CHECKING:
     from domains.user.model import User
 
+
 class SavedRecipe(Base):
     __tablename__ = "saved_recipe"
 
-    id: Mapped[uuid6.UUID] = mapped_column(
-        UUID(as_uuid=True), primary_key=True, default=uuid6.uuid7
-    )
+    id: Mapped[uuid6.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid6.uuid7)
     user_id: Mapped[uuid6.UUID] = mapped_column(
         UUID(as_uuid=True),
         ForeignKey("users.id", ondelete="CASCADE"),
@@ -45,8 +44,6 @@ class SavedRecipe(Base):
     )
 
     __table_args__ = (
-        UniqueConstraint(
-            "user_id", "source", "source_id", name="uq_saved_recipes_user_source"
-        ),
+        UniqueConstraint("user_id", "source", "source_id", name="uq_saved_recipes_user_source"),
         Index("ix_saved_recipes_user_created", "user_id", created_at.desc()),
     )

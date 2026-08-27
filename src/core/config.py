@@ -31,7 +31,6 @@ class Settings(BaseSettings):
     KAKAO_REDIRECT_URI: str
     KAKAO_CLIENT_SECRET: SecretStr
 
-
     @property
     def database_url(self) -> str:
         return f"postgresql+asyncpg://{self.DB_USER}:{self.DB_PASSWORD.get_secret_value()}@{self.DB_HOST}:{self.DB_PORT}/{self.DB_NAME}"

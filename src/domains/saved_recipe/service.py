@@ -12,10 +12,10 @@ from core.exception.exceptions import (
 from domains.saved_recipe.model import SavedRecipe
 from domains.saved_recipe.repository import SavedRecipeRepository
 from domains.saved_recipe.schemas import (
-    SaveRecipeRequest,
     SavedRecipeDetailResponse,
     SavedRecipeListItem,
     SavedRecipeStatusResponse,
+    SaveRecipeRequest,
 )
 from domains.user.model import User
 
@@ -25,16 +25,12 @@ if TYPE_CHECKING:
 
 def parse_mangae_source_id(source_id: str) -> tuple[str, str]:
     if "|" not in source_id:
-        raise BadRequestException(
-            detail="만개 레시피 source_id는 'board_name|author_name' 형식이어야 합니다."
-        )
+        raise BadRequestException(detail="만개 레시피 source_id는 'board_name|author_name' 형식이어야 합니다.")
     board_name, author_name = source_id.split("|", 1)
     board_name = board_name.strip()
     author_name = author_name.strip()
     if not board_name or not author_name:
-        raise BadRequestException(
-            detail="만개 레시피 source_id의 board_name과 author_name은 비어 있을 수 없습니다."
-        )
+        raise BadRequestException(detail="만개 레시피 source_id의 board_name과 author_name은 비어 있을 수 없습니다.")
     return board_name, author_name
 
 
@@ -52,9 +48,7 @@ class SavedRecipeService:
     async def save(self, request: SaveRecipeRequest) -> SavedRecipeDetailResponse:
         parse_mangae_source_id(request.source_id)
 
-        existing = await self.repo.find_by_source(
-            self.user.id, request.source, request.source_id
-        )
+        existing = await self.repo.find_by_source(self.user.id, request.source, request.source_id)
         if existing is not None:
             raise ConflictException(
                 code=ErrorCode.CONFLICT,
@@ -103,9 +97,7 @@ class SavedRecipeService:
         if not deleted:
             raise NotFoundException(detail="저장된 레시피를 찾을 수 없습니다.")
 
-    async def status(
-        self, source: str, source_id: str
-    ) -> SavedRecipeStatusResponse:
+    async def status(self, source: str, source_id: str) -> SavedRecipeStatusResponse:
         if source != "mangae":
             raise BadRequestException(detail="source는 mangae 여야 합니다.")
         parse_mangae_source_id(source_id)

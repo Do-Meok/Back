@@ -1,11 +1,10 @@
 import asyncio
 
+from domains.ingredient.repository import IngredientRepository
 from domains.rag.mapper import build_ingredient_query, map_document_to_recipe
+from domains.rag.retriever import RecipeRetriever
 from domains.rag.schemas import RecipeRecommendationResponse
 from domains.user.model import User
-from domains.ingredient.repository import IngredientRepository
-
-from domains.rag.retriever import RecipeRetriever
 
 # 상수 설정
 TOP_K = 5
@@ -29,9 +28,7 @@ class RagService:
             return RecipeRecommendationResponse(ingredients_used=[], recipes=[])
 
         query = build_ingredient_query(names)
-        docs_with_scores = await asyncio.to_thread(
-            self.retriever.search, query, k=TOP_K
-        )
+        docs_with_scores = await asyncio.to_thread(self.retriever.search, query, k=TOP_K)
 
         recipes = []
         for doc, score in docs_with_scores:

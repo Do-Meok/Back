@@ -1,36 +1,37 @@
-'''
+"""
 Vector DB에서 검색된 문서(Document) 데이터를 레시피 추천 객체(RecipeRecommendation)로 변환하고,
 레시피 검색 쿼리를 생성하는 RAG 보조 유틸리티
-'''
+"""
+
 from langchain_core.documents import Document
 
 from domains.rag.schemas import RecipeRecommendation
 
+
 def build_ingredient_query(names: list[str]) -> str:
-    '''
+    """
     식재료 이름 목록을 벡터 검색용 텍스트 쿼리로 변환
     ex) ["감자", "양파"] -> "pasred_ingredient: 감자, 양파"
-    '''
+    """
     return "parsed_ingredients: " + ", ".join(names)
 
+
 def parse_page_content(page_content: str) -> str:
-    '''
+    """
     PGVector에 저장(Store)된 Document의 page_content 텍스트 파싱
-    '''
+    """
     for line in page_content.splitlines():
         if line.startswith("parsed_ingredients:"):
             return line.removeprefix("parsed_ingredients:").strip()
     return page_content.strip()
 
+
 def split_ingredients(parsed_ingredients: str) -> list[str]:
-    '''
+    """
     파싱된 식재료 문자열을 비교 가능한 식재료 이름 목록으로 변환
-    '''
-    return [
-        ingredient.strip()
-        for ingredient in parsed_ingredients.split(",")
-        if ingredient.strip()
-    ]
+    """
+    return [ingredient.strip() for ingredient in parsed_ingredients.split(",") if ingredient.strip()]
+
 
 def map_document_to_recipe(
     doc: Document,
@@ -45,21 +46,9 @@ def map_document_to_recipe(
         return None
 
     recipe_ingredients = split_ingredients(parsed_ingredients)
-    owned_set = {
-        ingredient.strip()
-        for ingredient in (owned_ingredient_names or [])
-        if ingredient.strip()
-    }
-    owned = [
-        ingredient
-        for ingredient in recipe_ingredients
-        if ingredient in owned_set
-    ]
-    missing = [
-        ingredient
-        for ingredient in recipe_ingredients
-        if ingredient not in owned_set
-    ]
+    owned_set = {ingredient.strip() for ingredient in (owned_ingredient_names or []) if ingredient.strip()}
+    owned = [ingredient for ingredient in recipe_ingredients if ingredient in owned_set]
+    missing = [ingredient for ingredient in recipe_ingredients if ingredient not in owned_set]
 
     return RecipeRecommendation(
         recipe_name=recipe_name,

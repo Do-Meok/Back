@@ -27,7 +27,7 @@ class ErrorCode(StrEnum):
     # ----------------------------------------
     EMAIL_CONFLICT = "EMAIL_CONFLICT"  # 이메일 중복
     NICKNAME_CONFLICT = "NICKNAME_CONFLICT"  # 닉네임 중복
-    PHONE_NUM_CONFLICT = "PHONE_NUM_CONFLICT" # 전화번호 중복
+    PHONE_NUM_CONFLICT = "PHONE_NUM_CONFLICT"  # 전화번호 중복
     PASSWORD_MISMATCH = "PASSWORD_MISMATCH"  # 비밀번호와 비밀번호 확인 불일치
     USER_NOT_FOUND = "USER_NOT_FOUND"  # 사용자 없음
 

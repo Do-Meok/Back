@@ -1,5 +1,4 @@
-from typing import Literal
-from pydantic import BaseModel, EmailStr, constr, Field
+from pydantic import BaseModel, EmailStr, Field
 
 from domains.user.schemas import UserInfoResponse
 

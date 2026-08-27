@@ -19,9 +19,7 @@ class UserRepository:
             result = await self.session.execute(stmt)
             return result.scalar_one_or_none()
         except SQLAlchemyError as e:
-            raise DatabaseException(
-                detail="사용자 조회 중 DB 오류가 발생했습니다."
-            ) from e
+            raise DatabaseException(detail="사용자 조회 중 DB 오류가 발생했습니다.") from e
 
     async def get_user_by_id(self, user_id: uuid.UUID) -> User | None:
         """고유ID 정보로 조회"""
@@ -45,10 +43,7 @@ class UserRepository:
             await self.session.flush()
             return user
         except SQLAlchemyError as e:
-            raise DatabaseException(
-                detail="사용자 저장 중 DB 오류가 발생했습니다."
-            ) from e
-
+            raise DatabaseException(detail="사용자 저장 중 DB 오류가 발생했습니다.") from e
 
     async def get_user_by_social_id(self, provider: str, social_id: str) -> User | None:
         return await self._get_one(User.provider == provider, User.social_id == social_id)

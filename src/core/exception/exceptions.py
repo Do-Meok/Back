@@ -55,11 +55,7 @@ class NotFoundException(BaseCustomException):
 
 
 class ConflictException(BaseCustomException):
-    def __init__(
-        self,
-        code: str = "CONFLICT_ERROR",
-        detail: str = "이미 존재하거나 충돌이 발생한 요청입니다."
-    ):
+    def __init__(self, code: str = "CONFLICT_ERROR", detail: str = "이미 존재하거나 충돌이 발생한 요청입니다."):
         super().__init__(status_code=409, code=code, detail=detail)
 
 

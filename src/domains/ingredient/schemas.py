@@ -1,8 +1,11 @@
 from datetime import date
-from pydantic import BaseModel, ConfigDict, Field
+
+from pydantic import BaseModel, ConfigDict
+
 
 class AddIngredientRequest(BaseModel):
     ingredients: list[str]
+
 
 class AddIngredientResponse(BaseModel):
     id: int
@@ -10,6 +13,7 @@ class AddIngredientResponse(BaseModel):
     created_at: date
 
     model_config = ConfigDict(from_attributes=True)
+
 
 class GetIngredientResponse(BaseModel):
     id: int

@@ -1,8 +1,8 @@
-'''
+"""
 검색된 후보 목록 중에서 특정 게시물(제목, 작성자)와 가장 일치하는 레시피 후보 1개를 선별해내는 점수 기반 로직
-'''
-import re
+"""
 
+import re
 from dataclasses import dataclass
 
 
@@ -11,6 +11,7 @@ class SearchCandidate:
     recipe_id: str
     title: str
     author: str
+
 
 def normalize_text(value: str) -> str:
     collapsed = re.sub(r"\s+", " ", value.strip())

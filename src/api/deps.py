@@ -1,10 +1,9 @@
 from fastapi import Depends
-from redis.asyncio import Redis
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from core.database import get_db
 from core.redis import get_redis
-from core.security import get_access_token, REFRESH_TOKEN_EXPIRE_SECONDS
+from core.security import REFRESH_TOKEN_EXPIRE_SECONDS, get_access_token
 from domains.auth.refresh_store import RefreshTokenStore
 from domains.auth.service import AuthService
 from domains.ingredient.repository import IngredientRepository
@@ -22,12 +21,15 @@ from domains.user.service import UserService
 
 _recipe_crawler = RecipeCrawler()
 
+
 # --- 유저 관련 DI ---
 def get_user_repo(session: AsyncSession = Depends(get_db)) -> UserRepository:
     return UserRepository(session)
 
+
 def get_refresh_store() -> RefreshTokenStore:
     return RefreshTokenStore(get_redis(), ttl_seconds=REFRESH_TOKEN_EXPIRE_SECONDS)
+
 
 def get_user_service(
     user_repo: UserRepository = Depends(get_user_repo),
@@ -37,8 +39,8 @@ def get_user_service(
 
 
 def get_auth_service(
-        user_repo: UserRepository = Depends(get_user_repo),
-        refresh_store: RefreshTokenStore = Depends(get_refresh_store),
+    user_repo: UserRepository = Depends(get_user_repo),
+    refresh_store: RefreshTokenStore = Depends(get_refresh_store),
 ) -> AuthService:
     return AuthService(user_repo=user_repo, refresh_store=refresh_store)
 
@@ -49,6 +51,7 @@ async def get_current_user(
 ) -> User:
     return await auth_service.get_user_by_token(access_token)
 
+
 """
 async def get_social_auth_service(
     session: AsyncSession = Depends(get_db),
@@ -57,6 +60,7 @@ async def get_social_auth_service(
     user_repo = UserRepository(session)
     return SocialAuthService(user_repo, redis)
 """
+
 
 # --- 재료 관련 DI ---
 def get_ingredient_repo(
@@ -75,6 +79,7 @@ def get_ingredient_service(
 def get_rag_retriever() -> RecipeRetriever:
     return get_recipe_retriever()
 
+
 def get_rag_service(
     user: User = Depends(get_current_user),
     ingredient_repo: IngredientRepository = Depends(get_ingredient_repo),
@@ -86,11 +91,13 @@ def get_rag_service(
         retriever=retriever,
     )
 
+
 def get_recipe_detail_service(
     user: User = Depends(get_current_user),
 ) -> RecipeDetailService:
     cache = RecipeDetailCache(get_redis(), ttl_seconds=86400)
     return RecipeDetailService(crawler=_recipe_crawler, cache=cache)
+
 
 def get_saved_recipe_repo(
     session: AsyncSession = Depends(get_db),

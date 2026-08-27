@@ -4,7 +4,8 @@ from api.deps import get_rag_service, get_recipe_detail_service
 from core.exception.exceptions import (
     DatabaseException,
     ExternalServiceException,
-    UnAuthorizedException, NotFoundException,
+    NotFoundException,
+    UnAuthorizedException,
 )
 from core.exception.openapi import create_error_response
 from domains.rag.schemas import RecipeRecommendationResponse
@@ -31,6 +32,7 @@ async def recommend_recipes(
     service: RagService = Depends(get_rag_service),
 ) -> RecipeRecommendationResponse:
     return await service.recommend_recipes()
+
 
 @router.get(
     "/detail",

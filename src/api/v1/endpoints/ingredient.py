@@ -3,7 +3,6 @@ from fastapi import APIRouter, Depends, status
 from api.deps import get_ingredient_service
 from core.exception.exceptions import IngredientNotFoundException, UnAuthorizedException
 from core.exception.openapi import create_error_response
-
 from domains.ingredient.schemas import (
     AddIngredientRequest,
     AddIngredientResponse,
@@ -53,6 +52,7 @@ async def delete_ingredient(
 ) -> None:
     await ingredient_service.delete_ingredient(ingredient_id)
 
+
 @router.get(
     "/all-delete",
     summary="식재료 일괄 삭제",
@@ -60,7 +60,7 @@ async def delete_ingredient(
     responses=create_error_response(
         UnAuthorizedException,
         IngredientNotFoundException,
-    )
+    ),
 )
 async def delete_all_ingredient(
     service: IngredientService = Depends(get_ingredient_service),

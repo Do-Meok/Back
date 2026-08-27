@@ -2,7 +2,7 @@ from dataclasses import dataclass
 from uuid import UUID
 
 from core import security
-from core.exception.exceptions import UnAuthorizedException, InvalidTokenException
+from core.exception.exceptions import InvalidTokenException, UnAuthorizedException
 from domains.auth.refresh_store import RefreshTokenStore
 from domains.auth.schemas import LogInRequest, LogInResponse
 from domains.user.model import User
@@ -15,12 +15,11 @@ class TokenPair:
     access_token: str
     refresh_token: str
 
+
 class AuthService:
     """사용자 인증관련 서비스"""
-    def __init__(
-            self,
-            user_repo: UserRepository,
-            refresh_store: RefreshTokenStore) -> None:
+
+    def __init__(self, user_repo: UserRepository, refresh_store: RefreshTokenStore) -> None:
         self.user_repo = user_repo
         self.refresh_store = refresh_store
 
@@ -52,9 +51,7 @@ class AuthService:
         user = await self.user_repo.get_user_by_email(str(request.email))
 
         if not user or not security.verify_password(request.password, user.password):
-            raise UnAuthorizedException(
-                detail="이메일 또는 비밀번호가 올바르지 않습니다."
-            )
+            raise UnAuthorizedException(detail="이메일 또는 비밀번호가 올바르지 않습니다.")
 
         # 2. 토큰 생성(Access, Refresh)
         tokens = await self.issue_tokens(user)
