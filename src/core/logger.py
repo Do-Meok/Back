@@ -1,8 +1,6 @@
 import sys
 from loguru import logger
 
-_is_configured = False
-
 
 def setup_logger():
     # 기본 핸들러 제거 (중복 방지)
