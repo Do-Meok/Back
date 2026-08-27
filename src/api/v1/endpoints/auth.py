@@ -3,7 +3,8 @@ from fastapi import APIRouter, Depends, status
 from api.deps import get_auth_service
 from core.exception.exceptions import InvalidTokenException, UnAuthorizedException
 from core.exception.openapi import create_error_response
-from domains.auth.schemas import LogInRequest, LogInResponse, RefreshTokenRequest
+from domains.auth.schemas import LogInRequest, LogInResponse, RefreshTokenRequest, KakaoAuthResponse, \
+    KakaoNeedsProfileResponse, KakaoLoginRequest, KakaoCompleteRequest
 from domains.auth.service import AuthService
 
 router = APIRouter(prefix="/auth", tags=["auth"])
@@ -51,24 +52,25 @@ async def user_log_out(
     await auth_service.log_out(request.refresh_token)
     return {"message": "로그아웃 되었습니다."}
 
-
-"""
-@router.get("/kakao", status_code=200, summary="카카오 로그인 URL 반환", response_model=KaKaoAuthUrlResponse)
-async def get_kakao_url(
-    social_auth_service: SocialAuthService = Depends(get_social_auth_service),
-):
-    auth_url = await social_auth_service.get_kakao_auth_url()
-    return {"auth_url": auth_url}
-
-
-@router.get(
-    "/kakao/redirect",
-    status_code=200,
-    summary="카카오 로그인 콜백",
-    responses=create_error_response(OAuthStateMismatchException),
+@router.post(
+    "/kakao",
+    status_code=status.HTTP_200_OK,
+    response_model=KakaoAuthResponse | KakaoNeedsProfileResponse,
 )
-async def kakao_callback(
-    code: str, state: str, social_auth_service: SocialAuthService = Depends(get_social_auth_service)
-):
-    return await social_auth_service.kakao_login(code, state)
-"""
+async def kakao_login(
+    request: KakaoLoginRequest,
+    auth_service: AuthService = Depends(get_auth_service),
+) -> KakaoAuthResponse | KakaoNeedsProfileResponse:
+    return await auth_service.login_with_kakao(request.access_token)
+
+
+@router.post(
+    "/kakao/complete",
+    status_code=status.HTTP_200_OK,
+    response_model=KakaoAuthResponse,
+)
+async def kakao_complete(
+    request: KakaoCompleteRequest,
+    auth_service: AuthService = Depends(get_auth_service),
+) -> KakaoAuthResponse:
+    return await auth_service.complete_kakao_signup(request)
