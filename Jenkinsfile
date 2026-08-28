@@ -64,8 +64,9 @@ pipeline {
 
         stage('6. Migrate (alembic)') {
             steps {
-                echo '배포 경로로 docker-compose.yml 동기화 중...'
+                echo '배포 경로로 docker-compose.yml 및 .env 파일 동기화 중...'
                 sh "cp docker-compose.yml ${DEPLOY_PATH}/docker-compose.yml"
+                sh "cp .env ${DEPLOY_PATH}/.env"
                 dir("${DEPLOY_PATH}") {
                     echo '최신 애플리케이션 이미지 수신 및 Alembic DB 마이그레이션 실행 중...'
                     sh 'docker compose pull app'
@@ -90,7 +91,7 @@ pipeline {
                     echo '컨테이너 시작 대기 후 FastAPI 헬스 체크 진행 중...'
                     sleep 10
                     sh '''
-                        docker exec domeok-back python -c "import urllib.request; urllib.request.urlopen('http://localhost:8000/')"
+                        docker exec domeok-back python -c "import urllib.request; urllib.request.urlopen('http://localhost:8000/health')"
                     '''
                 }
             }
