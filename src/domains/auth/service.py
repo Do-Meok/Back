@@ -17,6 +17,8 @@ from domains.user.model import User
 from domains.user.repository import UserRepository
 from domains.user.schemas import UserInfoResponse
 
+KAKAO_PROVIDER = "kakao"
+
 
 @dataclass(frozen=True)
 class TokenPair:
@@ -52,7 +54,7 @@ class AuthService:
 
     def _to_kakao_auth_response(self, user: User, tokens: TokenPair) -> KakaoAuthResponse:
         return KakaoAuthResponse(
-            info=UserInfoResponse.model_validate(user),
+            info=UserInfoResponse.from_user(user),
             access_token=tokens.access_token,
             refresh_token=tokens.refresh_token,
         )
@@ -65,7 +67,11 @@ class AuthService:
         # 1. 사용자 확인 및 비밀번호 검증
         user = await self.user_repo.get_user_by_email(str(request.email))
 
-        if not user or not security.verify_password(request.password, user.password):
+        if not user:
+            raise UnAuthorizedException(detail="이메일 또는 비밀번호가 올바르지 않습니다.")
+        if user.password is None:
+            raise UnAuthorizedException(detail="카카오로 로그인해 주세요.")
+        if not security.verify_password(request.password, user.password):
             raise UnAuthorizedException(detail="이메일 또는 비밀번호가 올바르지 않습니다.")
 
         # 2. 토큰 생성(Access, Refresh)
@@ -74,7 +80,7 @@ class AuthService:
 
     async def login_with_kakao(self, access_token: str) -> KakaoAuthResponse | KakaoNeedsProfileResponse:
         kakao_id = await kakao_client.fetch_kakao_user_id(access_token)
-        user = await self.user_repo.get_user_by_social_id(kakao_id)
+        user = await self.user_repo.get_user_by_social_id(KAKAO_PROVIDER, kakao_id)
         if user:
             tokens = await self.issue_tokens(user)
             return self._to_kakao_auth_response(user, tokens)
@@ -84,7 +90,7 @@ class AuthService:
     async def complete_kakao_signup(self, request: KakaoCompleteRequest) -> KakaoAuthResponse:
         kakao_id = security.decode_kakao_signup_token(request.signup_token)
 
-        existing = await self.user_repo.get_user_by_social_id(kakao_id)
+        existing = await self.user_repo.get_user_by_social_id(KAKAO_PROVIDER, kakao_id)
         if existing:
             tokens = await self.issue_tokens(existing)
             return self._to_kakao_auth_response(existing, tokens)
@@ -103,6 +109,7 @@ class AuthService:
         user = User(
             email=str(request.email),
             password=None,
+            provider=KAKAO_PROVIDER,
             social_id=kakao_id,
             nickname=request.nickname,
         )
