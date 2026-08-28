@@ -29,9 +29,24 @@ def parse_page_content(page_content: str) -> str:
 def split_ingredients(parsed_ingredients: str) -> list[str]:
     """
     파싱된 식재료 문자열을 비교 가능한 식재료 이름 목록으로 변환
+    - 쉼표(,) 구분 및 양쪽 공백 제거
     """
-    return [ingredient.strip() for ingredient in parsed_ingredients.split(",") if ingredient.strip()]
+    names: list[str] = []
+    seen: set[str] = set()
 
+    for part in parsed_ingredients.split(","):
+        name = part.strip()
+        if not name:
+            continue
+
+        # normalize_name 로직 통합 (대소문자 통합 및 내부 공백 제거)
+        key = name.casefold().replace(" ", "")
+
+        if key not in seen:
+            seen.add(key)
+            names.append(name)  # 원본 공백만 trim된 형태 저장
+
+    return names
 
 def map_document_to_recipe(
     doc: Document,
