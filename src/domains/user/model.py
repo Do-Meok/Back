@@ -20,15 +20,15 @@ class User(Base):
     __tablename__ = "users"
 
     id: Mapped[uuid6.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid6.uuid7)
-    email: Mapped[str | None] = mapped_column(String(128), unique=True)
+    email: Mapped[str] = mapped_column(String(128), unique=True)
     password: Mapped[str | None] = mapped_column(String(128))
     nickname: Mapped[str] = mapped_column(String(20), unique=True)
 
     # 개인정보 영역
-    name: Mapped[str | None] = mapped_column(String(20))
-    birth: Mapped[date | None] = mapped_column(Date)
-    phone: Mapped[str | None] = mapped_column("phone_encrypt", String(128))
-    phone_hash: Mapped[str | None] = mapped_column(String(128), unique=True)
+    name: Mapped[str] = mapped_column(String(20))
+    birth: Mapped[date] = mapped_column(Date)
+    phone: Mapped[str] = mapped_column("phone_encrypt", String(128))
+    phone_hash: Mapped[str] = mapped_column(String(128), unique=True)
 
     # 소셜 로그인 영역
     provider: Mapped[str] = mapped_column(String(10), default="local")

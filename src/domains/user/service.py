@@ -78,9 +78,7 @@ class UserService:
         if not user:
             raise UserNotFoundException()
 
-        decrypted_phone = security.decrypt_phone(user.phone) if user.phone else None
-
-        return UserInfoResponse.from_user(user, phone_num=decrypted_phone)
+        return UserInfoResponse.from_user(user)
 
     async def update_user(self, user: User, request: UpdateUserRequest) -> UserInfoResponse:
         if request.nickname is not None:
