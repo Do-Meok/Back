@@ -54,16 +54,6 @@ async def get_current_user(
     return await auth_service.get_user_by_token(access_token)
 
 
-"""
-async def get_social_auth_service(
-    session: AsyncSession = Depends(get_db),
-    redis: Redis = Depends(get_redis),
-) -> SocialAuthService:
-    user_repo = UserRepository(session)
-    return SocialAuthService(user_repo, redis)
-"""
-
-
 # --- 재료 관련 DI ---
 def get_ingredient_repo(
     session: AsyncSession = Depends(get_db),

@@ -48,6 +48,7 @@ def split_ingredients(parsed_ingredients: str) -> list[str]:
 
     return names
 
+
 def map_document_to_recipe(
     doc: Document,
     score: float,

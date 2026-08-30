@@ -1,12 +1,10 @@
 from langchain_core.documents import Document
-from domains.rag.mapper import build_ingredient_query, parse_page_content, split_ingredients, map_document_to_recipe
+
+from domains.rag.mapper import build_ingredient_query, map_document_to_recipe, parse_page_content, split_ingredients
 
 
 def test_build_ingredient_query():
-    assert (
-        build_ingredient_query(["계란", "양파"])
-        == "parsed_ingredients: 계란, 양파"
-    )
+    assert build_ingredient_query(["계란", "양파"]) == "parsed_ingredients: 계란, 양파"
 
 
 def test_parse_page_content():
@@ -14,12 +12,14 @@ def test_parse_page_content():
 
     assert ingredients == "계란, 밥, 대파"
 
+
 def test_split_ingredients():
     assert split_ingredients("김, 밥, 김, 참 기름, 참기름") == [
         "김",
         "밥",
         "참 기름",
     ]
+
 
 def test_map_document_torecipe():
     doc = Document(

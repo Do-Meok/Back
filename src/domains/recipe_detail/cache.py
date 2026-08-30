@@ -5,7 +5,9 @@
 import hashlib
 
 from loguru import logger
+from pydantic import ValidationError
 from redis.asyncio import Redis
+from redis.exceptions import RedisError
 
 from domains.recipe_detail.matcher import normalize_text
 from domains.recipe_detail.schemas import RecipeDetailResponse
@@ -36,15 +38,15 @@ class RecipeDetailCache:
         """
         try:
             raw = await self._redis.get(self._redis_key(key))
-        except Exception:
-            logger.warning("레시피 상세 정보를 캐시에서 가져오는데 실패")
+        except RedisError as exc:
+            logger.warning("레시피 상세 정보를 캐시에서 가져오는데 실패: {}", exc)
             return None
         if raw is None:
             return None
         try:
             value = RecipeDetailResponse.model_validate_json(raw)
-        except Exception:
-            logger.warning("레시피 상세 정보를 디코딩하는데 실패")
+        except ValidationError as exc:
+            logger.warning("레시피 상세 정보를 디코딩하는데 실패: {}", exc)
             return None
         return value.model_copy(update={"cached": True})
 
@@ -59,5 +61,5 @@ class RecipeDetailCache:
                 stored.model_dump_json(),
                 ex=self._ttl,
             )
-        except Exception:
-            logger.warning("recipe detail cache set failed")
+        except RedisError as exc:
+            logger.warning("레시피 상세 정보 저장 실패: {}", exc)

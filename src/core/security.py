@@ -3,7 +3,7 @@ import hmac
 import secrets
 import uuid
 from base64 import urlsafe_b64encode
-from datetime import UTC, datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 
 import jwt
 from cryptography.fernet import Fernet
@@ -90,7 +90,7 @@ def decode_jwt(access_token: str) -> str:
 
 
 def create_kakao_signup_token(kakao_id: str) -> str:
-    now = datetime.now(timezone.utc)
+    now = datetime.now(UTC)
     payload = {
         "sub": kakao_id,
         "purpose": KAKAO_SIGNUP_PURPOSE,

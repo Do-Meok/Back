@@ -33,6 +33,7 @@ def auth_headers(registered_user: dict) -> dict:
 # 1. 회원가입 (Sign-Up) 테스트
 # ==========================================
 
+
 async def test_signup_success(client: AsyncClient, default_signup_payload: dict):
     response = await client.post("/api/v1/users/sign-up", json=default_signup_payload)
 
@@ -56,15 +57,30 @@ async def test_signup_success(client: AsyncClient, default_signup_payload: dict)
         ),
         # 닉네임 중복
         (
-            {"email": "user1@example.com", "password": "password", "checked_password": "password", "nickname": "same_nick"},
-            {"email": "user2@example.com", "password": "password", "checked_password": "password", "nickname": "same_nick"},
+            {
+                "email": "user1@example.com",
+                "password": "password",
+                "checked_password": "password",
+                "nickname": "same_nick",
+            },
+            {
+                "email": "user2@example.com",
+                "password": "password",
+                "checked_password": "password",
+                "nickname": "same_nick",
+            },
             409,
             ErrorCode.NICKNAME_CONFLICT,
         ),
         # 비밀번호 불일치 (사전 등록 불필요)
         (
             None,
-            {"email": "mismatch@example.com", "password": "password1", "checked_password": "password2", "nickname": "user3"},
+            {
+                "email": "mismatch@example.com",
+                "password": "password1",
+                "checked_password": "password2",
+                "nickname": "user3",
+            },
             400,
             ErrorCode.PASSWORD_MISMATCH,
         ),
@@ -89,6 +105,7 @@ async def test_signup_validation_failures(
 # ==========================================
 # 2. 로그인 및 토큰 (Auth) 테스트
 # ==========================================
+
 
 async def test_login_success(client: AsyncClient, default_signup_payload: dict):
     await client.post("/api/v1/users/sign-up", json=default_signup_payload)
@@ -143,6 +160,7 @@ async def test_logout_invalidates_refresh(client: AsyncClient, registered_user: 
 # ==========================================
 # 3. 유저 프로필 및 비밀번호 변경 (/users/me) 테스트
 # ==========================================
+
 
 async def test_get_my_info(client: AsyncClient, auth_headers: dict, default_signup_payload: dict):
     response = await client.get("/api/v1/users/me", headers=auth_headers)

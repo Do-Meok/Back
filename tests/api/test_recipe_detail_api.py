@@ -42,9 +42,7 @@ async def test_detail_success(client: AsyncClient, auth_headers: dict[str, str])
 
 async def test_detail_not_found(client: AsyncClient, auth_headers: dict[str, str]):
     mock = AsyncMock()
-    mock.get_detail.side_effect = NotFoundException(
-        detail="해당 레시피를 찾지 못했어요"
-    )
+    mock.get_detail.side_effect = NotFoundException(detail="해당 레시피를 찾지 못했어요")
     app.dependency_overrides[get_recipe_detail_service] = lambda: mock
     try:
         response = await client.get(

@@ -14,9 +14,7 @@ async def test_recommendations_requires_auth(client: AsyncClient):
     assert response.json()["code"] == ErrorCode.UNAUTHORIZED
 
 
-async def test_recommendations_empty_when_no_ingredients(
-    client: AsyncClient, auth_headers: dict[str, str]
-):
+async def test_recommendations_empty_when_no_ingredients(client: AsyncClient, auth_headers: dict[str, str]):
     mock_retriever = MagicMock()
     app.dependency_overrides[get_rag_retriever] = lambda: mock_retriever
     try:
@@ -33,9 +31,7 @@ async def test_recommendations_empty_when_no_ingredients(
         app.dependency_overrides.pop(get_rag_retriever, None)
 
 
-async def test_recommendations_returns_mapped_recipes(
-    client: AsyncClient, auth_headers: dict[str, str]
-):
+async def test_recommendations_returns_mapped_recipes(client: AsyncClient, auth_headers: dict[str, str]):
     await client.post(
         "/api/v1/ingredients",
         headers=auth_headers,

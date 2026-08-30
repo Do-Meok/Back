@@ -1,6 +1,5 @@
 from datetime import date
 
-import pytest
 from httpx import AsyncClient
 
 from core.exception.codes import ErrorCode
@@ -59,9 +58,7 @@ async def test_delete_ingredient(client: AsyncClient, auth_headers: dict[str, st
     assert list_response.json() == []
 
 
-async def test_delete_ingredient_returns_not_found(
-    client: AsyncClient, auth_headers: dict[str, str]
-):
+async def test_delete_ingredient_returns_not_found(client: AsyncClient, auth_headers: dict[str, str]):
     response = await client.delete(
         "/api/v1/ingredients/99999",
         headers=auth_headers,
@@ -78,9 +75,7 @@ async def test_delete_all_ingredients_requires_auth(client: AsyncClient):
     assert response.json()["code"] == ErrorCode.UNAUTHORIZED
 
 
-async def test_delete_all_ingredients_clears_all(
-    client: AsyncClient, auth_headers: dict[str, str]
-):
+async def test_delete_all_ingredients_clears_all(client: AsyncClient, auth_headers: dict[str, str]):
     await client.post(
         "/api/v1/ingredients",
         headers=auth_headers,
@@ -98,9 +93,7 @@ async def test_delete_all_ingredients_clears_all(
     assert list_response.json() == []
 
 
-async def test_delete_all_ingredients_returns_not_found_when_empty(
-    client: AsyncClient, auth_headers: dict[str, str]
-):
+async def test_delete_all_ingredients_returns_not_found_when_empty(client: AsyncClient, auth_headers: dict[str, str]):
     response = await client.get(
         "/api/v1/ingredients/all-delete",
         headers=auth_headers,
@@ -108,6 +101,4 @@ async def test_delete_all_ingredients_returns_not_found_when_empty(
 
     assert response.status_code == 404
     assert response.json()["code"] == ErrorCode.INGREDIENT_NOT_FOUND
-    assert response.json()["detail"] == (
-        "삭제할 식재료가 존재하지 않거나 이미 비어있습니다."
-    )
+    assert response.json()["detail"] == ("삭제할 식재료가 존재하지 않거나 이미 비어있습니다.")

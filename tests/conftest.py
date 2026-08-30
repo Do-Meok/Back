@@ -1,6 +1,5 @@
 import os
 from collections.abc import AsyncGenerator
-from datetime import date
 
 import pytest_asyncio
 from httpx import ASGITransport, AsyncClient
@@ -23,12 +22,12 @@ os.environ.setdefault("REDIS_URL", "redis://localhost:6379/0")
 import fakeredis.aioredis
 
 from core import redis as redis_module
-from core import security  # noqa: E402
-from core.database import Base, get_db  # noqa: E402
-from domains.ingredient.model import Ingredient  # noqa: F401, E402
-from domains.saved_recipe.model import SavedRecipe  # noqa: F401, E402
-from domains.user.model import User  # noqa: F401, E402
-from main import app  # noqa: E402
+from core import security
+from core.database import Base, get_db
+from domains.ingredient.model import Ingredient
+from domains.saved_recipe.model import SavedRecipe  # noqa: F401
+from domains.user.model import User
+from main import app
 
 TEST_DATABASE_URL = "sqlite+aiosqlite:///:memory:"
 

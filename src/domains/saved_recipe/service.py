@@ -46,7 +46,7 @@ class SavedRecipeService:
         self.recipe_detail_service = recipe_detail_service
 
     async def save(self, request: SaveRecipeRequest) -> SavedRecipeDetailResponse:
-        parse_mangae_source_id(request.source_id)
+        board_name, author_name = parse_mangae_source_id(request.source_id)
 
         existing = await self.repo.find_by_source(self.user.id, request.source, request.source_id)
         if existing is not None:
@@ -55,7 +55,6 @@ class SavedRecipeService:
                 detail="이미 저장된 레시피입니다.",
             )
 
-        board_name, author_name = parse_mangae_source_id(request.source_id)
         detail = await self.recipe_detail_service.get_detail(board_name, author_name)
         recipe_name = detail.recipe_name
         recipe_difficulty = detail.recipe_difficulty

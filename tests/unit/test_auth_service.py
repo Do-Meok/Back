@@ -5,9 +5,9 @@ import uuid6
 
 from core import security
 from core.exception.exceptions import InvalidTokenException, UnAuthorizedException
+from domains.auth.schemas import LogInRequest
 from domains.auth.service import AuthService
 from domains.user.model import User
-from domains.auth.schemas import LogInRequest
 
 
 @pytest.fixture
@@ -43,9 +43,7 @@ async def test_login_returns_access_and_refresh(
 ):
     user_repo.get_user_by_email.return_value = existing_user
 
-    response = await auth_service.log_in(
-        LogInRequest(email="test@example.com", password="password123")
-    )
+    response = await auth_service.log_in(LogInRequest(email="test@example.com", password="password123"))
 
     assert response.access_token
     assert response.refresh_token
@@ -53,31 +51,21 @@ async def test_login_returns_access_and_refresh(
     refresh_store.save.assert_awaited_once()
 
 
-async def test_login_raises_when_user_not_found(
-    auth_service: AuthService, user_repo: AsyncMock
-):
+async def test_login_raises_when_user_not_found(auth_service: AuthService, user_repo: AsyncMock):
     user_repo.get_user_by_email.return_value = None
 
     with pytest.raises(UnAuthorizedException):
-        await auth_service.log_in(
-            LogInRequest(email="missing@example.com", password="password123")
-        )
+        await auth_service.log_in(LogInRequest(email="missing@example.com", password="password123"))
 
 
-async def test_login_raises_on_wrong_password(
-    auth_service: AuthService, user_repo: AsyncMock, existing_user: User
-):
+async def test_login_raises_on_wrong_password(auth_service: AuthService, user_repo: AsyncMock, existing_user: User):
     user_repo.get_user_by_email.return_value = existing_user
 
     with pytest.raises(UnAuthorizedException):
-        await auth_service.log_in(
-            LogInRequest(email="test@example.com", password="wrong-password")
-        )
+        await auth_service.log_in(LogInRequest(email="test@example.com", password="wrong-password"))
 
 
-async def test_login_rejects_kakao_only_user(
-    auth_service: AuthService, user_repo: AsyncMock
-):
+async def test_login_rejects_kakao_only_user(auth_service: AuthService, user_repo: AsyncMock):
     kakao_user = User(
         id=uuid6.uuid7(),
         email="kakao@example.com",
@@ -88,9 +76,7 @@ async def test_login_rejects_kakao_only_user(
     user_repo.get_user_by_email.return_value = kakao_user
 
     with pytest.raises(UnAuthorizedException, match="카카오로 로그인해 주세요"):
-        await auth_service.log_in(
-            LogInRequest(email="kakao@example.com", password="password123")
-        )
+        await auth_service.log_in(LogInRequest(email="kakao@example.com", password="password123"))
 
 
 async def test_login_with_kakao_returns_tokens_for_existing_user(
@@ -111,9 +97,7 @@ async def test_login_with_kakao_returns_tokens_for_existing_user(
     async def fake_fetch(_token: str) -> str:
         return "1234567890"
 
-    monkeypatch.setattr(
-        "domains.auth.kakao_client.fetch_kakao_user_id", fake_fetch
-    )
+    monkeypatch.setattr("domains.auth.kakao_client.fetch_kakao_user_id", fake_fetch)
 
     response = await auth_service.login_with_kakao("kakao-access-token")
 
@@ -134,9 +118,7 @@ async def test_login_with_kakao_returns_needs_profile_for_new_user(
     async def fake_fetch(_token: str) -> str:
         return "999888777"
 
-    monkeypatch.setattr(
-        "domains.auth.kakao_client.fetch_kakao_user_id", fake_fetch
-    )
+    monkeypatch.setattr("domains.auth.kakao_client.fetch_kakao_user_id", fake_fetch)
 
     response = await auth_service.login_with_kakao("kakao-access-token")
 
@@ -180,9 +162,7 @@ async def test_complete_kakao_signup_creates_user(
     refresh_store.save.assert_awaited_once()
 
 
-async def test_complete_kakao_signup_rejects_email_conflict(
-    auth_service: AuthService, user_repo: AsyncMock
-):
+async def test_complete_kakao_signup_rejects_email_conflict(auth_service: AuthService, user_repo: AsyncMock):
     from core.exception.exceptions import ConflictException
     from domains.auth.schemas import KakaoCompleteRequest
 
@@ -225,24 +205,18 @@ async def test_refresh_rotates_tokens(
     refresh_store.save.assert_awaited_once()
 
 
-async def test_refresh_rejects_unknown_token(
-    auth_service: AuthService, refresh_store: AsyncMock
-):
+async def test_refresh_rejects_unknown_token(auth_service: AuthService, refresh_store: AsyncMock):
     refresh_store.pop_user_id.return_value = None
     with pytest.raises(InvalidTokenException):
         await auth_service.refresh("missing")
 
 
-async def test_logout_deletes_refresh(
-    auth_service: AuthService, refresh_store: AsyncMock
-):
+async def test_logout_deletes_refresh(auth_service: AuthService, refresh_store: AsyncMock):
     await auth_service.log_out("some-refresh")
     refresh_store.delete.assert_awaited_once_with("some-refresh")
 
 
-async def test_get_user_by_token_returns_user(
-    auth_service: AuthService, user_repo: AsyncMock, existing_user: User
-):
+async def test_get_user_by_token_returns_user(auth_service: AuthService, user_repo: AsyncMock, existing_user: User):
     token = security.create_jwt(existing_user.id)
     user_repo.get_user_by_id.return_value = existing_user
 

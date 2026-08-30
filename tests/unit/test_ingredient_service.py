@@ -1,5 +1,5 @@
-from unittest.mock import AsyncMock
 from datetime import date
+from unittest.mock import AsyncMock
 
 import pytest
 import uuid6
@@ -50,9 +50,7 @@ async def test_add_ingredients_returns_saved_items(
     ]
     ingredient_repo.add_ingredient.return_value = saved
 
-    result = await ingredient_service.add_ingredients(
-        AddIngredientRequest(ingredients=["양파", "당근"])
-    )
+    result = await ingredient_service.add_ingredients(AddIngredientRequest(ingredients=["양파", "당근"]))
 
     assert len(result) == 2
     assert result[0].ingredient_name == "양파"
