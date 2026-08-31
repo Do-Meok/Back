@@ -36,7 +36,7 @@ class SignUpRequest(BaseModel):
         ..., description="사용자 생년월일", examples=[date(1900, 1, 1), date(2000, 1, 1)]
     )
     phone_num: str = Field(
-        ..., min_length=10, max_length=11, description="사용자 전화번호", examples=["010-1234-5678"]
+        ..., min_length=12, max_length=13, description="사용자 전화번호", examples=["010-1234-5678"]
     )
 
 

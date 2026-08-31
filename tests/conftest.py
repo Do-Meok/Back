@@ -1,5 +1,6 @@
 import os
 from collections.abc import AsyncGenerator
+from datetime import date
 
 import pytest_asyncio
 from httpx import ASGITransport, AsyncClient
@@ -85,6 +86,10 @@ async def test_user(db_session: AsyncSession) -> User:
         email="test@example.com",
         password=security.hash_password("password123"),
         nickname="testuser",
+        name="테스트유저",
+        birth=date(1990, 1, 1),
+        phone=security.encrypt_phone("010-0000-0000"),
+        phone_hash=security.make_phone_hash("010-0000-0000"),
     )
     db_session.add(user)
     await db_session.flush()

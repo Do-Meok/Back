@@ -106,12 +106,20 @@ class AuthService:
                 detail="이미 사용 중인 닉네임 입니다.(대소문자 구별)",
             )
 
+        phone_hash = security.make_phone_hash(request.phone_num)
+        if await self.user_repo.get_user_by_phone_num(phone_hash):
+            raise ConflictException(code=ErrorCode.PHONE_NUM_CONFLICT, detail="이미 사용 중인 전화번호 입니다.")
+
         user = User(
             email=str(request.email),
             password=None,
             provider=KAKAO_PROVIDER,
             social_id=kakao_id,
             nickname=request.nickname,
+            name=request.name,
+            birth=request.birth,
+            phone=security.encrypt_phone(request.phone_num),
+            phone_hash=phone_hash,
         )
         user = await self.user_repo.save_user(user)
         tokens = await self.issue_tokens(user)

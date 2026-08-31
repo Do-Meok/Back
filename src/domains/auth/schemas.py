@@ -1,3 +1,4 @@
+from datetime import date
 from typing import Literal
 
 from pydantic import BaseModel, EmailStr, Field
@@ -30,6 +31,14 @@ class KakaoCompleteRequest(BaseModel):
     signup_token: str = Field(..., description="카카오 가입용 임시 토큰")
     nickname: str = Field(..., min_length=2, max_length=20, description="닉네임")
     email: EmailStr = Field(..., description="이메일")
+
+    name: str = Field(..., min_length=2, max_length=20, description="사용자 이름", examples=["홍길동"])
+    birth: date = Field(
+        ..., description="사용자 생년월일", examples=[date(1900, 1, 1), date(2000, 1, 1)]
+    )
+    phone_num: str = Field(
+        ..., min_length=12, max_length=13, description="사용자 전화번호", examples=["010-1234-5678"]
+    )
 
 
 class KakaoAuthResponse(BaseModel):

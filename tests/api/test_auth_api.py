@@ -1,4 +1,6 @@
 import pytest
+
+from datetime import date
 from httpx import AsyncClient
 
 from core.exception.codes import ErrorCode
@@ -12,6 +14,9 @@ def default_signup_payload() -> dict:
         "password": "password123",
         "checked_password": "password123",
         "nickname": "defaultuser",
+        "name": "홍길동",
+        "birth": date(1900, 1, 1).isoformat(),
+        "phone_num": "010-1234-5678"
     }
 
 
@@ -41,6 +46,8 @@ async def test_signup_success(client: AsyncClient, default_signup_payload: dict)
     body = response.json()
     assert body["info"]["email"] == default_signup_payload["email"]
     assert body["info"]["nickname"] == default_signup_payload["nickname"]
+    assert body["info"]["name"] == default_signup_payload["name"]
+    assert body["info"]["birth"] == default_signup_payload["birth"]
     assert body["access_token"]
     assert body["refresh_token"]
 
@@ -50,8 +57,24 @@ async def test_signup_success(client: AsyncClient, default_signup_payload: dict)
     [
         # 이메일 중복
         (
-            {"email": "dup@example.com", "password": "password", "checked_password": "password", "nickname": "user1"},
-            {"email": "dup@example.com", "password": "password", "checked_password": "password", "nickname": "user2"},
+            {
+                "email": "dup@example.com",
+                "password": "password",
+                "checked_password": "password",
+                "nickname": "user1",
+                "name": "홍길동",
+                "birth": "1990-01-01",
+                "phone_num": "010-1111-1111",
+            },
+            {
+                "email": "dup@example.com",
+                "password": "password",
+                "checked_password": "password",
+                "nickname": "user2",
+                "name": "홍길동",
+                "birth": "1990-01-01",
+                "phone_num": "010-2222-2222",
+            },
             409,
             ErrorCode.EMAIL_CONFLICT,
         ),
@@ -62,12 +85,18 @@ async def test_signup_success(client: AsyncClient, default_signup_payload: dict)
                 "password": "password",
                 "checked_password": "password",
                 "nickname": "same_nick",
+                "name": "홍길동",
+                "birth": "1990-01-01",
+                "phone_num": "010-3333-3333",
             },
             {
                 "email": "user2@example.com",
                 "password": "password",
                 "checked_password": "password",
                 "nickname": "same_nick",
+                "name": "홍길동",
+                "birth": "1990-01-01",
+                "phone_num": "010-4444-4444",
             },
             409,
             ErrorCode.NICKNAME_CONFLICT,
@@ -80,6 +109,9 @@ async def test_signup_success(client: AsyncClient, default_signup_payload: dict)
                 "password": "password1",
                 "checked_password": "password2",
                 "nickname": "user3",
+                "name": "홍길동",
+                "birth": "1990-01-01",
+                "phone_num": "010-5555-5555",
             },
             400,
             ErrorCode.PASSWORD_MISMATCH,

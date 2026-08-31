@@ -1,3 +1,4 @@
+from datetime import date
 from unittest.mock import AsyncMock
 
 import pytest
@@ -32,6 +33,8 @@ def existing_user() -> User:
         email="test@example.com",
         password=security.hash_password("password123"),
         nickname="testuser",
+        name="테스트유저",
+        birth=date(1990, 1, 1),
     )
 
 
@@ -91,6 +94,8 @@ async def test_login_with_kakao_returns_tokens_for_existing_user(
         password=None,
         social_id="1234567890",
         nickname="kakaouser",
+        name="테스트유저",
+        birth=date(1990, 1, 1),
     )
     user_repo.get_user_by_social_id.return_value = kakao_user
 
@@ -135,6 +140,7 @@ async def test_complete_kakao_signup_creates_user(
     user_repo.get_user_by_social_id.return_value = None
     user_repo.get_user_by_email.return_value = None
     user_repo.get_user_by_nickname.return_value = None
+    user_repo.get_user_by_phone_num.return_value = None
 
     created = User(
         id=uuid6.uuid7(),
@@ -142,6 +148,8 @@ async def test_complete_kakao_signup_creates_user(
         password=None,
         social_id="999888777",
         nickname="newbie",
+        name="테스트유저",
+        birth=date(1990, 1, 1),
     )
     user_repo.save_user.return_value = created
 
@@ -153,6 +161,9 @@ async def test_complete_kakao_signup_creates_user(
             signup_token=signup_token,
             nickname="newbie",
             email="new@example.com",
+            name="테스트유저",
+            birth=date(1990, 1, 1),
+            phone_num="010-1234-5678",
         )
     )
 
@@ -182,6 +193,9 @@ async def test_complete_kakao_signup_rejects_email_conflict(auth_service: AuthSe
                 signup_token=signup_token,
                 nickname="newbie",
                 email="taken@example.com",
+                name="테스트유저",
+                birth=date(1990, 1, 1),
+                phone_num="010-1234-5678",
             )
         )
 
