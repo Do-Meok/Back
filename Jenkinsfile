@@ -62,25 +62,23 @@ pipeline {
             }
         }
 
-        stage('6. Migrate (alembic)') {
+        stage('6. Deploy (compose app)') {
             steps {
-                echo '배포 경로로 docker-compose.yml 및 .env 파일 동기화 중...'
-                sh "cp docker-compose.yml ${DEPLOY_PATH}/docker-compose.yml"
-                sh "cp .env ${DEPLOY_PATH}/.env"
                 dir("${DEPLOY_PATH}") {
-                    echo '최신 애플리케이션 이미지 수신 및 Alembic DB 마이그레이션 실행 중...'
+                    echo '최신 애플리케이션 이미지 수신 및 컨테이너 재시작 중...'
                     sh 'docker compose pull app'
-                    sh 'docker compose run --rm app uv run alembic upgrade head'
+                    sh 'docker compose up -d app'
+                    sh 'docker image prune -f'
                 }
             }
         }
 
-        stage('7. Deploy (compose app)') {
+        stage('7. Migrate (alembic)') {
             steps {
                 dir("${DEPLOY_PATH}") {
-                    echo '애플리케이션 컨테이너 재시작 및 미사용 이미지 정리 중...'
-                    sh 'docker compose up -d app'
-                    sh 'docker image prune -f'
+                    echo '실행 중인 컨테이너에서 Alembic DB 마이그레이션 진행...'
+                    // 이미 뜬 컨테이너(domeok-back) 내부에서 exec로 실행
+                    sh 'docker compose exec -T app uv run alembic upgrade head'
                 }
             }
         }
