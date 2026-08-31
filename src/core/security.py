@@ -3,7 +3,7 @@ import hmac
 import secrets
 import uuid
 from base64 import urlsafe_b64encode
-from datetime import UTC, datetime, timedelta
+from datetime import datetime, timedelta
 
 import jwt
 from cryptography.fernet import Fernet
@@ -18,6 +18,7 @@ from core.exception.exceptions import (
     TokenExpiredException,
     UnAuthorizedException,
 )
+from core.timezone import KST
 
 # 설정 및 상수
 ACCESS_TOKEN_EXPIRE_MINUTES = 30  # 30분
@@ -65,7 +66,7 @@ def make_phone_hash(phone: str) -> str:
 
 # --- 토큰 관련 ---
 def create_jwt(user_id: uuid.UUID) -> str:
-    now = datetime.now(UTC)
+    now = datetime.now(KST)
     payload = {
         "sub": str(user_id),
         "iat": int(now.timestamp()),
@@ -90,7 +91,7 @@ def decode_jwt(access_token: str) -> str:
 
 
 def create_kakao_signup_token(kakao_id: str) -> str:
-    now = datetime.now(UTC)
+    now = datetime.now(KST)
     payload = {
         "sub": kakao_id,
         "purpose": KAKAO_SIGNUP_PURPOSE,

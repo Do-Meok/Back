@@ -5,6 +5,7 @@ from core.exception.exceptions import (
     DatabaseException,
     ExternalServiceException,
     NotFoundException,
+    RateLimitExceededException,
     UnAuthorizedException,
 )
 from core.exception.openapi import create_error_response
@@ -26,6 +27,7 @@ router = APIRouter(prefix="/recipes", tags=["recipes"])
         UnAuthorizedException,
         ExternalServiceException,
         DatabaseException,
+        RateLimitExceededException,
     ),
 )
 async def recommend_recipes(

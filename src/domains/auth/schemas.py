@@ -64,6 +64,12 @@ class SignupAcceptedResponse(BaseModel):
     email: EmailStr
     message: str
     expires_in_seconds: int
+    quota_remaining: int = Field(description="오늘 이 이메일로 남은 인증메일 발송 가능 횟수")
+
+
+class PasswordResetAcceptedResponse(BaseModel):
+    message: str
+    quota_remaining: int = Field(description="오늘 이 이메일로 남은 인증메일 발송 가능 횟수")
 
 
 class KakaoLoginRequest(BaseModel):

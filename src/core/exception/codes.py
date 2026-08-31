@@ -15,6 +15,7 @@ class ErrorCode(StrEnum):
     UNAUTHORIZED = "UNAUTHORIZED"  # 인증 필요 (로그인 안함)
     FORBIDDEN = "FORBIDDEN"  # 작업에 대한 권한 없음
     EXTERNAL_SERVICE_ERROR = "EXTERNAL_SERVICE_ERROR"
+    RATE_LIMIT_EXCEEDED = "RATE_LIMIT_EXCEEDED"  # 일일 사용량 제한 초과
 
     # ----------------------------------------
     # 2. 토큰 관련

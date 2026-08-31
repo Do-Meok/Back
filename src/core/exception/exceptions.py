@@ -68,6 +68,15 @@ class ExternalServiceException(BaseCustomException):
         super().__init__(status_code=502, code=code, detail=detail)
 
 
+class RateLimitExceededException(BaseCustomException):
+    def __init__(
+        self,
+        detail: str = "사용량 제한을 초과했습니다.",
+        code: str | ErrorCode = ErrorCode.RATE_LIMIT_EXCEEDED,
+    ):
+        super().__init__(status_code=429, code=code, detail=detail)
+
+
 # ----------------------------------------
 # 2. 토큰 관련
 # ----------------------------------------

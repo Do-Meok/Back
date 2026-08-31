@@ -337,3 +337,35 @@ async def test_password_reset_request_unknown_email_returns_same_response(client
         json={"email": "no-such-user@example.com"},
     )
     assert response.status_code == 200
+
+
+# ==========================================
+# 5. 일일 발송 한도 (Quota) 테스트
+# ==========================================
+
+
+async def test_password_reset_request_blocked_after_daily_limit(
+    client: AsyncClient, email_service_stub: CapturingEmailService
+):
+    email = "quota-test@example.com"
+
+    for expected_remaining in (4, 3, 2, 1, 0):
+        response = await client.post("/api/v1/auth/password/reset/request", json={"email": email})
+        assert response.status_code == 200
+        assert response.json()["quota_remaining"] == expected_remaining
+
+    blocked = await client.post("/api/v1/auth/password/reset/request", json={"email": email})
+    assert blocked.status_code == 429
+    assert blocked.json()["code"] == ErrorCode.RATE_LIMIT_EXCEEDED
+
+
+async def test_password_reset_request_quota_blocks_unknown_email_identically(client: AsyncClient):
+    """존재하지 않는 이메일도 동일하게 quota가 소모되어, 429 여부로 계정 존재를 추측할 수 없어야 함"""
+    email = "unknown-quota@example.com"
+
+    for _ in range(5):
+        response = await client.post("/api/v1/auth/password/reset/request", json={"email": email})
+        assert response.status_code == 200
+
+    blocked = await client.post("/api/v1/auth/password/reset/request", json={"email": email})
+    assert blocked.status_code == 429

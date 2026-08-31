@@ -31,6 +31,29 @@ async def test_recommendations_empty_when_no_ingredients(client: AsyncClient, au
         app.dependency_overrides.pop(get_rag_retriever, None)
 
 
+async def test_recommendations_blocked_after_daily_limit(client: AsyncClient, auth_headers: dict[str, str]):
+    await client.post(
+        "/api/v1/ingredients",
+        headers=auth_headers,
+        json={"ingredients": ["계란"]},
+    )
+
+    mock_retriever = MagicMock()
+    mock_retriever.search.return_value = []
+    app.dependency_overrides[get_rag_retriever] = lambda: mock_retriever
+    try:
+        for expected_remaining in (4, 3, 2, 1, 0):
+            response = await client.get("/api/v1/recipes/recommendations", headers=auth_headers)
+            assert response.status_code == 200
+            assert response.json()["quota_remaining"] == expected_remaining
+
+        blocked = await client.get("/api/v1/recipes/recommendations", headers=auth_headers)
+        assert blocked.status_code == 429
+        assert blocked.json()["code"] == ErrorCode.RATE_LIMIT_EXCEEDED
+    finally:
+        app.dependency_overrides.pop(get_rag_retriever, None)
+
+
 async def test_recommendations_returns_mapped_recipes(client: AsyncClient, auth_headers: dict[str, str]):
     await client.post(
         "/api/v1/ingredients",

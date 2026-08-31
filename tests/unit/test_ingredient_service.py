@@ -1,10 +1,11 @@
-from datetime import UTC, datetime
+from datetime import datetime
 from unittest.mock import AsyncMock
 
 import pytest
 import uuid6
 
 from core.exception.exceptions import IngredientNotFoundException
+from core.timezone import KST
 from domains.ingredient.model import Ingredient
 from domains.ingredient.schemas import AddIngredientRequest
 from domains.ingredient.service import IngredientService
@@ -39,13 +40,13 @@ async def test_add_ingredients_returns_saved_items(
             id=1,
             user_id=user.id,
             ingredient_name="양파",
-            created_at=datetime.now(UTC).date(),
+            created_at=datetime.now(KST).date(),
         ),
         Ingredient(
             id=2,
             user_id=user.id,
             ingredient_name="당근",
-            created_at=datetime.now(UTC).date(),
+            created_at=datetime.now(KST).date(),
         ),
     ]
     ingredient_repo.add_ingredient.return_value = saved
@@ -65,7 +66,7 @@ async def test_get_ingredients_returns_user_items(
             id=1,
             user_id=user.id,
             ingredient_name="양파",
-            created_at=datetime.now(UTC),
+            created_at=datetime.now(KST).date(),
         )
     ]
 

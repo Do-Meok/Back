@@ -11,6 +11,7 @@ from core.exception.exceptions import (
     UnAuthorizedException,
     UserNotFoundException,
 )
+from core.quota import EMAIL_SEND_DAILY_LIMIT, KIND_EMAIL_SEND, DailyQuotaStore
 from domains.auth import kakao_client
 from domains.auth.email_service import EmailService
 from domains.auth.refresh_store import RefreshTokenStore
@@ -22,6 +23,7 @@ from domains.auth.schemas import (
     KakaoNeedsProfileResponse,
     LogInRequest,
     LogInResponse,
+    PasswordResetAcceptedResponse,
     PasswordResetConfirmRequest,
     PasswordResetRequest,
     SignupAcceptedResponse,
@@ -57,12 +59,14 @@ class AuthService:
         verification_store: VerificationCodeStore,
         email_service: EmailService,
         signup_pending_store: SignupPendingStore,
+        daily_quota_store: DailyQuotaStore,
     ) -> None:
         self.user_repo = user_repo
         self.refresh_store = refresh_store
         self.verification_store = verification_store
         self.email_service = email_service
         self.signup_pending_store = signup_pending_store
+        self.daily_quota_store = daily_quota_store
 
     async def issue_tokens(self, user: User) -> TokenPair:
         """
@@ -135,6 +139,9 @@ class AuthService:
         if await self.user_repo.get_user_by_phone_num(phone_hash):
             raise ConflictException(code=ErrorCode.PHONE_NUM_CONFLICT, detail="이미 사용 중인 전화번호 입니다.")
 
+        # quota는 pending 저장 전에 먼저 소모 -> 한도 초과 시 대기 상태를 아예 만들지 않음
+        quota = await self.daily_quota_store.consume(KIND_EMAIL_SEND, email, EMAIL_SEND_DAILY_LIMIT)
+
         pending = PendingSignup(
             email=email,
             password_hash=security.hash_password(request.password),
@@ -152,6 +159,7 @@ class AuthService:
             email=email,
             message="인증 코드를 이메일로 발송했습니다.",
             expires_in_seconds=CODE_TTL_SECONDS,
+            quota_remaining=quota.remaining,
         )
 
     async def verify_email(self, request: EmailVerifyRequest) -> LogInResponse:
@@ -185,25 +193,33 @@ class AuthService:
         if pending is None:
             raise UserNotFoundException(detail="회원가입 요청 정보를 찾을 수 없습니다.")
 
+        quota = await self.daily_quota_store.consume(KIND_EMAIL_SEND, email, EMAIL_SEND_DAILY_LIMIT)
         code = await self.verification_store.resend(PURPOSE_SIGNUP, email)
         await self.email_service.send_verification_code(email, code, PURPOSE_SIGNUP)
         return SignupAcceptedResponse(
             email=email,
             message="인증 코드를 재발송했습니다.",
             expires_in_seconds=CODE_TTL_SECONDS,
+            quota_remaining=quota.remaining,
         )
 
-    async def request_password_reset(self, request: PasswordResetRequest) -> dict[str, str]:
+    async def request_password_reset(self, request: PasswordResetRequest) -> PasswordResetAcceptedResponse:
         """
         비밀번호 재설정 코드 발송: 이메일 존재 여부와 무관하게
-        항상 같은 응답을 반환함(이메일 열거 공격 방지)
+        항상 같은 응답을 반환함(이메일 열거 공격 방지). quota도 이메일 존재 여부와
+        무관하게 항상 소모해야 "제한 초과 여부"가 존재 여부를 흘리는 사이드채널이 안 됨
         """
         email = str(request.email)
+        quota = await self.daily_quota_store.consume(KIND_EMAIL_SEND, email, EMAIL_SEND_DAILY_LIMIT)
+
         user = await self.user_repo.get_user_by_email(email)
         if user is not None and user.password is not None:
             code = await self.verification_store.issue(PURPOSE_PASSWORD_RESET, email)
             await self.email_service.send_verification_code(email, code, PURPOSE_PASSWORD_RESET)
-        return {"message": "비밀번호 재설정 인증 코드를 이메일로 발송했습니다."}
+        return PasswordResetAcceptedResponse(
+            message="비밀번호 재설정 인증 코드를 이메일로 발송했습니다.",
+            quota_remaining=quota.remaining,
+        )
 
     async def confirm_password_reset(self, request: PasswordResetConfirmRequest) -> dict[str, str]:
         email = str(request.email)

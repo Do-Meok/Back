@@ -1,8 +1,9 @@
-from datetime import UTC, datetime
+from datetime import datetime
 
 from httpx import AsyncClient
 
 from core.exception.codes import ErrorCode
+from core.timezone import KST
 
 
 async def test_add_ingredients_requires_auth(client: AsyncClient):
@@ -19,7 +20,7 @@ async def test_add_and_list_ingredients(client: AsyncClient, auth_headers: dict[
     add_response = await client.post(
         "/api/v1/ingredients",
         headers=auth_headers,
-        json={"ingredients": ["양파", "당근"], "purchase_date": datetime.now(UTC).date().isoformat()},
+        json={"ingredients": ["양파", "당근"], "purchase_date": datetime.now(KST).date().isoformat()},
     )
 
     assert add_response.status_code == 201

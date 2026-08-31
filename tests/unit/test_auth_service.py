@@ -12,6 +12,7 @@ from core.exception.exceptions import (
     UnAuthorizedException,
     UserNotFoundException,
 )
+from core.quota import QuotaInfo
 from domains.auth.schemas import (
     EmailResendRequest,
     EmailVerifyRequest,
@@ -51,12 +52,21 @@ def signup_pending_store() -> AsyncMock:
 
 
 @pytest.fixture
+def daily_quota_store() -> AsyncMock:
+    store = AsyncMock()
+    store.consume.return_value = QuotaInfo(limit=5, used=1, remaining=4)
+    store.get_remaining.return_value = QuotaInfo(limit=5, used=0, remaining=5)
+    return store
+
+
+@pytest.fixture
 def auth_service(
     user_repo: AsyncMock,
     refresh_store: AsyncMock,
     verification_store: AsyncMock,
     email_service: AsyncMock,
     signup_pending_store: AsyncMock,
+    daily_quota_store: AsyncMock,
 ) -> AuthService:
     return AuthService(
         user_repo=user_repo,
@@ -64,6 +74,7 @@ def auth_service(
         verification_store=verification_store,
         email_service=email_service,
         signup_pending_store=signup_pending_store,
+        daily_quota_store=daily_quota_store,
     )
 
 
@@ -312,6 +323,7 @@ async def test_signup_upserts_pending_and_sends_code(
     verification_store: AsyncMock,
     email_service: AsyncMock,
     signup_pending_store: AsyncMock,
+    daily_quota_store: AsyncMock,
     signup_request: SignUpRequest,
 ):
     user_repo.get_user_by_email.return_value = None
@@ -323,10 +335,33 @@ async def test_signup_upserts_pending_and_sends_code(
 
     assert response.email == "new@example.com"
     assert response.expires_in_seconds > 0
+    assert response.quota_remaining == 4
     signup_pending_store.upsert.assert_awaited_once()
     verification_store.issue.assert_awaited_once_with("signup", "new@example.com")
     email_service.send_verification_code.assert_awaited_once_with("new@example.com", "123456", "signup")
     user_repo.save_user.assert_not_awaited()
+    daily_quota_store.consume.assert_awaited_once_with("email_send", "new@example.com", 5)
+
+
+async def test_signup_blocked_when_quota_exceeded(
+    auth_service: AuthService,
+    user_repo: AsyncMock,
+    daily_quota_store: AsyncMock,
+    signup_pending_store: AsyncMock,
+    signup_request: SignUpRequest,
+):
+    from core.exception.exceptions import RateLimitExceededException
+
+    user_repo.get_user_by_email.return_value = None
+    user_repo.get_user_by_nickname.return_value = None
+    user_repo.get_user_by_phone_num.return_value = None
+    daily_quota_store.consume.side_effect = RateLimitExceededException()
+
+    with pytest.raises(RateLimitExceededException):
+        await auth_service.signup(signup_request)
+
+    # quota 초과 시 pending 상태를 아예 만들지 않아야 함
+    signup_pending_store.upsert.assert_not_awaited()
 
 
 async def test_signup_rejects_email_conflict(
@@ -419,8 +454,9 @@ async def test_request_password_reset_sends_code_for_local_user(
     user_repo.get_user_by_email.return_value = existing_user
     verification_store.issue.return_value = "654321"
 
-    await auth_service.request_password_reset(PasswordResetRequest(email=existing_user.email))
+    response = await auth_service.request_password_reset(PasswordResetRequest(email=existing_user.email))
 
+    assert response.quota_remaining == 4
     verification_store.issue.assert_awaited_once_with("password_reset", existing_user.email)
     email_service.send_verification_code.assert_awaited_once()
 
@@ -430,14 +466,17 @@ async def test_request_password_reset_silently_ignores_unknown_email(
     user_repo: AsyncMock,
     verification_store: AsyncMock,
     email_service: AsyncMock,
+    daily_quota_store: AsyncMock,
 ):
     user_repo.get_user_by_email.return_value = None
 
     response = await auth_service.request_password_reset(PasswordResetRequest(email="ghost@example.com"))
 
-    assert "message" in response
+    assert response.message
     verification_store.issue.assert_not_awaited()
     email_service.send_verification_code.assert_not_awaited()
+    # 존재하지 않는 이메일이어도 quota는 동일하게 소모되어야 함(존재 여부 노출 방지)
+    daily_quota_store.consume.assert_awaited_once_with("email_send", "ghost@example.com", 5)
 
 
 async def test_confirm_password_reset_updates_password_and_revokes_sessions(

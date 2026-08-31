@@ -5,6 +5,7 @@ from core.exception.exceptions import (
     BadRequestException,
     ConflictException,
     InvalidTokenException,
+    RateLimitExceededException,
     UnAuthorizedException,
     UserNotFoundException,
 )
@@ -18,6 +19,7 @@ from domains.auth.schemas import (
     KakaoNeedsProfileResponse,
     LogInRequest,
     LogInResponse,
+    PasswordResetAcceptedResponse,
     PasswordResetConfirmRequest,
     PasswordResetRequest,
     RefreshTokenRequest,
@@ -102,7 +104,7 @@ async def kakao_complete(
     summary="회원가입 요청",
     description="가입 정보를 임시 저장하고 이메일로 인증 코드를 발송합니다. 계정은 인증 완료 시 생성됩니다.",
     response_model=SignupAcceptedResponse,
-    responses=create_error_response(ConflictException, BadRequestException),
+    responses=create_error_response(ConflictException, BadRequestException, RateLimitExceededException),
 )
 async def signup_request(
     request: SignUpRequest,
@@ -131,7 +133,7 @@ async def signup_verify(
     status_code=status.HTTP_202_ACCEPTED,
     summary="회원가입 인증 코드 재발송",
     response_model=SignupAcceptedResponse,
-    responses=create_error_response(BadRequestException, UserNotFoundException),
+    responses=create_error_response(BadRequestException, UserNotFoundException, RateLimitExceededException),
 )
 async def signup_resend(
     request: EmailResendRequest,
@@ -145,11 +147,13 @@ async def signup_resend(
     status_code=status.HTTP_200_OK,
     summary="비밀번호 재설정 요청",
     description="가입된 이메일이면 인증 코드를 발송합니다. 이메일 존재 여부와 무관하게 항상 동일하게 응답합니다.",
+    response_model=PasswordResetAcceptedResponse,
+    responses=create_error_response(RateLimitExceededException),
 )
 async def password_reset_request(
     request: PasswordResetRequest,
     auth_service: AuthService = Depends(get_auth_service),
-) -> dict[str, str]:
+) -> PasswordResetAcceptedResponse:
     return await auth_service.request_password_reset(request)
 
 

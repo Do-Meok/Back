@@ -21,3 +21,4 @@ class RecipeRecommendation(BaseModel):
 class RecipeRecommendationResponse(BaseModel):
     ingredients_used: list[str]
     recipes: list[RecipeRecommendation]
+    quota_remaining: int = Field(description="오늘 남은 레시피 추천 요청 가능 횟수")

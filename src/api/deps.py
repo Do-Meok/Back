@@ -3,6 +3,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from core.config import settings
 from core.database import get_db
+from core.quota import DailyQuotaStore
 from core.redis import get_redis
 from core.security import REFRESH_TOKEN_EXPIRE_SECONDS, get_access_token
 from domains.auth.email_service import EmailService
@@ -51,6 +52,10 @@ def get_signup_pending_store() -> SignupPendingStore:
     return SignupPendingStore(get_redis())
 
 
+def get_daily_quota_store() -> DailyQuotaStore:
+    return DailyQuotaStore(get_redis())
+
+
 def get_email_service() -> EmailService:
     backend = "smtp" if settings.SMTP_HOST else "console"
     return EmailService(
@@ -70,6 +75,7 @@ def get_auth_service(
     verification_store: VerificationCodeStore = Depends(get_verification_store),
     email_service: EmailService = Depends(get_email_service),
     signup_pending_store: SignupPendingStore = Depends(get_signup_pending_store),
+    daily_quota_store: DailyQuotaStore = Depends(get_daily_quota_store),
 ) -> AuthService:
     return AuthService(
         user_repo=user_repo,
@@ -77,6 +83,7 @@ def get_auth_service(
         verification_store=verification_store,
         email_service=email_service,
         signup_pending_store=signup_pending_store,
+        daily_quota_store=daily_quota_store,
     )
 
 
@@ -110,11 +117,13 @@ def get_rag_service(
     user: User = Depends(get_current_user),
     ingredient_repo: IngredientRepository = Depends(get_ingredient_repo),
     retriever: RecipeRetriever = Depends(get_rag_retriever),
+    daily_quota_store: DailyQuotaStore = Depends(get_daily_quota_store),
 ) -> RagService:
     return RagService(
         user=user,
         ingredient_repo=ingredient_repo,
         retriever=retriever,
+        daily_quota_store=daily_quota_store,
     )
 
 
