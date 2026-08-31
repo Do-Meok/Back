@@ -30,6 +30,10 @@ class ErrorCode(StrEnum):
     PHONE_NUM_CONFLICT = "PHONE_NUM_CONFLICT"  # 전화번호 중복
     PASSWORD_MISMATCH = "PASSWORD_MISMATCH"  # 비밀번호와 비밀번호 확인 불일치
     USER_NOT_FOUND = "USER_NOT_FOUND"  # 사용자 없음
+    EMAIL_NOT_VERIFIED = "EMAIL_NOT_VERIFIED"  # 이메일 인증되지 않음
+    INVALID_VERIFICATION_CODE = "INVALID_VERIFICATION_CODE"  # 인증 코드 불일치 또는 만료
+    VERIFICATION_COOLDOWN = "VERIFICATION_COOLDOWN"  # 인증 코드 초과 발송
+    EMAIL_ALREADY_VERIFIED = "EMAIL_ALREADY_VERIFIED"  # 이메일 이미 검증됨
 
     # ----------------------------------------
     # 4. 식재료 관련

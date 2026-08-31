@@ -28,6 +28,13 @@ class Settings(BaseSettings):
     NAVER_OCR_API_URL: SecretStr
     OCR_LLM_MODEL: str = "gpt-5-nano"
 
+    SMTP_HOST: str | None = None
+    SMTP_PORT: int = 587
+    SMTP_USER: str | None = None
+    SMTP_PASSWORD: SecretStr | None = None
+    SMTP_FROM_EMAIL: str | None = None
+    SMTP_FROM_NAME: str = "DoMeok(두고먹고)"
+
     @property
     def database_url(self) -> str:
         return f"postgresql+asyncpg://{self.DB_USER}:{self.DB_PASSWORD.get_secret_value()}@{self.DB_HOST}:{self.DB_PORT}/{self.DB_NAME}"

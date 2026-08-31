@@ -1,4 +1,4 @@
-from datetime import date
+from datetime import UTC, datetime
 from unittest.mock import AsyncMock
 
 import pytest
@@ -39,13 +39,13 @@ async def test_add_ingredients_returns_saved_items(
             id=1,
             user_id=user.id,
             ingredient_name="양파",
-            created_at=date.today(),
+            created_at=datetime.now(UTC).date(),
         ),
         Ingredient(
             id=2,
             user_id=user.id,
             ingredient_name="당근",
-            created_at=date.today(),
+            created_at=datetime.now(UTC).date(),
         ),
     ]
     ingredient_repo.add_ingredient.return_value = saved
@@ -65,7 +65,7 @@ async def test_get_ingredients_returns_user_items(
             id=1,
             user_id=user.id,
             ingredient_name="양파",
-            created_at=date.today(),
+            created_at=datetime.now(UTC),
         )
     ]
 

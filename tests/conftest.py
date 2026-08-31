@@ -22,15 +22,28 @@ os.environ.setdefault("REDIS_URL", "redis://localhost:6379/0")
 
 import fakeredis.aioredis
 
+from api.deps import get_email_service
 from core import redis as redis_module
 from core import security
 from core.database import Base, get_db
+from domains.auth.email_service import EmailService
 from domains.ingredient.model import Ingredient
 from domains.saved_recipe.model import SavedRecipe  # noqa: F401
 from domains.user.model import User
 from main import app
 
 TEST_DATABASE_URL = "sqlite+aiosqlite:///:memory:"
+
+
+class CapturingEmailService(EmailService):
+    """실제 발송 대신 (email -> code)를 기억해서 테스트가 인증 코드를 읽을 수 있게 함"""
+
+    def __init__(self) -> None:
+        super().__init__(backend="console")
+        self.sent_codes: dict[str, str] = {}
+
+    async def send_verification_code(self, to_email: str, code: str, purpose: str) -> None:
+        self.sent_codes[to_email] = code
 
 
 @pytest_asyncio.fixture
@@ -57,7 +70,12 @@ async def db_session(db_engine) -> AsyncGenerator[AsyncSession]:
 
 
 @pytest_asyncio.fixture
-async def client(db_session: AsyncSession) -> AsyncGenerator[AsyncClient]:
+def email_service_stub() -> CapturingEmailService:
+    return CapturingEmailService()
+
+
+@pytest_asyncio.fixture
+async def client(db_session: AsyncSession, email_service_stub: CapturingEmailService) -> AsyncGenerator[AsyncClient]:
     async def override_get_db() -> AsyncGenerator[AsyncSession]:
         try:
             yield db_session
@@ -70,6 +88,7 @@ async def client(db_session: AsyncSession) -> AsyncGenerator[AsyncClient]:
     redis_module._redis = fake
 
     app.dependency_overrides[get_db] = override_get_db
+    app.dependency_overrides[get_email_service] = lambda: email_service_stub
     transport = ASGITransport(app=app)
     try:
         async with AsyncClient(transport=transport, base_url="http://test") as ac:

@@ -11,7 +11,7 @@ class UserInfoResponse(BaseModel):
     nickname: str = Field(..., min_length=2, max_length=20, description="닉네임")
 
     name: str = Field(..., description="사용자 실명")
-    birth: date= Field(..., description="생년월일")
+    birth: date = Field(..., description="생년월일")
 
     model_config = ConfigDict(from_attributes=True)
 
@@ -23,27 +23,6 @@ class UserInfoResponse(BaseModel):
             name=user.name,
             birth=user.birth,
         )
-
-
-class SignUpRequest(BaseModel):
-    email: EmailStr = Field(..., description="로그인 ID로 사용될 메일", examples=["user@example.com"])
-    password: str = Field(..., min_length=8, max_length=20, description="비밀번호 (8~20자)")
-    checked_password: str = Field(..., min_length=8, max_length=20, description="비밀번호 확인")
-    nickname: str = Field(..., min_length=2, max_length=20, description="닉네임 (2~20자)")
-
-    name: str = Field(..., min_length=2, max_length=20, description="사용자 이름", examples=["홍길동"])
-    birth: date = Field(
-        ..., description="사용자 생년월일", examples=[date(1900, 1, 1), date(2000, 1, 1)]
-    )
-    phone_num: str = Field(
-        ..., min_length=12, max_length=13, description="사용자 전화번호", examples=["010-1234-5678"]
-    )
-
-
-class SignUpResponse(BaseModel):
-    info: UserInfoResponse
-    access_token: str
-    refresh_token: str
 
 
 class UpdateUserRequest(BaseModel):

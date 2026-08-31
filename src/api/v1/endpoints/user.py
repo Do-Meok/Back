@@ -1,13 +1,10 @@
 from fastapi import APIRouter, Depends, status
 
-from api.deps import get_auth_service, get_current_user, get_user_service
+from api.deps import get_current_user, get_user_service
 from core.exception.exceptions import ConflictException, UnAuthorizedException
 from core.exception.openapi import create_error_response
-from domains.auth.service import AuthService
 from domains.user.model import User
 from domains.user.schemas import (
-    SignUpRequest,
-    SignUpResponse,
     UpdatePasswordRequest,
     UpdateUserRequest,
     UserInfoResponse,
@@ -15,21 +12,6 @@ from domains.user.schemas import (
 from domains.user.service import UserService
 
 router = APIRouter(prefix="/users", tags=["users"])
-
-
-@router.post("/sign-up", status_code=status.HTTP_201_CREATED, summary="회원가입 API", response_model=SignUpResponse)
-async def user_sign_up(
-    request: SignUpRequest,
-    user_service: UserService = Depends(get_user_service),
-    auth_service: AuthService = Depends(get_auth_service),
-) -> SignUpResponse:
-    user = await user_service.sign_up(request)
-    tokens = await auth_service.issue_tokens(user)
-    return SignUpResponse(
-        info=UserInfoResponse.from_user(user),
-        access_token=tokens.access_token,
-        refresh_token=tokens.refresh_token,
-    )
 
 
 @router.get(

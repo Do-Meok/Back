@@ -1,4 +1,4 @@
-from datetime import date
+from datetime import UTC, datetime
 
 from httpx import AsyncClient
 
@@ -19,10 +19,7 @@ async def test_add_and_list_ingredients(client: AsyncClient, auth_headers: dict[
     add_response = await client.post(
         "/api/v1/ingredients",
         headers=auth_headers,
-        json={
-            "ingredients": ["양파", "당근"],
-            "purchase_date": date.today().isoformat(),
-        },
+        json={"ingredients": ["양파", "당근"], "purchase_date": datetime.now(UTC).date().isoformat()},
     )
 
     assert add_response.status_code == 201
