@@ -10,7 +10,7 @@ from domains.ingredient.schemas import (
 )
 from domains.ingredient.service import IngredientService
 
-router = APIRouter(prefix="/ingredients", tags=["ingredients"])
+router = APIRouter(prefix="/ingredients", tags=["Ingredients"])
 
 
 @router.post(

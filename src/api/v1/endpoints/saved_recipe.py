@@ -18,7 +18,7 @@ from domains.saved_recipe.schemas import (
 )
 from domains.saved_recipe.service import SavedRecipeService
 
-router = APIRouter(prefix="/recipes/saved", tags=["saved_recipe"])
+router = APIRouter(prefix="/recipes/saved", tags=["Saved_recipe"])
 
 
 @router.post(

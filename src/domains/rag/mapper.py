@@ -26,6 +26,10 @@ def parse_page_content(page_content: str) -> str:
     return page_content.strip()
 
 
+def _normalize_name(name: str) -> str:
+    return name.casefold().replace(" ", "")
+
+
 def split_ingredients(parsed_ingredients: str) -> list[str]:
     """
     파싱된 식재료 문자열을 비교 가능한 식재료 이름 목록으로 변환
@@ -39,8 +43,7 @@ def split_ingredients(parsed_ingredients: str) -> list[str]:
         if not name:
             continue
 
-        # normalize_name 로직 통합 (대소문자 통합 및 내부 공백 제거)
-        key = name.casefold().replace(" ", "")
+        key = _normalize_name(name)
 
         if key not in seen:
             seen.add(key)
@@ -62,9 +65,10 @@ def map_document_to_recipe(
         return None
 
     recipe_ingredients = split_ingredients(parsed_ingredients)
-    owned_set = {ingredient.strip() for ingredient in (owned_ingredient_names or []) if ingredient.strip()}
-    owned = [ingredient for ingredient in recipe_ingredients if ingredient in owned_set]
-    missing = [ingredient for ingredient in recipe_ingredients if ingredient not in owned_set]
+    # 사용자가 저장한 재료명과 대소문자/공백 표기가 달라도 동일 재료로 인식되도록 정규화 키로 비교
+    owned_set = {_normalize_name(ingredient) for ingredient in (owned_ingredient_names or []) if ingredient.strip()}
+    owned = [ingredient for ingredient in recipe_ingredients if _normalize_name(ingredient) in owned_set]
+    missing = [ingredient for ingredient in recipe_ingredients if _normalize_name(ingredient) not in owned_set]
 
     return RecipeRecommendation(
         recipe_name=recipe_name,

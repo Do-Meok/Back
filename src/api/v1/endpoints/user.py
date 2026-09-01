@@ -11,7 +11,7 @@ from domains.user.schemas import (
 )
 from domains.user.service import UserService
 
-router = APIRouter(prefix="/users", tags=["users"])
+router = APIRouter(prefix="/users", tags=["Users"])
 
 
 @router.get(

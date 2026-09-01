@@ -51,9 +51,4 @@ class Settings(BaseSettings):
         )
 
 
-@lru_cache  # get_settings()를 호출할 때마다 매번 파일/환경변수를 다시 읽는 연산 발생 억제
-def get_settings() -> Settings:
-    return Settings()
-
-
 settings = Settings()

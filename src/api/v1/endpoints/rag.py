@@ -14,7 +14,7 @@ from domains.rag.service import RagService
 from domains.recipe_detail.schemas import RecipeDetailResponse
 from domains.recipe_detail.service import RecipeDetailService
 
-router = APIRouter(prefix="/recipes", tags=["recipes"])
+router = APIRouter(prefix="/recipes", tags=["Recipes"])
 
 
 @router.get(

@@ -10,7 +10,7 @@ from pydantic import ValidationError
 
 from core.exception.codes import ErrorCode
 from core.exception.exceptions import ExternalServiceException
-from domains.ocr.schemas import _LlmIngredientsPayload
+from domains.ocr.schemas import _LLMIngredientsPayload
 
 INGREDIENT_NAME_MAX_LEN = 45
 
@@ -53,7 +53,7 @@ async def parse_receipt_text(
             ],
         )
         content = response.choices[0].message.content or ""
-        payload = _LlmIngredientsPayload.model_validate(json.loads(content))
+        payload = _LLMIngredientsPayload.model_validate(json.loads(content))
         return _normalize_names(payload.ingredients)
     except (openai.OpenAIError, json.JSONDecodeError, ValidationError, IndexError, TypeError) as exc:
         raise ExternalServiceException(
