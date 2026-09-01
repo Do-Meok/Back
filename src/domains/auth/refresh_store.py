@@ -39,6 +39,9 @@ class RefreshTokenStore:
             raise ExternalServiceException("세션 저장에 실패했습니다.") from exc
 
     async def pop_user_id(self, raw_token: str) -> UUID | None:
+        """
+        토큰을 조회함과 동시에 기존 토큰 무효
+        """
         token_hash = hash_refresh_token(raw_token)
         key = self._key_from_hash(token_hash)
         try:
@@ -55,6 +58,9 @@ class RefreshTokenStore:
             raise ExternalServiceException("세션 조회에 실패했습니다.") from exc
 
     async def delete(self, raw_token: str) -> None:
+        """
+        토큰 삭제 후 무효화
+        """
         token_hash = hash_refresh_token(raw_token)
         key = self._key_from_hash(token_hash)
         try:

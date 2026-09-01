@@ -28,12 +28,16 @@ class Settings(BaseSettings):
     NAVER_OCR_API_URL: SecretStr
     OCR_LLM_MODEL: str = "gpt-5-nano"
 
-    SMTP_HOST: str | None = None
+    SMTP_HOST: str
     SMTP_PORT: int = 587
-    SMTP_USER: str | None = None
-    SMTP_PASSWORD: SecretStr | None = None
-    SMTP_FROM_EMAIL: str | None = None
+    SMTP_USER: str
+    SMTP_PASSWORD: SecretStr
+    SMTP_FROM_EMAIL: str
     SMTP_FROM_NAME: str = "DoMeok(두고먹고)"
+
+    KAKAO_REST_API_KEY: SecretStr
+    KAKAO_CLIENT_SECRET: SecretStr
+    KAKAO_REDIRECT_URI: str
 
     @property
     def database_url(self) -> str:

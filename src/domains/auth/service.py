@@ -238,6 +238,9 @@ class AuthService:
         return {"message": "비밀번호가 재설정되었습니다."}
 
     async def login_with_kakao(self, access_token: str) -> KakaoAuthResponse | KakaoNeedsProfileResponse:
+        """
+        기존 회원인지, 신규 회원인지에 따라 로그인할지, 회원가입할지 처리함
+        """
         kakao_id = await kakao_client.fetch_kakao_user_id(access_token)
         user = await self.user_repo.get_user_by_social_id(KAKAO_PROVIDER, kakao_id)
         if user:
@@ -245,6 +248,13 @@ class AuthService:
             return self._to_kakao_auth_response(user, tokens)
         signup_token = security.create_kakao_signup_token(kakao_id)
         return KakaoNeedsProfileResponse(signup_token=signup_token)
+
+    async def login_with_kakao_web(self, code: str, redirect_uri: str) -> KakaoAuthResponse | KakaoNeedsProfileResponse:
+        """
+        웹 카카오 로그인(Authorization Code) 플로우: 인가 코드를 access_token으로 교환한 뒤 동일한 로그인 처리를 수행함
+        """
+        access_token = await kakao_client.exchange_code_for_token(code, redirect_uri)
+        return await self.login_with_kakao(access_token)
 
     async def complete_kakao_signup(self, request: KakaoCompleteRequest) -> KakaoAuthResponse:
         kakao_id = security.decode_kakao_signup_token(request.signup_token)
@@ -285,6 +295,9 @@ class AuthService:
         return self._to_kakao_auth_response(user, tokens)
 
     async def refresh(self, refresh_token: str) -> LogInResponse:
+        """
+        refresh token으로 access token 재발급시, RTR(Refresh Token Rotation) 적용
+        """
         user_id = await self.refresh_store.pop_user_id(refresh_token)
         if user_id is None:
             raise InvalidTokenException(detail="유효하지 않은 리프레시 토큰입니다.")

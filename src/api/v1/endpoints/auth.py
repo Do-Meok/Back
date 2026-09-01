@@ -17,6 +17,7 @@ from domains.auth.schemas import (
     KakaoCompleteRequest,
     KakaoLoginRequest,
     KakaoNeedsProfileResponse,
+    KakaoWebLoginRequest,
     LogInRequest,
     LogInResponse,
     PasswordResetAcceptedResponse,
@@ -28,7 +29,7 @@ from domains.auth.schemas import (
 )
 from domains.auth.service import AuthService
 
-router = APIRouter(prefix="/auth", tags=["auth"])
+router = APIRouter(prefix="/auth", tags=["Auth"])
 
 
 @router.post(
@@ -77,6 +78,7 @@ async def user_log_out(
 @router.post(
     "/kakao",
     status_code=status.HTTP_200_OK,
+    summary="카카오 로그인",
     response_model=KakaoAuthResponse | KakaoNeedsProfileResponse,
 )
 async def kakao_login(
@@ -84,6 +86,19 @@ async def kakao_login(
     auth_service: AuthService = Depends(get_auth_service),
 ) -> KakaoAuthResponse | KakaoNeedsProfileResponse:
     return await auth_service.login_with_kakao(request.access_token)
+
+
+@router.post(
+    "/kakao/web",
+    status_code=status.HTTP_200_OK,
+    summary="카카오 로그인 (웹, Authorization Code)",
+    response_model=KakaoAuthResponse | KakaoNeedsProfileResponse,
+)
+async def kakao_login_web(
+    request: KakaoWebLoginRequest,
+    auth_service: AuthService = Depends(get_auth_service),
+) -> KakaoAuthResponse | KakaoNeedsProfileResponse:
+    return await auth_service.login_with_kakao_web(request.code, request.redirect_uri)
 
 
 @router.post(

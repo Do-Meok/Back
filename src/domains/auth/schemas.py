@@ -76,6 +76,11 @@ class KakaoLoginRequest(BaseModel):
     access_token: str = Field(..., description="카카오 액세스 토큰")
 
 
+class KakaoWebLoginRequest(BaseModel):
+    code: str = Field(..., description="카카오 인가 코드")
+    redirect_uri: str = Field(..., description="인가 코드 요청 시 사용한 리다이렉트 URI")
+
+
 class KakaoCompleteRequest(BaseModel):
     signup_token: str = Field(..., description="카카오 가입용 임시 토큰")
     nickname: str = Field(..., min_length=2, max_length=20, description="닉네임")
@@ -88,11 +93,11 @@ class KakaoCompleteRequest(BaseModel):
 
 class KakaoAuthResponse(BaseModel):
     status: Literal["authenticated"] = "authenticated"
-    info: UserInfoResponse
-    access_token: str
-    refresh_token: str
+    info: UserInfoResponse = Field(..., description="사용자 정보")
+    access_token: str = Field(..., description="인증을 위한 액세스 토큰")
+    refresh_token: str = Field(..., description="액세스 토큰 갱신용 리프레시 토큰")
 
 
 class KakaoNeedsProfileResponse(BaseModel):
     status: Literal["needs_profile"] = "needs_profile"
-    signup_token: str
+    signup_token: str = Field(..., description="추가 정보 입력 시 사용할 카카오 가입용 임시 토큰")
