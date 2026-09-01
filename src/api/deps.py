@@ -160,7 +160,7 @@ def get_ocr_service(
     user: User = Depends(get_current_user),
 ) -> OcrService:
     return OcrService(
-        api_url=settings.NAVER_OCR_API_URL,
+        api_url=settings.NAVER_OCR_API_URL.get_secret_value(),
         secret_key=settings.NAVER_OCR_SECRET_KEY.get_secret_value(),
         openai_api_key=settings.OPENAI_API_KEY.get_secret_value(),
         llm_model=settings.OCR_LLM_MODEL,

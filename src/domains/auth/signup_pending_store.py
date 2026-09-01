@@ -9,7 +9,7 @@ from redis.asyncio import Redis
 from core.exception.codes import ErrorCode
 from core.exception.exceptions import ConflictException, ExternalServiceException
 
-PENDING_SIGNUP_TTL_SECONDS = 24 * 60 * 60
+PENDING_SIGNUP_TTL_SECONDS = 60 * 5
 
 
 @dataclass(frozen=True)
