@@ -1,3 +1,13 @@
+def notifyDiscord(String credId, String message) {
+    withCredentials([string(credentialsId: credId, variable: 'DISCORD_WEBHOOK_URL')]) {
+        sh """
+            curl -sS -X POST -H "Content-Type: application/json" \\
+              -d '{"content": "${message}"}' \\
+              "\$DISCORD_WEBHOOK_URL" || true
+        """
+    }
+}
+
 pipeline {
     agent any
 
@@ -8,6 +18,7 @@ pipeline {
         DOCKER_CRED_ID = 'dockerhub-login'
         ENV_CRED_ID = 'domeok-env-file'
         DEPLOY_PATH = '/home/augustzer0/zer0/domeok'
+        DISCORD_WEBHOOK_CRED_ID = 'domeok-discord-webhook'
     }
 
     stages {
@@ -99,6 +110,20 @@ pipeline {
     }
 
     post {
+        success {
+            script {
+                echo '배포 성공 - Discord 알림 전송 중...'
+                notifyDiscord(DISCORD_WEBHOOK_CRED_ID,
+                    "✅ **Do-Meok/Back** 배포 성공\\n- Job: ${env.JOB_NAME}\\n- Build: #${env.BUILD_NUMBER}\\n- URL: ${env.BUILD_URL}")
+            }
+        }
+        failure {
+            script {
+                echo '배포 실패 - Discord 알림 전송 중...'
+                notifyDiscord(DISCORD_WEBHOOK_CRED_ID,
+                    "❌ **Do-Meok/Back** 배포 실패\\n- Job: ${env.JOB_NAME}\\n- Build: #${env.BUILD_NUMBER}\\n- URL: ${env.BUILD_URL}")
+            }
+        }
         always {
             echo '임시 비밀 설정 파일 삭제 및 Docker 로그인 세션 종료 중...'
             sh 'rm -f .env'
