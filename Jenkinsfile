@@ -21,9 +21,11 @@ pipeline {
         stage('2. Create .env File') {
             steps {
                 script {
-                    echo 'Secret File 자격 증명으로부터 작업 공간 .env 파일 생성 중'
+                    echo 'Secret File 자격 증명으로부터 .env 파일 생성 중'
                     withCredentials([file(credentialsId: "${ENV_CRED_ID}", variable: 'SECRET_ENV')]) {
                         sh 'cp "$SECRET_ENV" .env'
+                        // docker compose(app 배포/마이그레이션)는 ${DEPLOY_PATH}를 기준으로 .env를 읽으므로 그 경로에도 최신 값을 반영
+                        sh "cp \"\$SECRET_ENV\" ${DEPLOY_PATH}/.env"
                     }
                 }
             }

@@ -19,6 +19,13 @@ os.environ.setdefault("OPENAI_API_KEY", "test-openai-key")
 os.environ.setdefault("NAVER_OCR_SECRET_KEY", "test-naver-ocr-secret")
 os.environ.setdefault("NAVER_OCR_API_URL", "https://example.com/ocr")
 os.environ.setdefault("REDIS_URL", "redis://localhost:6379/0")
+os.environ.setdefault("SMTP_HOST", "localhost")
+os.environ.setdefault("SMTP_USER", "test")
+os.environ.setdefault("SMTP_PASSWORD", "test")
+os.environ.setdefault("SMTP_FROM_EMAIL", "test@test.com")
+os.environ.setdefault("KAKAO_REST_API_KEY", "test-kakao-key")
+os.environ.setdefault("KAKAO_CLIENT_SECRET", "test-kakao-client-secret")
+os.environ.setdefault("KAKAO_REDIRECT_URI", "https://example.com/redirect")
 
 import fakeredis.aioredis
 
