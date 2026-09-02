@@ -22,14 +22,14 @@ pipeline {
     }
 
     stages {
-        stage('1. Checkout') {
+        stage('1. 코드 불러오기') {
             steps {
                 echo 'Do-Meok/Back 저장소의 main 브랜치 코드를 가져오는 중...'
                 git branch: 'main', credentialsId: "${GIT_CRED_ID}", url: "${GIT_URL}"
             }
         }
 
-        stage('2. Create .env File') {
+        stage('2. .env 파일 생성') {
             steps {
                 script {
                     echo 'Secret File 자격 증명으로부터 .env 파일 생성 중'
@@ -42,14 +42,14 @@ pipeline {
             }
         }
 
-        stage('3. Build Image') {
+        stage('3. 이미지 빌드') {
             steps {
                 echo "Docker 이미지 빌드 중: ${DOCKER_IMAGE}:latest"
                 sh "docker build -t ${DOCKER_IMAGE}:latest ."
             }
         }
 
-        stage('4. Test (pytest)') {
+        stage('4. 테스트 진행 (pytest)') {
             steps {
                 echo '임시 컨테이너에서 pytest 단위 테스트 실행 중...'
                 sh """
@@ -59,7 +59,7 @@ pipeline {
             }
         }
 
-        stage('5. Push to Docker Hub') {
+        stage('5. 도커 허브 푸시') {
             steps {
                 script {
                     echo "Docker Hub에 이미지 푸시 중: ${DOCKER_IMAGE}:latest"
@@ -75,7 +75,7 @@ pipeline {
             }
         }
 
-        stage('6. Deploy (compose app)') {
+        stage('6. 배포 (compose app)') {
             steps {
                 dir("${DEPLOY_PATH}") {
                     echo '최신 애플리케이션 이미지 수신 및 컨테이너 재시작 중...'
@@ -86,7 +86,7 @@ pipeline {
             }
         }
 
-        stage('7. Migrate (alembic)') {
+        stage('7. DB 마이그레이션 (alembic)') {
             steps {
                 dir("${DEPLOY_PATH}") {
                     echo '실행 중인 컨테이너에서 Alembic DB 마이그레이션 진행...'
@@ -96,7 +96,7 @@ pipeline {
             }
         }
 
-        stage('8. Health Check') {
+        stage('8. 상태 확인') {
             steps {
                 script {
                     echo '컨테이너 시작 대기 후 FastAPI 헬스 체크 진행 중...'

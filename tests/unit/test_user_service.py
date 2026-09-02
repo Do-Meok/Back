@@ -75,9 +75,7 @@ async def test_update_user_rejects_nickname_used_by_other_user(
         await user_service.update_user(user, UpdateUserRequest(nickname="taken"))
 
 
-async def test_update_user_updates_nickname_when_available(
-    user_service: UserService, user_repo: AsyncMock, user: User
-):
+async def test_update_user_updates_nickname_when_available(user_service: UserService, user_repo: AsyncMock, user: User):
     user_repo.get_user_by_nickname.return_value = None
 
     result = await user_service.update_user(user, UpdateUserRequest(nickname="newnick"))
