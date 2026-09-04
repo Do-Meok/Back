@@ -40,8 +40,9 @@ class RagService:
         docs_with_scores = await asyncio.to_thread(self.retriever.search, query, k=TOP_K)
 
         recipes = []
-        for doc, score in docs_with_scores:
-            mapped = map_document_to_recipe(doc, score, owned_ingredient_names=names)
+        for doc, _distance in docs_with_scores:
+            # 벡터 거리(_distance)는 후보 검색 순서에만 쓰이고, 노출되는 score는 재료 보유율로 별도 계산됨
+            mapped = map_document_to_recipe(doc, owned_ingredient_names=names)
             if mapped is not None:
                 recipes.append(mapped)
 

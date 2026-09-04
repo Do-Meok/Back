@@ -15,7 +15,7 @@ class RecipeRecommendation(BaseModel):
     author_name: str = Field(default="", description="작성자 이름")
     recipe_difficulty: str = Field(default="", description="난이도")
     time: str = Field(default="", description="조리 시간")
-    score: float = Field(description="PGVector 거리 점수(작을수록 비슷하다는 뜻)")
+    score: float = Field(description="보유 재료 매칭률(보유 재료 수 / 전체 필요 재료 수, 0~1, 높을수록 많이 보유)")
 
 
 class RecipeRecommendationResponse(BaseModel):

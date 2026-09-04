@@ -54,7 +54,6 @@ def split_ingredients(parsed_ingredients: str) -> list[str]:
 
 def map_document_to_recipe(
     doc: Document,
-    score: float,
     owned_ingredient_names: list[str] | None = None,
 ) -> RecipeRecommendation | None:
     parsed_ingredients = parse_page_content(doc.page_content)
@@ -70,6 +69,9 @@ def map_document_to_recipe(
     owned = [ingredient for ingredient in recipe_ingredients if _normalize_name(ingredient) in owned_set]
     missing = [ingredient for ingredient in recipe_ingredients if _normalize_name(ingredient) not in owned_set]
 
+    # 레시피 전체 재료 대비 보유 재료 비율(0~1, 높을수록 많이 보유). 재료 파싱이 안 된 레시피는 매칭 불가로 0점 처리
+    match_score = round(len(owned) / len(recipe_ingredients), 2) if recipe_ingredients else 0.0
+
     return RecipeRecommendation(
         recipe_name=recipe_name,
         owned_ingredients=owned,
@@ -78,5 +80,5 @@ def map_document_to_recipe(
         author_name=str(meta.get("author_name", "") or ""),
         recipe_difficulty=str(meta.get("recipe_difficulty", "") or ""),
         time=str(meta.get("time", "") or ""),
-        score=float(score),
+        score=match_score,
     )
