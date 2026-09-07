@@ -3,7 +3,7 @@ services:
     image: augustzer0/do-meok:latest
     container_name: domeok-back
     restart: always
-    command: ["uv", "run", "fastapi", "run", "src/main.py", "--host", "0.0.0.0", "--port", "8000"]
+    command: ["uv", "run", "fastapi", "run", "src/main.py", "--host", "0.0.0.0", "--port", "8000", "--proxy-headers", "--forwarded-allow-ips", "*"]
     depends_on:
       postgresql:
         condition: service_healthy

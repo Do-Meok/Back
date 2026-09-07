@@ -38,6 +38,8 @@ pipeline {
                         // docker compose(app 배포/마이그레이션)는 ${DEPLOY_PATH}를 기준으로 .env를 읽으므로 그 경로에도 최신 값을 반영
                         sh "cp \"\$SECRET_ENV\" ${DEPLOY_PATH}/.env"
                     }
+                    // docker compose(app 배포)는 ${DEPLOY_PATH}의 docker-compose.yml을 기준으로 실행되므로 그 경로에도 최신 버전을 반영
+                    sh "cp docker-compose.yml ${DEPLOY_PATH}/docker-compose.yml"
                 }
             }
         }
