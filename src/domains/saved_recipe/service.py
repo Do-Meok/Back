@@ -9,11 +9,14 @@ from core.exception.exceptions import (
     ConflictException,
     NotFoundException,
 )
+from domains.ingredient.repository import IngredientRepository
+from domains.rag.mapper import normalize_ingredient_name
 from domains.saved_recipe.model import SavedRecipe
 from domains.saved_recipe.repository import SavedRecipeRepository
 from domains.saved_recipe.schemas import (
     SavedRecipeDetailResponse,
     SavedRecipeListItem,
+    SavedRecipeOwnedIngredient,
     SavedRecipeStatusResponse,
     SaveRecipeRequest,
 )
@@ -40,10 +43,12 @@ class SavedRecipeService:
         user: User,
         repo: SavedRecipeRepository,
         recipe_detail_service: RecipeDetailService,
+        ingredient_repo: IngredientRepository,
     ) -> None:
         self.user = user
         self.repo = repo
         self.recipe_detail_service = recipe_detail_service
+        self.ingredient_repo = ingredient_repo
 
     async def save(self, request: SaveRecipeRequest) -> SavedRecipeDetailResponse:
         board_name, author_name = parse_mangae_source_id(request.source_id)
@@ -95,6 +100,27 @@ class SavedRecipeService:
         deleted = await self.repo.delete(recipe_id, self.user.id)
         if not deleted:
             raise NotFoundException(detail="저장된 레시피를 찾을 수 없습니다.")
+
+    async def get_owned_ingredients(self, recipe_id: uuid.UUID) -> list[SavedRecipeOwnedIngredient]:
+        row = await self.repo.get_by_id(recipe_id, self.user.id)
+        if row is None:
+            raise NotFoundException(detail="저장된 레시피를 찾을 수 없습니다.")
+
+        recipe_ingredient_keys = {
+            normalize_ingredient_name(item.get("name", ""))
+            for item in row.snapshot.get("ingredients", [])
+            if item.get("name")
+        }
+        if not recipe_ingredient_keys:
+            return []
+
+        owned_ingredients = await self.ingredient_repo.get_ingredients(self.user.id)
+        matched = [
+            ingredient
+            for ingredient in owned_ingredients
+            if normalize_ingredient_name(ingredient.ingredient_name) in recipe_ingredient_keys
+        ]
+        return [SavedRecipeOwnedIngredient.model_validate(ingredient) for ingredient in matched]
 
     async def status(self, source: str, source_id: str) -> SavedRecipeStatusResponse:
         if source != "mangae":

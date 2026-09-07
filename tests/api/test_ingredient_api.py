@@ -66,6 +66,44 @@ async def test_delete_ingredient_returns_not_found(client: AsyncClient, auth_hea
     assert response.json()["code"] == ErrorCode.INGREDIENT_NOT_FOUND
 
 
+async def test_delete_ingredients_bulk(client: AsyncClient, auth_headers: dict[str, str]):
+    add_response = await client.post(
+        "/api/v1/ingredients",
+        headers=auth_headers,
+        json={"ingredients": ["양파", "당근", "대파"]},
+    )
+    added = add_response.json()
+    ids_to_delete = [added[0]["id"], added[1]["id"]]
+
+    delete_response = await client.request(
+        "DELETE",
+        "/api/v1/ingredients",
+        headers=auth_headers,
+        json={"ingredient_ids": ids_to_delete},
+    )
+
+    assert delete_response.status_code == 204
+
+    list_response = await client.get("/api/v1/ingredients", headers=auth_headers)
+    remaining = list_response.json()
+    assert len(remaining) == 1
+    assert remaining[0]["ingredient_name"] == "대파"
+
+
+async def test_delete_ingredients_bulk_returns_not_found_when_missing(
+    client: AsyncClient, auth_headers: dict[str, str]
+):
+    response = await client.request(
+        "DELETE",
+        "/api/v1/ingredients",
+        headers=auth_headers,
+        json={"ingredient_ids": [99999]},
+    )
+
+    assert response.status_code == 404
+    assert response.json()["code"] == ErrorCode.INGREDIENT_NOT_FOUND
+
+
 async def test_delete_all_ingredients_requires_auth(client: AsyncClient):
     response = await client.get("/api/v1/ingredients/all-delete")
 

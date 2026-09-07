@@ -1,7 +1,12 @@
 from core.exception.exceptions import IngredientNotFoundException
 from domains.ingredient.model import Ingredient
 from domains.ingredient.repository import IngredientRepository
-from domains.ingredient.schemas import AddIngredientRequest, AddIngredientResponse, GetIngredientResponse
+from domains.ingredient.schemas import (
+    AddIngredientRequest,
+    AddIngredientResponse,
+    DeleteIngredientsRequest,
+    GetIngredientResponse,
+)
 from domains.user.model import User
 
 
@@ -29,6 +34,12 @@ class IngredientService:
         deleted = await self.ingredient_repo.delete_ingredient(ingredient_id, self.user.id)
         if not deleted:
             raise IngredientNotFoundException()
+
+    async def delete_ingredients(self, request: DeleteIngredientsRequest) -> None:
+        ingredient_ids = list(dict.fromkeys(request.ingredient_ids))
+        deleted_count = await self.ingredient_repo.delete_ingredients_by_ids(ingredient_ids, self.user.id)
+        if deleted_count != len(ingredient_ids):
+            raise IngredientNotFoundException("삭제할 식재료 중 존재하지 않는 항목이 있습니다.")
 
     async def delete_all_ingredients(self) -> None:
         deleted = await self.ingredient_repo.delete_all_ingredients(self.user.id)

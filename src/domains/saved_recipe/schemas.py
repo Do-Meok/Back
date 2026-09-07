@@ -40,3 +40,10 @@ class SavedRecipeDetailResponse(BaseModel):
 class SavedRecipeStatusResponse(BaseModel):
     saved: bool
     id: UUID | None = None
+
+
+class SavedRecipeOwnedIngredient(BaseModel):
+    id: int
+    ingredient_name: str
+
+    model_config = ConfigDict(from_attributes=True)

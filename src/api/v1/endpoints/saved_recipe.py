@@ -13,6 +13,7 @@ from core.exception.openapi import create_error_response
 from domains.saved_recipe.schemas import (
     SavedRecipeDetailResponse,
     SavedRecipeListItem,
+    SavedRecipeOwnedIngredient,
     SavedRecipeStatusResponse,
     SaveRecipeRequest,
 )
@@ -84,6 +85,22 @@ async def get_saved_recipe(
     service: SavedRecipeService = Depends(get_saved_recipe_service),
 ) -> SavedRecipeDetailResponse:
     return await service.get(recipe_id)
+
+
+@router.get(
+    "/{recipe_id}/owned-ingredients",
+    status_code=status.HTTP_200_OK,
+    response_model=list[SavedRecipeOwnedIngredient],
+    summary="레시피 재료 중 보유 식재료 조회",
+    description="저장한 레시피의 재료 목록 중 내가 보유한 식재료와 일치하는 항목을 조회합니다. "
+    "체크박스로 선택 후 /ingredients 선택 삭제 API에 id 목록을 전달하면 됩니다.",
+    responses=create_error_response(UnAuthorizedException, NotFoundException),
+)
+async def get_saved_recipe_owned_ingredients(
+    recipe_id: UUID,
+    service: SavedRecipeService = Depends(get_saved_recipe_service),
+) -> list[SavedRecipeOwnedIngredient]:
+    return await service.get_owned_ingredients(recipe_id)
 
 
 @router.delete(

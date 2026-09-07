@@ -145,11 +145,13 @@ def get_saved_recipe_service(
     user: User = Depends(get_current_user),
     repo: SavedRecipeRepository = Depends(get_saved_recipe_repo),
     recipe_detail_service: RecipeDetailService = Depends(get_recipe_detail_service),
+    ingredient_repo: IngredientRepository = Depends(get_ingredient_repo),
 ) -> SavedRecipeService:
     return SavedRecipeService(
         user=user,
         repo=repo,
         recipe_detail_service=recipe_detail_service,
+        ingredient_repo=ingredient_repo,
     )
 
 

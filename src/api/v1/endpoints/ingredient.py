@@ -6,6 +6,7 @@ from core.exception.openapi import create_error_response
 from domains.ingredient.schemas import (
     AddIngredientRequest,
     AddIngredientResponse,
+    DeleteIngredientsRequest,
     GetIngredientResponse,
 )
 from domains.ingredient.service import IngredientService
@@ -51,6 +52,20 @@ async def delete_ingredient(
     ingredient_service: IngredientService = Depends(get_ingredient_service),
 ) -> None:
     await ingredient_service.delete_ingredient(ingredient_id)
+
+
+@router.delete(
+    "",
+    summary="식재료 선택 삭제",
+    description="체크박스 등으로 선택한 식재료 id 목록을 한 번에 삭제합니다.",
+    status_code=status.HTTP_204_NO_CONTENT,
+    responses=create_error_response(UnAuthorizedException, IngredientNotFoundException),
+)
+async def delete_ingredients(
+    request: DeleteIngredientsRequest,
+    ingredient_service: IngredientService = Depends(get_ingredient_service),
+) -> None:
+    await ingredient_service.delete_ingredients(request)
 
 
 @router.get(

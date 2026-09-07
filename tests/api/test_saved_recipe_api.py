@@ -45,6 +45,56 @@ async def test_save_mangae(client: AsyncClient, auth_headers: dict[str, str]):
         app.dependency_overrides.pop(get_recipe_detail_service, None)
 
 
+async def test_get_owned_ingredients_matches_pantry_and_deletes(client: AsyncClient, auth_headers: dict[str, str]):
+    await client.post(
+        "/api/v1/ingredients",
+        headers=auth_headers,
+        json={"ingredients": ["김치", "양파"]},
+    )
+
+    mangae_mock = _override_mangae_detail()
+    app.dependency_overrides[get_recipe_detail_service] = lambda: mangae_mock
+    try:
+        save = await client.post(
+            "/api/v1/recipes/saved",
+            headers=auth_headers,
+            json={"source": "mangae", "source_id": "김치볶음밥|요리왕"},
+        )
+        recipe_id = save.json()["id"]
+
+        owned_response = await client.get(
+            f"/api/v1/recipes/saved/{recipe_id}/owned-ingredients",
+            headers=auth_headers,
+        )
+        assert owned_response.status_code == 200
+        owned = owned_response.json()
+        assert len(owned) == 1
+        assert owned[0]["ingredient_name"] == "김치"
+
+        delete_response = await client.request(
+            "DELETE",
+            "/api/v1/ingredients",
+            headers=auth_headers,
+            json={"ingredient_ids": [item["id"] for item in owned]},
+        )
+        assert delete_response.status_code == 204
+
+        remaining = await client.get("/api/v1/ingredients", headers=auth_headers)
+        assert {item["ingredient_name"] for item in remaining.json()} == {"양파"}
+    finally:
+        app.dependency_overrides.pop(get_recipe_detail_service, None)
+
+
+async def test_get_owned_ingredients_returns_not_found_for_unknown_recipe(
+    client: AsyncClient, auth_headers: dict[str, str]
+):
+    response = await client.get(
+        "/api/v1/recipes/saved/00000000-0000-0000-0000-000000000000/owned-ingredients",
+        headers=auth_headers,
+    )
+    assert response.status_code == 404
+
+
 async def test_status_not_saved(client: AsyncClient, auth_headers: dict[str, str]):
     response = await client.get(
         "/api/v1/recipes/saved/status",

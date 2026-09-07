@@ -7,7 +7,7 @@ import uuid6
 from core.exception.exceptions import IngredientNotFoundException
 from core.timezone import KST
 from domains.ingredient.model import Ingredient
-from domains.ingredient.schemas import AddIngredientRequest
+from domains.ingredient.schemas import AddIngredientRequest, DeleteIngredientsRequest
 from domains.ingredient.service import IngredientService
 from domains.user.model import User
 
@@ -102,3 +102,30 @@ async def test_delete_all_ingredients_deletes_all(
     await ingredient_service.delete_all_ingredients()
 
     ingredient_repo.delete_all_ingredients.assert_awaited_once_with(user.id)
+
+
+async def test_delete_ingredients_deletes_selected(
+    ingredient_service: IngredientService, ingredient_repo: AsyncMock, user: User
+):
+    ingredient_repo.delete_ingredients_by_ids.return_value = 2
+
+    await ingredient_service.delete_ingredients(DeleteIngredientsRequest(ingredient_ids=[1, 2]))
+
+    ingredient_repo.delete_ingredients_by_ids.assert_awaited_once_with([1, 2], user.id)
+
+
+async def test_delete_ingredients_dedupes_ids(ingredient_service: IngredientService, ingredient_repo: AsyncMock):
+    ingredient_repo.delete_ingredients_by_ids.return_value = 1
+
+    await ingredient_service.delete_ingredients(DeleteIngredientsRequest(ingredient_ids=[1, 1]))
+
+    ingredient_repo.delete_ingredients_by_ids.assert_awaited_once_with([1], ingredient_service.user.id)
+
+
+async def test_delete_ingredients_raises_when_some_not_found(
+    ingredient_service: IngredientService, ingredient_repo: AsyncMock
+):
+    ingredient_repo.delete_ingredients_by_ids.return_value = 1
+
+    with pytest.raises(IngredientNotFoundException):
+        await ingredient_service.delete_ingredients(DeleteIngredientsRequest(ingredient_ids=[1, 2]))

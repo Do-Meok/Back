@@ -7,6 +7,7 @@ import uuid6
 
 from core.exception.exceptions import BadRequestException, ConflictException, NotFoundException
 from core.timezone import KST
+from domains.ingredient.model import Ingredient
 from domains.recipe_detail.schemas import RecipeDetailResponse
 from domains.saved_recipe.model import SavedRecipe
 from domains.saved_recipe.schemas import SaveRecipeRequest
@@ -47,8 +48,20 @@ def recipe_detail_service() -> AsyncMock:
 
 
 @pytest.fixture
-def service(user: User, repo: AsyncMock, recipe_detail_service: AsyncMock) -> SavedRecipeService:
-    return SavedRecipeService(user=user, repo=repo, recipe_detail_service=recipe_detail_service)
+def ingredient_repo() -> AsyncMock:
+    return AsyncMock()
+
+
+@pytest.fixture
+def service(
+    user: User, repo: AsyncMock, recipe_detail_service: AsyncMock, ingredient_repo: AsyncMock
+) -> SavedRecipeService:
+    return SavedRecipeService(
+        user=user,
+        repo=repo,
+        recipe_detail_service=recipe_detail_service,
+        ingredient_repo=ingredient_repo,
+    )
 
 
 def _detail() -> RecipeDetailResponse:
@@ -141,6 +154,45 @@ async def test_delete_succeeds(service: SavedRecipeService, repo: AsyncMock, use
     await service.delete(recipe_id)
 
     repo.delete.assert_awaited_once_with(recipe_id, user.id)
+
+
+async def test_get_owned_ingredients_raises_when_recipe_not_found(service: SavedRecipeService, repo: AsyncMock):
+    repo.get_by_id.return_value = None
+
+    with pytest.raises(NotFoundException):
+        await service.get_owned_ingredients(uuid.uuid4())
+
+
+async def test_get_owned_ingredients_returns_matching_items(
+    service: SavedRecipeService, repo: AsyncMock, ingredient_repo: AsyncMock, user: User
+):
+    entity = _saved_recipe(
+        user_id=user.id,
+        snapshot={"ingredients": [{"name": "김치", "amount": "1컵"}, {"name": "돼지고기", "amount": "200g"}]},
+    )
+    repo.get_by_id.return_value = entity
+    ingredient_repo.get_ingredients.return_value = [
+        Ingredient(id=1, user_id=user.id, ingredient_name="김치"),
+        Ingredient(id=2, user_id=user.id, ingredient_name="양파"),
+    ]
+
+    result = await service.get_owned_ingredients(entity.id)
+
+    assert len(result) == 1
+    assert result[0].id == 1
+    assert result[0].ingredient_name == "김치"
+
+
+async def test_get_owned_ingredients_returns_empty_when_no_ingredients_in_snapshot(
+    service: SavedRecipeService, repo: AsyncMock, ingredient_repo: AsyncMock, user: User
+):
+    entity = _saved_recipe(user_id=user.id, snapshot={})
+    repo.get_by_id.return_value = entity
+
+    result = await service.get_owned_ingredients(entity.id)
+
+    assert result == []
+    ingredient_repo.get_ingredients.assert_not_awaited()
 
 
 async def test_status_rejects_non_mangae_source(service: SavedRecipeService):
