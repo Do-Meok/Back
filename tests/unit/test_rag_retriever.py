@@ -64,3 +64,57 @@ def test_search_generic_error_raises_external_service_exception():
 
     assert exc_info.value.detail == "레시피 벡터 검색 중 외부 서비스 오류가 발생했습니다."
     assert isinstance(exc_info.value.__cause__, RuntimeError)
+
+
+def _make_connection_with_rows(rows: list[tuple]) -> MagicMock:
+    conn = MagicMock()
+    conn.__enter__.return_value = conn
+    cursor = conn.cursor.return_value.__enter__.return_value
+    cursor.fetchall.return_value = rows
+    return conn
+
+
+def test_search_exact_matches_queries_by_normalized_sorted_ingredients_and_returns_zero_score():
+    conn = _make_connection_with_rows([("parsed_ingredients: 양파, 감자", {"recipe_name": "감자볶음"})])
+
+    retriever = RecipeRetriever(
+        vector_store=MagicMock(), connection_factory=lambda: conn, collection_name="recipe_vectors"
+    )
+    result = retriever.search_exact_matches(["양파", " 감자 "], limit=5)
+
+    assert len(result) == 1
+    doc, score = result[0]
+    assert doc.page_content == "parsed_ingredients: 양파, 감자"
+    assert doc.metadata == {"recipe_name": "감자볶음"}
+    assert score == 0.0
+
+    cursor = conn.cursor.return_value.__enter__.return_value
+    _query, params = cursor.execute.call_args[0]
+    assert params == ("recipe_vectors", ["감자", "양파"], 5)
+
+
+def test_search_exact_matches_without_owned_ingredients_skips_query():
+    retriever = RecipeRetriever(
+        vector_store=MagicMock(), connection_factory=MagicMock(), collection_name="recipe_vectors"
+    )
+
+    assert retriever.search_exact_matches([], limit=5) == []
+
+
+def test_search_exact_matches_without_connection_factory_returns_empty():
+    retriever = RecipeRetriever(vector_store=MagicMock())
+
+    assert retriever.search_exact_matches(["양파"], limit=5) == []
+
+
+def test_search_exact_matches_db_error_raises_database_exception():
+    conn = MagicMock()
+    conn.__enter__.side_effect = psycopg.OperationalError("connection failed")
+
+    retriever = RecipeRetriever(vector_store=MagicMock(), connection_factory=lambda: conn)
+
+    with pytest.raises(DatabaseException) as exc_info:
+        retriever.search_exact_matches(["양파"], limit=5)
+
+    assert exc_info.value.detail == "레시피 완전일치 검색 중 DB 오류가 발생했습니다."
+    assert isinstance(exc_info.value.__cause__, psycopg.Error)

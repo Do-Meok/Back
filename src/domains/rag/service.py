@@ -8,7 +8,9 @@ from domains.rag.schemas import RecipeRecommendationResponse
 from domains.user.model import User
 
 # 상수 설정
-TOP_K = 5
+TOP_K = 10
+# 벡터 검색 1차 후보군 크기(재료 보유율로 재정렬하기 위해 최종 개수보다 넉넉히 조회)
+CANDIDATE_K = 30
 
 
 class RagService:
@@ -36,14 +38,41 @@ class RagService:
 
         quota = await self.daily_quota_store.consume(KIND_RAG_SEARCH, str(self.user.id), RAG_SEARCH_DAILY_LIMIT)
 
-        query = build_ingredient_query(names)
-        docs_with_scores = await asyncio.to_thread(self.retriever.search, query, k=TOP_K)
+        # 1) 보유 재료만으로 부족한 것 없이 조리 가능한(100% 일치) 레시피를 SQL containment로 먼저 확보한다.
+        #    임베딩 유사도와 무관하게 항상 찾아지므로, 재료를 많이 추가해도 100% 일치 레시피가 밀려나지 않는다.
+        exact_docs = await asyncio.to_thread(self.retriever.search_exact_matches, names, TOP_K)
 
         recipes = []
-        for doc, score in docs_with_scores:
+        seen_keys: set[tuple[str, str, str]] = set()
+        for doc, score in exact_docs:
             mapped = map_document_to_recipe(doc, score, owned_ingredient_names=names)
-            if mapped is not None:
-                recipes.append(mapped)
+            if mapped is None:
+                continue
+            key = (mapped.recipe_name, mapped.board_name, mapped.author_name)
+            if key in seen_keys:
+                continue
+            seen_keys.add(key)
+            recipes.append(mapped)
+
+        # 2) 자리가 남으면 벡터 유사도 검색으로 후보를 넓게 가져와 부족 재료가 적은 순으로 채운다.
+        remaining = TOP_K - len(recipes)
+        if remaining > 0:
+            query = build_ingredient_query(names)
+            docs_with_scores = await asyncio.to_thread(self.retriever.search, query, k=CANDIDATE_K)
+
+            fallback_candidates = []
+            for doc, score in docs_with_scores:
+                mapped = map_document_to_recipe(doc, score, owned_ingredient_names=names)
+                if mapped is None:
+                    continue
+                key = (mapped.recipe_name, mapped.board_name, mapped.author_name)
+                if key in seen_keys:
+                    continue
+                seen_keys.add(key)
+                fallback_candidates.append(mapped)
+
+            fallback_candidates.sort(key=lambda recipe: (len(recipe.missing_ingredients), recipe.score))
+            recipes.extend(fallback_candidates[:remaining])
 
         return RecipeRecommendationResponse(
             ingredients_used=names,
